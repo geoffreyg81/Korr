@@ -1,11 +1,9 @@
 const status = document.getElementById("status");
 const backendState = document.getElementById("backend-state");
-const checkBackendButton = document.getElementById("check-backend");
 const siteEnabledInput = document.getElementById("site-enabled");
 const currentSiteLabel = document.getElementById("current-site");
 const stylePicker = document.getElementById("style-picker");
 const styleHint = document.getElementById("style-hint");
-const modeInputs = [...document.querySelectorAll('input[name="mode"]')];
 const styleInputs = [...document.querySelectorAll('input[name="style"]')];
 
 const STYLE_HINTS = {
@@ -16,64 +14,56 @@ const STYLE_HINTS = {
 };
 
 let currentSite = "";
+let backendAvailable = false;
 let statusTimer = null;
 
 initialize();
 
 async function initialize() {
-  // Nettoie une éventuelle clé conservée par l'ancienne version OpenAI du MVP.
-  await chrome.storage.local.remove("apiKey");
-  const { mode = "instant", style = "corriger" } = await chrome.storage.local.get(["mode", "style"]);
-
-  selectRadio(modeInputs, mode);
-  selectRadio(styleInputs, style);
-  await chrome.storage.local.set({ mode: selectedValue(modeInputs), style: selectedValue(styleInputs) });
-  reflectStyleAvailability();
+  // Nettoie les clés des versions précédentes (clé OpenAI du MVP, mode
+  // « instant »/« deep » remplacé par la détection automatique du backend).
+  await chrome.storage.local.remove(["apiKey", "mode"]);
+  const { style = "corriger" } = await chrome.storage.local.get("style");
+  selectStyle(style);
 
   await initializeSiteSetting();
   await checkBackend();
 }
 
-function selectRadio(inputs, value) {
-  const target = inputs.find((input) => input.value === value) || inputs[0];
+function selectStyle(value) {
+  const target = styleInputs.find((input) => input.value === value) || styleInputs[0];
   if (target) target.checked = true;
+  reflectStyleAvailability();
 }
 
-function selectedValue(inputs) {
-  return inputs.find((input) => input.checked)?.value || inputs[0]?.value || "";
-}
-
-for (const input of modeInputs) {
-  input.addEventListener("change", async () => {
-    await chrome.storage.local.set({ mode: input.value });
-    reflectStyleAvailability();
-    flashStatus(input.value === "instant" ? "Mode instantané activé." : "Mode IA approfondie activé.");
-  });
+function selectedStyle() {
+  return styleInputs.find((input) => input.checked)?.value || "corriger";
 }
 
 for (const input of styleInputs) {
   input.addEventListener("change", async () => {
-    await chrome.storage.local.set({ style: input.value });
-    reflectStyleAvailability();
-
-    // Un style de réécriture n'a d'effet qu'avec l'IA : bascule automatique.
-    if (input.value !== "corriger" && selectedValue(modeInputs) === "instant") {
-      selectRadio(modeInputs, "deep");
-      await chrome.storage.local.set({ mode: "deep" });
-      flashStatus("Style enregistré · mode IA activé automatiquement.");
+    if (input.value !== "corriger" && !backendAvailable) {
+      // Sans backend, seul le moteur embarqué est disponible.
+      selectStyle("corriger");
+      await chrome.storage.local.set({ style: "corriger" });
+      flashStatus("Ce style demande le mode IA (voir ci-dessous).");
       return;
     }
+    await chrome.storage.local.set({ style: input.value });
+    reflectStyleAvailability();
     flashStatus("Style enregistré.");
   });
 }
 
 function reflectStyleAvailability() {
-  const style = selectedValue(styleInputs);
-  const instant = selectedValue(modeInputs) === "instant";
-  stylePicker.classList.toggle("is-muted", instant && style === "corriger");
-  styleHint.textContent = instant && style === "corriger"
-    ? "Les styles Pro, Amical et Concis utilisent le mode IA."
-    : STYLE_HINTS[style] || "";
+  stylePicker.classList.toggle("is-muted", !backendAvailable);
+  const style = selectedStyle();
+
+  if (!backendAvailable) {
+    styleHint.textContent = "Correction instantanée, hors ligne. Les styles de réécriture demandent le mode IA.";
+    return;
+  }
+  styleHint.textContent = STYLE_HINTS[style] || "";
 }
 
 async function initializeSiteSetting() {
@@ -112,27 +102,24 @@ siteEnabledInput.addEventListener("change", async () => {
     : `Bouton masqué sur ${currentSite}.`);
 });
 
-checkBackendButton.addEventListener("click", checkBackend);
-
 async function checkBackend() {
-  backendState.className = "backend-state is-checking";
-  backendState.textContent = "Vérification du backend…";
   const result = await chrome.runtime.sendMessage({ type: "CHECK_BACKEND" });
+  backendAvailable = Boolean(result?.ollama);
 
-  if (result?.ok) {
-    backendState.className = "backend-state is-online";
-    backendState.textContent = result.ollama
-      ? "Mode instantané prêt · IA approfondie prête"
-      : "Mode instantané prêt · IA approfondie arrêtée";
-    return;
+  backendState.className = `backend-state ${backendAvailable ? "is-online" : "is-local"}`;
+  backendState.textContent = backendAvailable
+    ? "Correcteur hors ligne prêt · mode IA disponible"
+    : "Correcteur hors ligne prêt";
+
+  if (!backendAvailable && selectedStyle() !== "corriger") {
+    selectStyle("corriger");
+    await chrome.storage.local.set({ style: "corriger" });
   }
-
-  backendState.className = "backend-state is-offline";
-  backendState.textContent = result?.error || "Backend arrêté";
+  reflectStyleAvailability();
 }
 
 function flashStatus(message) {
   clearTimeout(statusTimer);
   status.textContent = message;
-  statusTimer = setTimeout(() => { status.textContent = ""; }, 2200);
+  statusTimer = setTimeout(() => { status.textContent = ""; }, 2600);
 }

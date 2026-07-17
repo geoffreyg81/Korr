@@ -11,12 +11,12 @@
       <header>
         <span class="logo">✓</span>
         <div class="header-copy">
-          <h1>Zéro Friction <span class="version">v0.4.0</span></h1>
-          <p>Ton correcteur, directement sur la page.</p>
+          <h1>Zéro Friction <span class="version">v0.5.0</span></h1>
+          <p>Correcteur français, hors ligne.</p>
         </div>
       </header>
 
-      <div id="backend-state" class="backend-state is-checking">Vérification du backend…</div>
+      <div id="backend-state" class="backend-state is-local">Vérification…</div>
 
       <section class="site-setting" aria-labelledby="site-setting-title">
         <div class="site-setting-copy">
@@ -29,28 +29,8 @@
         </label>
       </section>
 
-      <fieldset class="mode-picker">
-        <legend>Mode de correction</legend>
-        <label class="mode-card">
-          <input type="radio" name="mode" value="instant">
-          <span class="mode-icon">⚡</span>
-          <span class="mode-copy">
-            <strong>Instantané</strong>
-            <small>Grammalecte local · quelques millisecondes</small>
-          </span>
-        </label>
-        <label class="mode-card">
-          <input type="radio" name="mode" value="deep">
-          <span class="mode-icon">🧠</span>
-          <span class="mode-copy">
-            <strong>IA approfondie</strong>
-            <small>gemma3:4b via Ollama · plus lent, reformule</small>
-          </span>
-        </label>
-      </fieldset>
-
       <fieldset id="style-picker" class="style-picker">
-        <legend>Style de réponse <span class="legend-hint">(mode IA)</span></legend>
+        <legend>Style de réponse</legend>
         <div class="style-chips">
           <label class="chip"><input type="radio" name="style" value="corriger"><span>✓ Corriger</span></label>
           <label class="chip"><input type="radio" name="style" value="professionnel"><span>💼 Pro</span></label>
@@ -60,11 +40,10 @@
         <p id="style-hint" class="style-hint"></p>
       </fieldset>
 
-      <button id="check-backend" class="secondary" type="button">Vérifier le backend</button>
       <p id="status" role="status" aria-live="polite"></p>
 
       <footer>
-        Gratuit et privé : le texte reste sur ton ordinateur.<br>
+        Tout se passe sur ton ordinateur : aucun texte n’est envoyé sur Internet.<br>
         Sélectionne du texte ou clique dans un champ, puis <strong>✓</strong> ou
         <kbd>Alt</kbd>+<kbd>Maj</kbd>+<kbd>C</kbd>.
       </footer>
