@@ -1,0 +1,84 @@
+/*
+   CSS Document
+*/
+
+div#grammalecte_thes_panel_content {
+    padding: 20px 0;
+    width: 100%;
+}
+
+h1.grammalecte_thes_title {
+    margin: 5px 0 2px 0;
+    color: hsl(210, 50%, 50%);
+    font: bold 30px Tahoma, "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", sans-serif;
+    text-align: center;
+}
+
+div#grammalecte_thes_word_info {
+    text-align: center;
+    color: hsl(210, 00%, 40%);
+}
+
+div#grammalecte_thes_word {
+    display: inline-block;
+    width: 230px;
+    margin-left: 5px;
+    padding: 5px 10px;
+    border: 2px solid hsl(0, 0%, 80%);
+    border-radius: 3px;
+    height: 20px;
+    background: transparent;
+    font: normal 18px Tahoma, "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", sans-serif;
+    color: hsl(0, 0%, 50%);
+}
+div#grammalecte_thes_erase_button {
+    display: inline-block;
+    margin: 3px;
+    padding: 5px 10px;
+    font-weight: bold;
+    color: hsl(0, 0%, 100%);
+    background-color: hsl(0, 0%, 80%);
+    border-radius: 4px;
+}
+div#grammalecte_thes_erase_button:hover {
+    background-color: hsl(0, 50%, 50%);
+    cursor: pointer;
+}
+
+div#grammalecte_separator {
+    margin: 10px 20px;
+    font-size: 11px;
+    color: hsl(0, 0%, 60%);
+    text-align: center;
+}
+
+div.grammalecte_syn_block {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+div.grammalecte_cat_name {
+    flex: 0 0 15%;
+    padding: 9px;
+}
+
+div.grammalecte_synonyms {
+    padding: 5px;
+}
+
+div.grammalecte_synonym {
+    display: inline-block;
+    padding: 2px 5px;
+    background: hsl(210, 100%, 95%);
+    border-radius: 3px;
+    margin: 2px 3px;
+    cursor: pointer;
+}
+
+div.grammalecte_synonym:hover {
+    background: hsl(0, 100%, 95%);
+}
+

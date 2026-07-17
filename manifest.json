@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Zéro Friction",
+  "version": "0.4.1",
+  "description": "Corrige ou reformule le texte sélectionné avec un moteur local et gratuit, uniquement sur les sites choisis.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["http://127.0.0.1:8787/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Zéro Friction",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "commands": {
+    "correct-text": {
+      "suggested_key": {
+        "default": "Alt+Shift+C",
+        "mac": "Alt+Shift+C"
+      },
+      "description": "Corriger le texte actif"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="thesaurus.css" />
+        <title>Grammalecte · Thesaurus</title>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    </head>
+
+    <body>
+        <header>
+            <div class="mainflow">
+                <div class="logo" style="margin: -10px 0 0 0;">
+                    <img src="../img/logo-96.png" alt="" />
+                </div>
+            </div>
+        </header>
+
+        <div id="main">
+            <div class="inbox">
+
+                <div class="right" style="margin: 10px 180px 0 0">
+                    <input type="text" id="word" name="word" maxlength="40" value="" placeholder="entrez un mot" autofocus />
+                    <div id="fetch">Synonymes</div>
+                </div>
+
+                <h1 id="word_title" class="center">&nbsp;</h1>
+                <p id="info" class="center">&nbsp;</p>
+
+                <p id="separator">❦</p>
+
+                <div id="synonyms_list">
+
+                </div>
+            </div>
+        </div>
+
+        <script src="../grammalecte/graphspell/helpers.js"></script>
+        <script src="../grammalecte/fr/thesaurus.js"></script>
+        <script src="thesaurus.js"></script>
+    </body>
+
+</html>

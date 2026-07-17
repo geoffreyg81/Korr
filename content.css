@@ -1,0 +1,116 @@
+#zero-friction-button {
+  all: initial;
+  position: fixed;
+  z-index: 2147483646;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+  background: linear-gradient(145deg, #8b5cf6, #4f46e5);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(49, 46, 129, 0.35), 0 0 0 1px rgba(79, 70, 229, 0.12);
+  cursor: pointer;
+  font-family: "Segoe UI Symbol", "Segoe UI", system-ui, sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-indent: 0;
+  user-select: none;
+  opacity: 0.92;
+  transition: transform 130ms ease, box-shadow 130ms ease, opacity 130ms ease;
+}
+
+#zero-friction-button.is-visible { display: flex; animation: zero-friction-pop 160ms ease; }
+#zero-friction-button:hover {
+  opacity: 1;
+  transform: translateY(-1px) scale(1.06);
+  box-shadow: 0 7px 20px rgba(49, 46, 129, 0.45), 0 0 0 1px rgba(79, 70, 229, 0.2);
+}
+#zero-friction-button:active { transform: scale(0.96); }
+#zero-friction-button:focus-visible { outline: 3px solid rgba(139, 92, 246, 0.45); outline-offset: 2px; }
+#zero-friction-button.is-loading {
+  cursor: wait;
+  animation: zero-friction-pulse 800ms ease-in-out infinite alternate;
+}
+
+#zero-friction-toast {
+  all: initial;
+  position: fixed;
+  z-index: 2147483647;
+  left: 50%;
+  bottom: 28px;
+  display: block;
+  max-width: min(440px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(24, 24, 27, 0.96);
+  color: #fafafa;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(6px);
+  font: 500 13px/1.45 system-ui, sans-serif;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 10px) scale(0.98);
+  transition: opacity 170ms ease, transform 170ms ease;
+}
+
+#zero-friction-toast > span { all: initial; color: inherit; font: inherit; }
+#zero-friction-toast > button {
+  all: initial;
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font: 750 12px/1 system-ui, sans-serif;
+  pointer-events: auto;
+  transition: background 120ms ease;
+}
+#zero-friction-toast > button:hover { background: rgba(255, 255, 255, 0.18); }
+#zero-friction-toast:has(> button) { display: flex; align-items: center; gap: 12px; }
+
+#zero-friction-toast.is-visible { opacity: 1; transform: translate(-50%, 0) scale(1); }
+#zero-friction-toast.is-error { background: rgba(153, 27, 27, 0.97); }
+#zero-friction-toast.is-success { background: rgba(20, 83, 45, 0.97); }
+#zero-friction-toast.is-loading::before {
+  all: initial;
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 9px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  content: "";
+  vertical-align: -1px;
+  animation: zero-friction-spin 700ms linear infinite;
+}
+
+@keyframes zero-friction-pop {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 0.92; transform: scale(1); }
+}
+@keyframes zero-friction-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #zero-friction-button,
+  #zero-friction-button.is-visible,
+  #zero-friction-toast { animation: none; transition: opacity 100ms ease; }
+  #zero-friction-button.is-loading { animation: zero-friction-pulse 800ms ease-in-out infinite alternate; }
+}
+@keyframes zero-friction-pulse {
+  from { opacity: 0.65; }
+  to { opacity: 1; }
+}
