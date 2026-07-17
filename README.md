@@ -1,39 +1,51 @@
-# Zéro Friction — correcteur local instantané
+# Zéro Friction — correcteur français local
 
-Extension Edge/Chrome qui corrige le français directement dans les champs de saisie, sans clé API et sans abonnement.
+Extension Edge/Chrome qui corrige le français directement dans les champs de
+saisie. Gratuite, sans clé API, sans abonnement, sans compte — et **hors
+ligne** : le texte ne quitte jamais votre ordinateur.
 
-## Deux modes, quatre styles
+L'extension embarque son propre moteur : elle s'installe et fonctionne, sans
+rien d'autre à lancer. Une application de bureau facultative étend la
+correction à toutes les applications Windows, et un backend facultatif ajoute
+des styles de réécriture par IA.
 
-- **Instantané — Français** : moteur Grammalecte 2.3.0 spécialisé dans le français. Après son chargement au démarrage, une correction courante prend généralement quelques millisecondes.
-- **Approfondi — IA 4B** : utilise `gemma3:4b` via Ollama pour les formulations complexes. Plus lent sur une machine sans accélération GPU.
+## Correction instantanée (par défaut)
 
-Le mode instantané est sélectionné par défaut et fonctionne même si Ollama est arrêté.
+Moteur **Grammalecte 2.3.0** et règles maison, exécutés dans l'extension
+elle-même :
 
-Le mode IA propose quatre **styles de réponse**, choisis dans le popup :
+- fautes d'orthographe, de grammaire, de conjugaison et d'accord ;
+- accord du participe passé avec le COD placé avant l'auxiliaire ;
+- concordance des temps, subjonctif après « bien que », homophones et/est
+  et ou/où ;
+- langage SMS : environ 180 abréviations et des règles contextuelles.
+
+Le moteur se charge en deux secondes au démarrage du navigateur, puis chaque
+correction prend quelques millisecondes.
+
+## Styles de réécriture (facultatif, demandent le backend)
 
 | Style | Effet |
 | --- | --- |
-| ✓ Corriger | Corrige les fautes sans rien reformuler (défaut). |
+| ✓ Corriger | Corrige les fautes sans rien reformuler (défaut, hors ligne). |
 | 💼 Pro | Réécrit dans un ton professionnel et courtois. |
 | 😊 Amical | Réécrit dans un ton chaleureux et détendu. |
-| ✂️ Concis | Raccourcit le texte en gardant l’essentiel. |
+| ✂️ Concis | Raccourcit le texte en gardant l'essentiel. |
+
+Ces trois derniers passent par `gemma3:4b` via Ollama et n'apparaissent que si
+le backend tourne. Sans lui, l'extension corrige seule et les masque.
 
 Exemple en style Pro : « slt, jpe pa venir a la réunion dmn, dsl pour le
 retard » devient « Je ne pourrai malheureusement pas être présent à la réunion
 de demain. Veuillez excuser ce contretemps. »
 
 Chaque style garde son garde-fou : une réponse IA trop éloignée du texte
-d’origine est écartée et remplacée par la correction instantanée. Choisir un
-style de réécriture bascule automatiquement en mode IA.
+d'origine est écartée au profit de la correction instantanée.
 
-Les nombres et dates, adresses e-mail, URL, mentions, hashtags, acronymes et
-noms propres détectés sont invariants : une réponse qui les supprime, les
-modifie ou en invente est refusée. Même le style Concis doit conserver un socle
-de mots porteurs de sens, et la vérification est répétée après Grammalecte.
+## Backend facultatif
 
-## Démarrage
-
-Depuis ce dossier :
+L'extension n'en a pas besoin pour corriger : il ne sert qu'aux styles de
+réécriture et à l'application de bureau. Depuis ce dossier :
 
 ```powershell
 npm start
@@ -125,28 +137,31 @@ npm run autostart:remove-app   # l’en retire
 4. Sélectionne ce dossier.
 5. Après chaque modification de l’extension, actualise-la puis recharge les pages déjà ouvertes.
 
+Rien d’autre à lancer : le correcteur est embarqué dans l’extension.
+
 ## Utilisation
 
-- Ouvre le popup sur un site et active **Flèche sur ce site**. Le choix est mémorisé séparément pour Gmail, Outlook, Discord et chaque autre application web.
+- Ouvre le popup sur un site et active **Bouton ✓ sur ce site**. Le choix est mémorisé séparément pour Gmail, Outlook, Discord et chaque autre application web.
 - Clique dans un champ de texte.
 - Sélectionne un passage, ou ne sélectionne rien pour corriger le champ entier.
 - Clique sur le bouton violet `✓` ou utilise `Alt+Maj+C`.
-- Choisis le mode dans le popup de l’extension.
 - Après une modification, clique sur **Annuler** dans la notification pendant sept secondes pour restaurer le texte original.
 
-La flèche est masquée par défaut sur les sites qui n’ont pas été autorisés. Le raccourci clavier reste disponible même lorsque la flèche est masquée.
+Le bouton est masqué par défaut sur les sites qui n’ont pas été autorisés. Le raccourci clavier reste disponible même lorsque le bouton est masqué.
 
 Dans les éditeurs riches, les corrections sont appliquées uniquement aux fragments modifiés afin de conserver le gras, l’italique et les liens. Si la structure d’une sélection ne peut pas être modifiée sûrement, l’extension demande de sélectionner un passage plus court au lieu d’aplatir le HTML.
 
 ## Mode IA facultatif
 
-Pour utiliser le mode approfondi :
+Pour débloquer les styles Pro, Amical et Concis :
 
 ```powershell
 ollama pull gemma3:4b
 ```
 
-Ollama doit alors rester démarré. Le mode instantané n’en dépend pas.
+Ollama et le backend doivent alors rester démarrés. L’extension détecte leur
+présence toute seule et affiche les styles en conséquence ; la correction
+instantanée n’en dépend jamais.
 
 ### Coût réel du mode approfondi
 
@@ -176,11 +191,36 @@ le réordonnancement — la seule raison d’appeler un modèle.
 
 ## Architecture
 
+Le correcteur tourne dans l’extension. Le backend ne sert qu’aux styles de
+réécriture et à l’application de bureau.
+
+**Règles, partagées par les deux environnements**
+
+- `grammar-rules.js` contient toute la logique de correction. C’est un script
+  classique, sans import ni export : il s’exécute dans une portée où
+  Grammalecte est déjà chargé et y trouve `gc_engine` comme variable globale.
+  Le navigateur et Node chargent donc exactement le même fichier.
+
+**Extension**
+
 - `content.js` lit et remplace le texte dans la page.
-- `background.js` appelle le backend local.
-- `server.js` sélectionne le moteur instantané ou approfondi.
-- `grammar-engine.js` applique jusqu’à trois passes de corrections Grammalecte et résout les chevauchements.
-- `.vendor/grammalecte-js/grammalecte` contient le moteur officiel Grammalecte 2.3.0.
+- `background.js` aiguille vers le moteur embarqué ou, pour un style de
+  réécriture, vers le backend s’il répond.
+- `offscreen.html` héberge le Worker. Un document offscreen est nécessaire :
+  le service worker MV3 s’arrête après quelques secondes et ne fournit pas
+  `XMLHttpRequest`, dont Grammalecte a besoin pour lire ses données.
+- `grammalecte-worker.js` charge Grammalecte par `importScripts`, puis les
+  règles.
+- `vendor/grammalecte/` contient le sous-ensemble embarqué (9,3 Mo) : les
+  scripts du moteur et le seul dictionnaire utilisé, `fr-allvars.json`.
+
+**Backend facultatif**
+
+- `server.js` reçoit les demandes de réécriture et interroge Ollama.
+- `grammar-engine.js` monte Grammalecte dans un contexte `vm` et y injecte
+  `grammar-rules.js`.
+- `.vendor/grammalecte-js/` contient la distribution Grammalecte 2.3.0
+  complète, dont `vendor/grammalecte/` est extrait.
 
 ### Grammaire
 
