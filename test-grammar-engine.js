@@ -74,6 +74,16 @@ const cases = [
   ["Rendez-vous à 10:30 précises.", "Rendez-vous à 10:30 précises."],
   ["Va sur https://exemple.fr demain.", "Va sur https://exemple.fr demain."],
   ["Trop drôle :) à plus :D", "Trop drôle :) à plus :D"],
+  // « pallier » est transitif direct ; « d’urgence » invariable ; « Mr. » → « M. ».
+  ["Il faut pallier aux problèmes.", "Il faut pallier les problèmes."],
+  ["On doit pallier au manque de moyens.", "On doit pallier le manque de moyens."],
+  ["Pallier à cette difficulté.", "Pallier cette difficulté."],
+  ["Il faut des réparations d’urgences.", "Il faut des réparations d’urgence."],
+  ["Mr. Le Maire est arrivé.", "M. Le Maire est arrivé."],
+  ["Les habitants ce sont plains du bruit.", "Les habitants se sont plaints du bruit."],
+  // Garde-fous : « ce sont » présentatif et « des urgences » (nom) intacts.
+  ["Ce sont des problèmes graves.", "Ce sont des problèmes graves."],
+  ["Le service des urgences est ouvert.", "Le service des urgences est ouvert."],
   // Infinitif attendu après « veuillez » / « vouloir » (tournures épistolaires).
   ["Veuillez trouvés ci-joint le rapport.", "Veuillez trouver ci-joint le rapport."],
   [

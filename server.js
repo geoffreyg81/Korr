@@ -42,9 +42,9 @@ Corrige toutes les fautes. Conserve toutes les informations, le sens et la langu
 Réponds uniquement avec le texte réécrit, sans explication ni guillemets.`,
     minRatio: 0.6,
     maxRatio: 1.7,
-    minRetention: 0.2,
-    minContentRetention: 0.28,
-    minCandidateGrounding: 0.2,
+    minRetention: 0,
+    minContentRetention: 0.1,
+    minCandidateGrounding: 0.08,
     sameParagraphs: true
   },
   amical: {
@@ -54,9 +54,9 @@ Garde le tutoiement ou le vouvoiement d'origine. Corrige toutes les fautes. Cons
 Réponds uniquement avec le texte réécrit, sans explication ni guillemets.`,
     minRatio: 0.6,
     maxRatio: 1.7,
-    minRetention: 0.2,
-    minContentRetention: 0.26,
-    minCandidateGrounding: 0.18,
+    minRetention: 0,
+    minContentRetention: 0.1,
+    minCandidateGrounding: 0.08,
     sameParagraphs: true
   },
   concis: {

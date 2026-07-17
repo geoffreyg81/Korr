@@ -323,6 +323,20 @@ function grammalecte() {
     replace(/\bdesfois(?![\p{L}\p{N}])/giu, "des fois");
     replace(/\b(plein(?:e)?s?\s+de\s+)(truc|chose|idée|problème)(?!\p{L})/giu, "$1$2s");
 
+    // « pallier » est transitif direct : « pallier à/au/aux » est un barbarisme.
+    // La préposition disparaît, l’article contracté redevient défini.
+    replace(/\b(pallier)\s+aux\b/giu, "$1 les");
+    replace(/\b(pallier)\s+au\b/giu, "$1 le");
+    replace(/\b(pallier)\s+à\s+(la|l’|l'|ce|cet|cette|ces|son|sa|ses|leur|leurs|mon|ma|mes|un|une)\b/giu, "$1 $2");
+    replace(/\b(pallier)\s+à\b/giu, "$1");
+
+    // « d’urgence » est une locution invariable ; le pluriel « d’urgences » est
+    // fautif (à distinguer du nom « les urgences » d’un hôpital, jamais élidé).
+    replace(/\bd[’']urgences(?![\p{L}\p{N}])/giu, (match) => match.replace(/urgences/iu, "urgence"));
+
+    // « Mr. » est l’abréviation anglaise ; en français c’est « M. ».
+    replace(/\bMr\.?(?=\s|$)/gu, "M.");
+
     // Soudures et graphies univoques, fréquentes même hors langage SMS.
     // « ca » en minuscules n’existe pas en français ; « CA » (chiffre
     // d’affaires) et « Ca » (calcium) restent intouchés hors mode SMS.
@@ -523,9 +537,12 @@ function grammalecte() {
       /\b(Bien que\b[^.!?]{0,100}?)\bsoient\s+annonc(?:é|és|ée|ées)\s+que(?![\p{L}\p{N}])/giu,
       "$1aient annoncé que"
     );
+    // « ce sont plaints » → « se sont plaints » : « ce » confondu avec le
+    // pronom réfléchi « se », et « plains » (présent) écrit pour le participe.
+    // Le féminin est déduit du sujet ou de la graphie déjà accordée.
     replace(
-      /\b((?:plusieurs\s+[\p{L}’'-]+|ils|elles)\s+)ce\s+sont\s+plaint(?:s|es)?(?![\p{L}\p{N}])/giu,
-      (match, subject) => `${subject}se sont ${/(?:elles|ées)\s*$/iu.test(subject) ? "plaintes" : "plaints"}`
+      /\b((?:plusieurs|certains|certaines|beaucoup\s+de|les|des|ces|nombreux|nombreuses)\s+[\p{L}’'-]+|ils|elles)\s+ce\s+sont\s+plain(?:t|te|ts|tes|s|es)?(?![\p{L}\p{N}])/giu,
+      (match, subject) => `${subject} se sont ${/(?:elles|certaines|nombreuses|tes|es)\s*$/iu.test(match.trim()) ? "plaintes" : "plaints"}`
     );
 
     // Accord avec un groupe explicitement pluriel dans la même proposition.
