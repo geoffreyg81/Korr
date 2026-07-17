@@ -32,12 +32,12 @@ const cases = [
   ],
   [
     "jvai o ciné avc mé pote se soir tu vyn?",
-    "Je vais au ciné avec mes potes ce soir tu viens ?"
+    "Je vais au ciné avec mes potes ce soir tu viens ?"
   ],
   ["dsl jpe pa vnir jsui malad", "Désolé je peux pas venir je suis malade"],
   [
     "cc sava? tkt pr dmn jsp si jpe venir mé jte tiens o courant",
-    "Coucou ça va ? T’inquiète pour demain je ne sais pas si je peux venir, mais je te tiens au courant"
+    "Coucou ça va ? T’inquiète pour demain je ne sais pas si je peux venir, mais je te tiens au courant"
   ],
   [
     "bjr, jspr que tu va bien. rdv 2m1 mat1 pr le ptit dej stp",
@@ -45,11 +45,11 @@ const cases = [
   ],
   [
     "mdr jss mort de rire, keske tu fé ce soir? ya un truc o bar avc kelkun que tu connais",
-    "Mdr je suis mort de rire, qu’est-ce que tu fais ce soir ? Il y a un truc au bar avec quelqu’un que tu connais"
+    "Mdr je suis mort de rire, qu’est-ce que tu fais ce soir ? Il y a un truc au bar avec quelqu’un que tu connais"
   ],
   [
     "koi29? sa fait lgtmp! fo kon se voit bi1to paske jai plein de truc a te raconter",
-    "Quoi de neuf ? Ça fait longtemps ! Faut qu’on se voit bientôt parce que j’ai plein de trucs à te raconter"
+    "Quoi de neuf ? Ça fait longtemps ! Faut qu’on se voit bientôt parce que j’ai plein de trucs à te raconter"
   ],
   [
     "dcp jvx bien venir mé chépa si ya la place",
@@ -59,14 +59,21 @@ const cases = [
   ["ca marche, askip tlm sera la dmn", "Ça marche, à ce qu’il paraît tout le monde sera là demain"],
   [
     "pk tu ma pa dit ca deja? cest pas grave jte pardonne",
-    "Pourquoi tu m’as pas dit ça déjà ? C’est pas grave je te pardonne"
+    "Pourquoi tu m’as pas dit ça déjà ? C’est pas grave je te pardonne"
   ],
   // Élision « ma/ta + participe » et « deja », actives aussi hors mode SMS.
-  ["il ma fait un cadeau, elle ta rien dit?", "Il m’a fait un cadeau, elle t’a rien dit?"],
+  ["il ma fait un cadeau, elle ta rien dit?", "Il m’a fait un cadeau, elle t’a rien dit ?"],
   [
     "Le chiffre du CA est en hausse, deja 3% de mieux que prévu.",
     "Le chiffre du CA est en hausse, déjà 3% de mieux que prévu."
   ],
+  // Espace insécable (U+00A0) avant la ponctuation double, avec garde-fous.
+  ["Ce plat est exceptionnel!", "Ce plat est exceptionnel !"],
+  ["Un détail: le prix.", "Un détail : le prix."],
+  ["Vraiment?! Incroyable!", "Vraiment ?! Incroyable !"],
+  ["Rendez-vous à 10:30 précises.", "Rendez-vous à 10:30 précises."],
+  ["Va sur https://exemple.fr demain.", "Va sur https://exemple.fr demain."],
+  ["Trop drôle :) à plus :D", "Trop drôle :) à plus :D"],
   // Infinitif attendu après « veuillez » / « vouloir » (tournures épistolaires).
   ["Veuillez trouvés ci-joint le rapport.", "Veuillez trouver ci-joint le rapport."],
   [

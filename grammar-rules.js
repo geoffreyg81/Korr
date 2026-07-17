@@ -289,8 +289,26 @@ function grammalecte() {
       replace(/^Salut\s+ça\s+va/iu, "Salut, ça va");
       replace(/\b(de\s+travers)\s+genre(?![\p{L}\p{N}])/giu, "$1, genre");
       replace(/\bmais\s+bon\s+on(?![\p{L}\p{N}])/giu, "mais bon, on");
-      replace(/([\p{L}\p{N}])([?!])/gu, "$1 $2");
       replace(/(^|[.!?…]\s+)([\p{Ll}])/gu, (match, prefix, letter) => `${prefix}${letter.toUpperCase()}`);
+    }
+
+    // Espace insécable avant la ponctuation double (! ? : ;), règle
+    // typographique française, ajouté seulement lorsqu'il manque. On épargne
+    // les URL (« http:// »), les heures (« 10:30 ») et les émoticônes
+    // (« :) », « ;-) », « :D »).
+    {
+      const previous = correctedText;
+      correctedText = correctedText.replace(
+        /(\S)([!?;:]+)/gu,
+        (match, lead, marks, offset, full) => {
+          const after = full[offset + match.length] || "";
+          if (marks[0] === ":" && after === "/") return match;
+          if (marks === ":" && /\d/u.test(lead) && /\d/u.test(after)) return match;
+          if (/[:;]/u.test(marks[0]) && /[)(\/\\DPp*-]/u.test(after)) return match;
+          return `${lead} ${marks}`;
+        }
+      );
+      if (correctedText !== previous) corrections += 1;
     }
 
     // Répare d’abord quelques formes soudées ou phonétiques très courantes.
