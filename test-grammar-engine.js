@@ -67,6 +67,25 @@ const cases = [
     "Le chiffre du CA est en hausse, deja 3% de mieux que prévu.",
     "Le chiffre du CA est en hausse, déjà 3% de mieux que prévu."
   ],
+  // Infinitif attendu après « veuillez » / « vouloir » (tournures épistolaires).
+  ["Veuillez trouvés ci-joint le rapport.", "Veuillez trouver ci-joint le rapport."],
+  [
+    "Je vous prie de bien vouloir trouvés le dossier.",
+    "Je vous prie de bien vouloir trouver le dossier."
+  ],
+  // Participe passé invariable des pronominaux à complément indirect.
+  [
+    "Les ministres qui se sont succédées ont échoué.",
+    "Les ministres qui se sont succédé ont échoué."
+  ],
+  ["Ils se sont demandés pourquoi.", "Ils se sont demandé pourquoi."],
+  ["Elles se sont parlées longtemps.", "Elles se sont parlé longtemps."],
+  // Le « se » COD garde l’accord ; les formes déjà correctes ne bougent pas.
+  ["Elles se sont lavées ce matin.", "Elles se sont lavées ce matin."],
+  ["Ils se sont succédé sans interruption.", "Ils se sont succédé sans interruption."],
+  // Accord en genre du passif que Grammalecte laisse au masculin.
+  ["Les primes avaient été supprimé.", "Les primes avaient été supprimées."],
+  ["Les dossiers avaient été classés.", "Les dossiers avaient été classés."],
   // La règle « infi » de Grammalecte est spéculative : elle ne s’applique que
   // là où un infinitif est attendu, sinon « venir demain désolé » devenait
   // « désoler ».

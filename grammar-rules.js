@@ -404,6 +404,33 @@ function grammalecte() {
       }
     );
 
+    // Participe passé invariable des verbes pronominaux à complément indirect
+    // (se succéder, se parler, se demander…) : le « se » est alors un COI, donc
+    // le participe ne s’accorde jamais. « ils se sont succédés » → « succédé ».
+    replace(
+      /\b(s[’']|se\s+)(sont|étaient|seraient|furent|soient)\s+((?:déjà|bien|mal|toujours|souvent|longtemps|tous|toutes|peu|beaucoup|enfin)\s+)?([\p{L}]+)(?![\p{L}])/giu,
+      (match, reflexive, auxiliary, adverb, participle) => {
+        const base = INVARIABLE_PRONOMINAL_PP.get(participle.toLocaleLowerCase("fr-FR"));
+        if (!base) return match;
+        return `${reflexive}${auxiliary} ${adverb || ""}${base}`;
+      }
+    );
+
+    // Accord en genre du participe passé passif avec son sujet, que Grammalecte
+    // laisse parfois au masculin (« les primes avaient été supprimés » →
+    // « supprimées »). Le genre du nom sujet est lu dans le dictionnaire.
+    replace(
+      /\b(Les|Des|Ces|Mes|Tes|Ses|Nos|Vos|Leurs)\s+([\p{L}’'-]+)((?:\s+[\p{L}’'-]+){0,3}?)\s+(?:avaient|avait|ont|étaient|seront|seraient)\s+été\s+([\p{L}]+)(?![\p{L}])/gu,
+      (match, determiner, headNoun, modifiers, participle) => {
+        const features = nounFeatures(headNoun);
+        if (!features) return match;
+        if (!isParticiple(participle)) return match;
+        const inflected = inflectParticiple(participle, features);
+        if (!inflected || inflected === participle) return match;
+        return match.slice(0, match.lastIndexOf(participle)) + inflected;
+      }
+    );
+
     // Homophones « et » / « est » : après un pronom sujet, « et » suivi d’un
     // participe ou d’un adjectif est le verbe être. La nature du mot est lue dans
     // le dictionnaire, ce qui épargne « Elle et Marie » (nom propre), « Elle et
@@ -616,6 +643,25 @@ function grammalecte() {
     "été", "fait", "laissé", "coûté", "valu", "pesé", "mesuré", "duré",
     "vécu", "couru", "régné", "dormi", "marché", "plu", "ri", "nui", "survécu"
   ]);
+
+  // Verbes pronominaux dont le « se » est un complément indirect : le participe
+  // passé reste toujours invariable. On associe chaque forme accordée fautive à
+  // sa forme de base. Seules des formes qui ne sont pas d’autres mots français
+  // figurent ici (« succédées », « demandés »…), pour rester sûr même sans
+  // contexte ; « plus », « ris », « souris » sont donc écartés.
+  const INVARIABLE_PRONOMINAL_PP = new Map(Object.entries({
+    succédée: "succédé", succédés: "succédé", succédées: "succédé",
+    parlée: "parlé", parlés: "parlé", parlées: "parlé",
+    demandée: "demandé", demandés: "demandé", demandées: "demandé",
+    téléphonée: "téléphoné", téléphonés: "téléphoné", téléphonées: "téléphoné",
+    ressemblée: "ressemblé", ressemblés: "ressemblé", ressemblées: "ressemblé",
+    souriée: "souri", souriées: "souri",
+    mentie: "menti", menties: "menti",
+    nuie: "nui", nuies: "nui",
+    suffie: "suffi", suffies: "suffi",
+    convenue: "convenu", convenues: "convenu",
+    plue: "plu", plues: "plu"
+  }));
 
   // Auxiliaires de l’indicatif et leur équivalent au subjonctif, pour les
   // conjonctions qui l’exigent (« bien que », « quoique »…).
@@ -1007,14 +1053,17 @@ function grammalecte() {
   // Mots après lesquels un infinitif est réellement attendu.
   const INFINITIVE_TRIGGERS = new Set([
     "à", "a", "de", "d’", "d'", "pour", "sans", "par",
-    "va", "vais", "vas", "vont", "allons", "allez",
-    "veut", "veux", "voulons", "voulez", "veulent", "voulu",
-    "peut", "peux", "pouvons", "pouvez", "peuvent", "pu",
-    "dois", "doit", "devons", "devez", "doivent", "dû",
+    "va", "vais", "vas", "vont", "allons", "allez", "aller",
+    "veut", "veux", "voulons", "voulez", "veulent", "voulu", "vouloir", "veuillez",
+    "peut", "peux", "pouvons", "pouvez", "peuvent", "pu", "pouvoir",
+    "dois", "doit", "devons", "devez", "doivent", "dû", "devoir",
     "faut", "fait", "fais", "faire", "laisse", "laissé", "laisser",
     "sait", "sais", "savoir", "ose", "espère", "espere", "compte",
     "préfère", "prefere", "préféré", "aime", "adore", "déteste",
-    "souhaite", "désire", "semble", "paraît", "vient", "viens", "venir"
+    "souhaite", "désire", "semble", "paraît", "vient", "viens", "venir",
+    // Impératifs et tournures épistolaires : « veuillez trouver », « prière de
+    // confirmer », « merci de rappeler ».
+    "prière", "prie", "prions", "merci"
   ]);
 
   // La règle « infi » de Grammalecte est spéculative : son message dit lui-même
