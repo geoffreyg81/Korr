@@ -97,9 +97,19 @@ writeWindowsFile(path.join(APP_DIR, "2 - LANCER KORR AVEC WINDOWS.vbs"), [
   ""
 ]);
 
-writeWindowsFile(path.join(APP_DIR, "À LIRE EN PREMIER.txt"), [
+writeWindowsFile(path.join(APP_DIR, "0 - À LIRE AVANT DE COMMENCER.txt"), [
   "KORR - DÉMARRAGE RAPIDE",
   "======================================",
+  "",
+  "SI WINDOWS BLOQUE KORR",
+  "",
+  "  1. Revenez au fichier ZIP que vous avez téléchargé.",
+  "  2. Clic droit sur le ZIP, puis « Propriétés ».",
+  "  3. Cochez « Débloquer » en bas de la fenêtre, puis « Appliquer ».",
+  "  4. Décompressez de nouveau le ZIP et ouvrez le nouveau dossier Korr.",
+  "",
+  "  Cette protection apparaît parce que Korr n'est pas encore signé avec un",
+  "  certificat payant. Le programme fonctionne entièrement hors ligne.",
   "",
   "1. DÉMARRER KORR",
   "",
