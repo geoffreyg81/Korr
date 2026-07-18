@@ -1,0 +1,16 @@
+# Korr sur Vercel est exclusivement le site statique construit par build-web.js.
+# Le backend ci-dessous est réservé à l'application locale avec Ollama. Ne pas
+# l'envoyer empêche Vercel de le détecter comme une fonction Node automatique.
+server.js
+grammar-engine.js
+stop.js
+autostart.js
+app-tray.ps1
+app.vbs
+benchmark-model.js
+build-desktop.js
+package-extension.js
+test-server-guards.js
+test-grammar-engine.js
+.vendor/
+dist/
