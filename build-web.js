@@ -18,7 +18,7 @@ function version() {
 }
 
 // Fichiers propres au site.
-const WEB_FILES = ["index.html", "app.css", "app.js", "sw.js", "manifest.webmanifest", "vercel.json"];
+const WEB_FILES = ["index.html", "app.css", "app.js", "sw.js", "manifest.webmanifest"];
 // Moteur partagé avec l'extension.
 const SHARED_FILES = ["grammalecte-worker.js", "grammar-rules.js", "LICENSE", "PRIVACY.md"];
 const DIRECTORIES = ["icons", "vendor"];
