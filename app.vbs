@@ -1,4 +1,4 @@
-' Lance l'application de bureau Zero Friction sans fenetre.
+' Lance l'application de bureau Korr sans fenetre.
 ' Utilise par "npm run app" et par le demarrage automatique.
 Set fso = CreateObject("Scripting.FileSystemObject")
 projectDir = fso.GetParentFolderName(WScript.ScriptFullName)

@@ -1,9 +1,9 @@
 {
-  "name": "zero-friction-backend",
+  "name": "korr-backend",
   "version": "0.5.0",
   "private": true,
   "type": "module",
-  "description": "Backend local et gratuit pour l'extension Zéro Friction",
+  "description": "Backend local et gratuit pour l'extension Korr",
   "scripts": {
     "start": "node server.js",
     "stop": "node stop.js",
@@ -22,7 +22,7 @@
     "package": "node package-extension.js",
     "build:web": "node build-web.js",
     "build:desktop": "node build-desktop.js",
-    "build:all": "node build-web.js && node package-extension.js && node build-desktop.js"
+    "build:all": "node build-desktop.js && node package-extension.js && node build-web.js"
   },
   "engines": {
     "node": ">=18.17"

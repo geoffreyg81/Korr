@@ -1,10 +1,10 @@
-# Politique de confidentialité — Zéro Friction
+# Politique de confidentialité — Korr
 
 _Dernière mise à jour : 18 juillet 2026_
 
 ## En une phrase
 
-Zéro Friction ne collecte, ne transmet et ne stocke aucune donnée personnelle.
+Korr ne collecte, ne transmet et ne stocke aucune donnée personnelle.
 Le texte que vous corrigez ne quitte jamais votre ordinateur.
 
 ## Quelles données sont traitées
@@ -59,7 +59,7 @@ vous désinstallez l'extension.
 
 ## Code source
 
-Zéro Friction est un logiciel libre publié sous licence GNU GPL 3.0. Le code
+Korr est un logiciel libre publié sous licence GNU GPL 3.0. Le code
 est public et vérifiable : chacun peut confirmer les affirmations de cette
 politique en le lisant.
 

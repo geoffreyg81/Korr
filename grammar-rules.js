@@ -1,4 +1,4 @@
-// Règles de correction de Zéro Friction — partagées par le backend Node et
+// Règles de correction de Korr — partagées par le backend Node et
 // l'extension de navigateur.
 //
 // Ce fichier est un script classique, sans import ni export : il s'exécute dans
@@ -6,7 +6,7 @@
 // la portée globale du Worker côté navigateur. Les deux environnements y
 // trouvent donc « gc_engine » comme variable globale.
 //
-// Il expose self.zeroFrictionRules = { correctFrenchText, analyzeFrenchText }.
+// Il expose self.korrRules = { correctFrenchText, analyzeFrenchText }.
 
 "use strict";
 
@@ -1271,6 +1271,6 @@ function grammalecte() {
     return accepted;
   }
 
-root.zeroFrictionRules = { correctFrenchText, analyzeFrenchText };
+root.korrRules = { correctFrenchText, analyzeFrenchText };
 
 })(typeof self !== "undefined" ? self : globalThis);

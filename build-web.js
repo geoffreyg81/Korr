@@ -53,18 +53,18 @@ for (const directory of DIRECTORIES) {
 //   taille des hébergeurs.
 // - sinon : le zip est copié dans le site, pratique pour tester en local.
 const downloadUrl = process.env.ZF_DOWNLOAD_URL;
-const desktopZip = path.join(PROJECT_DIR, "dist", `zero-friction-windows-${version()}.zip`);
+const desktopZip = path.join(PROJECT_DIR, "dist", `korr-windows-${version()}.zip`);
 
 if (downloadUrl) {
   const indexPath = path.join(OUT_DIR, "index.html");
   const html = fs.readFileSync(indexPath, "utf8").replace(
-    /href="zero-friction-windows\.zip" download/u,
+    /href="korr-windows\.zip" download/u,
     `href="${downloadUrl}" rel="noopener"`
   );
   fs.writeFileSync(indexPath, html);
   console.log(`Téléchargement externe : ${downloadUrl}`);
 } else if (fs.existsSync(desktopZip)) {
-  fs.copyFileSync(desktopZip, path.join(OUT_DIR, "zero-friction-windows.zip"));
+  fs.copyFileSync(desktopZip, path.join(OUT_DIR, "korr-windows.zip"));
   const mo = fs.statSync(desktopZip).size / 1024 / 1024;
   console.log(`Application Windows incluse dans le site : ${mo.toFixed(0)} Mo`);
   console.log("  (définissez ZF_DOWNLOAD_URL pour pointer vers une release à la place)");

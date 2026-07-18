@@ -1,4 +1,4 @@
-#zero-friction-button {
+#korr-button {
   all: initial;
   position: fixed;
   z-index: 2147483646;
@@ -27,20 +27,20 @@
   transition: transform 130ms ease, box-shadow 130ms ease, opacity 130ms ease;
 }
 
-#zero-friction-button.is-visible { display: flex; animation: zero-friction-pop 160ms ease; }
-#zero-friction-button:hover {
+#korr-button.is-visible { display: flex; animation: korr-pop 160ms ease; }
+#korr-button:hover {
   opacity: 1;
   transform: translateY(-1px) scale(1.06);
   box-shadow: 0 7px 20px rgba(49, 46, 129, 0.45), 0 0 0 1px rgba(79, 70, 229, 0.2);
 }
-#zero-friction-button:active { transform: scale(0.96); }
-#zero-friction-button:focus-visible { outline: 3px solid rgba(139, 92, 246, 0.45); outline-offset: 2px; }
-#zero-friction-button.is-loading {
+#korr-button:active { transform: scale(0.96); }
+#korr-button:focus-visible { outline: 3px solid rgba(139, 92, 246, 0.45); outline-offset: 2px; }
+#korr-button.is-loading {
   cursor: wait;
-  animation: zero-friction-pulse 800ms ease-in-out infinite alternate;
+  animation: korr-pulse 800ms ease-in-out infinite alternate;
 }
 
-#zero-friction-toast {
+#korr-toast {
   all: initial;
   position: fixed;
   z-index: 2147483647;
@@ -63,8 +63,8 @@
   transition: opacity 170ms ease, transform 170ms ease;
 }
 
-#zero-friction-toast > span { all: initial; color: inherit; font: inherit; }
-#zero-friction-toast > button {
+#korr-toast > span { all: initial; color: inherit; font: inherit; }
+#korr-toast > button {
   all: initial;
   flex: 0 0 auto;
   padding: 5px 10px;
@@ -76,13 +76,13 @@
   pointer-events: auto;
   transition: background 120ms ease;
 }
-#zero-friction-toast > button:hover { background: rgba(255, 255, 255, 0.18); }
-#zero-friction-toast:has(> button) { display: flex; align-items: center; gap: 12px; }
+#korr-toast > button:hover { background: rgba(255, 255, 255, 0.18); }
+#korr-toast:has(> button) { display: flex; align-items: center; gap: 12px; }
 
-#zero-friction-toast.is-visible { opacity: 1; transform: translate(-50%, 0) scale(1); }
-#zero-friction-toast.is-error { background: rgba(153, 27, 27, 0.97); }
-#zero-friction-toast.is-success { background: rgba(20, 83, 45, 0.97); }
-#zero-friction-toast.is-loading::before {
+#korr-toast.is-visible { opacity: 1; transform: translate(-50%, 0) scale(1); }
+#korr-toast.is-error { background: rgba(153, 27, 27, 0.97); }
+#korr-toast.is-success { background: rgba(20, 83, 45, 0.97); }
+#korr-toast.is-loading::before {
   all: initial;
   display: inline-block;
   width: 11px;
@@ -93,24 +93,24 @@
   border-radius: 50%;
   content: "";
   vertical-align: -1px;
-  animation: zero-friction-spin 700ms linear infinite;
+  animation: korr-spin 700ms linear infinite;
 }
 
-@keyframes zero-friction-pop {
+@keyframes korr-pop {
   from { opacity: 0; transform: scale(0.7); }
   to { opacity: 0.92; transform: scale(1); }
 }
-@keyframes zero-friction-spin {
+@keyframes korr-spin {
   to { transform: rotate(360deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #zero-friction-button,
-  #zero-friction-button.is-visible,
-  #zero-friction-toast { animation: none; transition: opacity 100ms ease; }
-  #zero-friction-button.is-loading { animation: zero-friction-pulse 800ms ease-in-out infinite alternate; }
+  #korr-button,
+  #korr-button.is-visible,
+  #korr-toast { animation: none; transition: opacity 100ms ease; }
+  #korr-button.is-loading { animation: korr-pulse 800ms ease-in-out infinite alternate; }
 }
-@keyframes zero-friction-pulse {
+@keyframes korr-pulse {
   from { opacity: 0.65; }
   to { opacity: 1; }
 }

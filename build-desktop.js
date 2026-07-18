@@ -4,7 +4,7 @@
 // (licence MIT, redistribuable) à côté du correcteur. Aucune installation
 // préalable, aucune ligne de commande.
 //
-//   npm run build:desktop   ->  dist/zero-friction-windows-<version>.zip
+//   npm run build:desktop   ->  dist/korr-windows-<version>.zip
 
 import fs from "node:fs";
 import path from "node:path";
@@ -14,8 +14,8 @@ import { fileURLToPath } from "node:url";
 const PROJECT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const VERSION = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "package.json"), "utf8")).version;
 const OUT_DIR = path.join(PROJECT_DIR, "dist", "desktop");
-const APP_DIR = path.join(OUT_DIR, "Zero Friction");
-const ZIP_PATH = path.join(PROJECT_DIR, "dist", `zero-friction-windows-${VERSION}.zip`);
+const APP_DIR = path.join(OUT_DIR, "Korr");
+const ZIP_PATH = path.join(PROJECT_DIR, "dist", `korr-windows-${VERSION}.zip`);
 
 const FILES = [
   "server.js",
@@ -64,8 +64,8 @@ fs.writeFileSync(
   "latin1"
 );
 
-writeWindowsFile(path.join(APP_DIR, "Zéro Friction.vbs"), [
-  "' Lance Zéro Friction sans fenêtre.",
+writeWindowsFile(path.join(APP_DIR, "Korr.vbs"), [
+  "' Lance Korr sans fenêtre.",
   "Set fso = CreateObject(\"Scripting.FileSystemObject\")",
   "appDir = fso.GetParentFolderName(WScript.ScriptFullName)",
   "Set shell = CreateObject(\"WScript.Shell\")",
@@ -75,33 +75,33 @@ writeWindowsFile(path.join(APP_DIR, "Zéro Friction.vbs"), [
 ]);
 
 writeWindowsFile(path.join(APP_DIR, "Démarrage automatique.vbs"), [
-  "' Ajoute (ou retire) Zéro Friction au démarrage de Windows.",
+  "' Ajoute (ou retire) Korr au démarrage de Windows.",
   "Set fso = CreateObject(\"Scripting.FileSystemObject\")",
   "Set shell = CreateObject(\"WScript.Shell\")",
   "appDir = fso.GetParentFolderName(WScript.ScriptFullName)",
   "startup = shell.SpecialFolders(\"Startup\")",
-  "linkPath = startup & \"\\Zero Friction.lnk\"",
+  "linkPath = startup & \"\\Korr.lnk\"",
   "If fso.FileExists(linkPath) Then",
   "  fso.DeleteFile linkPath",
-  "  MsgBox \"Zéro Friction ne démarrera plus automatiquement.\", 64, \"Zéro Friction\"",
+  "  MsgBox \"Korr ne démarrera plus automatiquement.\", 64, \"Korr\"",
   "Else",
   "  Set link = shell.CreateShortcut(linkPath)",
-  "  link.TargetPath = appDir & \"\\Zéro Friction.vbs\"",
+  "  link.TargetPath = appDir & \"\\Korr.vbs\"",
   "  link.WorkingDirectory = appDir",
-  "  link.Description = \"Correcteur de français Zéro Friction\"",
+  "  link.Description = \"Correcteur de français Korr\"",
   "  link.Save",
-  "  MsgBox \"Zéro Friction démarrera avec Windows.\", 64, \"Zéro Friction\"",
+  "  MsgBox \"Korr démarrera avec Windows.\", 64, \"Korr\"",
   "End If",
   ""
 ]);
 
 writeWindowsFile(path.join(APP_DIR, "LISEZ-MOI.txt"), [
-  "Zéro Friction — correcteur de français",
+  "Korr — correcteur de français",
   "======================================",
   "",
   "DÉMARRER",
   "",
-  "  Double-cliquez sur « Zéro Friction.vbs ».",
+  "  Double-cliquez sur « Korr.vbs ».",
   "",
   "  Une icône violette apparaît près de l'horloge. Si vous ne la voyez pas,",
   "  cliquez sur le chevron ^ à gauche de l'horloge, puis faites-la glisser",
@@ -139,7 +139,7 @@ writeWindowsFile(path.join(APP_DIR, "LISEZ-MOI.txt"), [
   "  L'application n'étant pas signée, Windows peut afficher « Windows a",
   "  protégé votre ordinateur ». Cliquez sur « Informations complémentaires »",
   "  puis « Exécuter quand même ». Le code est public et vérifiable :",
-  "  https://github.com/ggine/zero-friction",
+  "  https://github.com/ggine/korr",
   "",
   "LICENCE",
   "",

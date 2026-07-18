@@ -1,4 +1,4 @@
-﻿# Zéro Friction — application de bureau.
+﻿# Korr — application de bureau.
 # Corrige la sélection dans N'IMPORTE QUELLE application Windows :
 # sélectionne du texte, appuie sur Ctrl+Alt+C, le texte corrigé est recollé.
 #
@@ -16,7 +16,7 @@ param(
 $ErrorActionPreference = "Stop"
 $projectDir = $PSScriptRoot
 $backendUrl = "http://127.0.0.1:8787"
-$configPath = Join-Path $env:LOCALAPPDATA "ZeroFriction\app-config.json"
+$configPath = Join-Path $env:LOCALAPPDATA "Korr\app-config.json"
 
 # --- Arrêt d'une instance déjà lancée -------------------------------------
 if ($Stop) {
@@ -91,7 +91,7 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 $created = $false
-$mutex = New-Object System.Threading.Mutex($true, "ZeroFrictionTrayApp", [ref]$created)
+$mutex = New-Object System.Threading.Mutex($true, "KorrTrayApp", [ref]$created)
 if (-not $created) { exit 0 }
 
 Add-Type -ReferencedAssemblies System.Windows.Forms @"
@@ -99,14 +99,14 @@ using System;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 
-public class ZeroFrictionHotkey : NativeWindow, IDisposable {
+public class KorrHotkey : NativeWindow, IDisposable {
   [DllImport("user32.dll")] private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
   [DllImport("user32.dll")] private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
   private const int WM_HOTKEY = 0x0312;
   private int count = 0;
   public int PressCount = 0;
   public int LastId = 0;
-  public ZeroFrictionHotkey() { CreateHandle(new CreateParams()); }
+  public KorrHotkey() { CreateHandle(new CreateParams()); }
   public bool Register(int id, uint modifiers, uint key) {
     if (RegisterHotKey(Handle, id, modifiers, key)) { count++; return true; }
     return false;
@@ -121,7 +121,7 @@ public class ZeroFrictionHotkey : NativeWindow, IDisposable {
   }
 }
 
-public static class ZeroFrictionClipboardNative {
+public static class KorrClipboardNative {
   [DllImport("user32.dll")]
   public static extern uint GetClipboardSequenceNumber();
 
@@ -224,7 +224,7 @@ function Get-ClipboardSnapshot {
 }
 
 function Get-ClipboardSequence {
-  return [uint32][ZeroFrictionClipboardNative]::GetClipboardSequenceNumber()
+  return [uint32][KorrClipboardNative]::GetClipboardSequenceNumber()
 }
 
 # Ne restaure jamais notre sauvegarde par-dessus un presse-papiers que
@@ -286,7 +286,7 @@ $icon = [System.Drawing.Icon]::FromHandle($bitmap.GetHicon())
 
 $notify = New-Object System.Windows.Forms.NotifyIcon
 $notify.Icon = $icon
-$notify.Text = "Zéro Friction — Ctrl+Alt+C corrige la sélection"
+$notify.Text = "Korr — Ctrl+Alt+C corrige la sélection"
 $notify.Visible = $true
 
 function Show-Balloon($title, $message, $kind) {
@@ -334,7 +334,7 @@ function Invoke-CorrectionCore {
     [System.Windows.Forms.SendKeys]::SendWait("^c")
     # Capturé après Ctrl+C pour que le lancement depuis le menu de l'icône
     # retrouve bien l'application cible, une fois le menu refermé.
-    $targetWindow = [ZeroFrictionClipboardNative]::GetForegroundWindow()
+    $targetWindow = [KorrClipboardNative]::GetForegroundWindow()
     $copied = Wait-ForCopiedText $sequenceBeforeCopy
     $copySequence = [long]$copied.Sequence
     $selection = [string]$copied.Text
@@ -383,7 +383,7 @@ function Invoke-CorrectionCore {
     Show-Balloon "Correction annulée" "Le presse-papiers a été modifié pendant la correction." "Warning"
     return
   }
-  if ($targetWindow -ne [IntPtr]::Zero -and [ZeroFrictionClipboardNative]::GetForegroundWindow() -ne $targetWindow) {
+  if ($targetWindow -ne [IntPtr]::Zero -and [KorrClipboardNative]::GetForegroundWindow() -ne $targetWindow) {
     [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $copySequence)
     Show-Balloon "Correction annulée" "Reviens dans le champ d'origine avant de relancer la correction." "Warning"
     return
@@ -399,7 +399,7 @@ function Invoke-CorrectionCore {
 
     # Vérification une seconde fois juste avant le collage : elle évite de
     # coller dans une fenêtre activée pendant la mise à jour du presse-papiers.
-    if ($targetWindow -ne [IntPtr]::Zero -and [ZeroFrictionClipboardNative]::GetForegroundWindow() -ne $targetWindow) {
+    if ($targetWindow -ne [IntPtr]::Zero -and [KorrClipboardNative]::GetForegroundWindow() -ne $targetWindow) {
       [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $pasteSequence)
       Show-Balloon "Correction annulée" "La fenêtre active a changé avant le collage." "Warning"
       return
@@ -492,7 +492,7 @@ $hotkeyMap = @{
   3 = @{ mode = "deep"; style = "amical" }                 # Ctrl+Alt+A
   4 = @{ mode = "deep"; style = "concis" }                 # Ctrl+Alt+R
 }
-$hotkey = New-Object ZeroFrictionHotkey
+$hotkey = New-Object KorrHotkey
 $failed = @()
 foreach ($binding in @(
   @{ Id = 1; Key = "C" }, @{ Id = 2; Key = "P" }, @{ Id = 3; Key = "A" }, @{ Id = 4; Key = "R" }
@@ -519,7 +519,7 @@ $timer.add_Tick({
 $timer.Start()
 
 [void](Start-BackendIfDown)
-Show-Balloon "Zéro Friction actif" "Ctrl+Alt+C corrige · P pro · A amical · R raccourcit." "Info"
+Show-Balloon "Korr actif" "Ctrl+Alt+C corrige · P pro · A amical · R raccourcit." "Info"
 
 [System.Windows.Forms.Application]::Run()
 

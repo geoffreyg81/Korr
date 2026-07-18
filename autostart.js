@@ -14,8 +14,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PROJECT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const LAUNCHER_NAME = "zero-friction-backend.vbs";
-const APP_LAUNCHER_NAME = "zero-friction-app.vbs";
+const LAUNCHER_NAME = "korr-backend.vbs";
+const APP_LAUNCHER_NAME = "korr-app.vbs";
 
 const startupDir = process.env.APPDATA
   ? path.join(process.env.APPDATA, "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
@@ -35,7 +35,7 @@ if (action === "install") {
   const serverPath = path.join(PROJECT_DIR, "server.js");
   const command = `"${nodePath}" "${serverPath}"`;
   const script = [
-    "' Démarre le backend Zéro Friction sans fenêtre à l'ouverture de session.",
+    "' Démarre le backend Korr sans fenêtre à l'ouverture de session.",
     "' Généré par « npm run autostart:install ». Supprimable par « npm run autostart:remove »",
     "' ou en effaçant simplement ce fichier.",
     'Set shell = CreateObject("WScript.Shell")',
@@ -59,7 +59,7 @@ if (action === "install") {
 } else if (action === "install-app") {
   const command = `wscript.exe "${path.join(PROJECT_DIR, "app.vbs")}"`;
   const script = [
-    "' Lance l'application de bureau Zéro Friction à l'ouverture de session.",
+    "' Lance l'application de bureau Korr à l'ouverture de session.",
     "' Généré par « npm run autostart:install-app ».",
     'Set shell = CreateObject("WScript.Shell")',
     `shell.CurrentDirectory = ${vbsString(PROJECT_DIR)}`,

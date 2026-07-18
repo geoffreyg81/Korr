@@ -5,7 +5,7 @@
 // paquet et attirerait l'attention des relecteurs sur du code inutilisé.
 // Ce script ne copie que les fichiers réellement chargés par le manifeste.
 //
-//   npm run package   ->  dist/zero-friction-<version>.zip
+//   npm run package   ->  dist/korr-<version>.zip
 
 import fs from "node:fs";
 import path from "node:path";
@@ -16,7 +16,7 @@ const PROJECT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.join(PROJECT_DIR, "dist");
 const manifest = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "manifest.json"), "utf8"));
 const STAGING_DIR = path.join(DIST_DIR, "extension");
-const ZIP_PATH = path.join(DIST_DIR, `zero-friction-${manifest.version}.zip`);
+const ZIP_PATH = path.join(DIST_DIR, `korr-${manifest.version}.zip`);
 
 // Tout ce que l'extension charge, et rien d'autre.
 const FILES = [

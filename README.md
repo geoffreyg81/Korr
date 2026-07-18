@@ -1,4 +1,4 @@
-# Zéro Friction — correcteur français local
+# Korr — correcteur français local
 
 Extension Edge/Chrome qui corrige le français directement dans les champs de
 saisie. Gratuite, sans clé API, sans abonnement, sans compte — et **hors

@@ -1,4 +1,4 @@
-# Textes de publication — Zéro Friction
+# Textes de publication — Korr
 
 Contenus prêts à coller dans les formulaires des boutiques et sur Product Hunt.
 
@@ -7,7 +7,7 @@ Contenus prêts à coller dans les formulaires des boutiques et sur Product Hunt
 ## Nom
 
 ```
-Zéro Friction — correcteur français
+Korr — correcteur français
 ```
 
 ## Description courte (132 caractères max)
@@ -19,7 +19,7 @@ Corrigez le français dans n'importe quel champ de saisie. Gratuit, sans compte,
 ## Description longue
 
 ```
-Zéro Friction corrige vos fautes de français directement là où vous écrivez :
+Korr corrige vos fautes de français directement là où vous écrivez :
 e-mail, réseau social, messagerie, outil de travail.
 
 Sélectionnez du texte, appuyez sur le bouton ✓ ou sur Alt+Maj+C, c'est corrigé.
@@ -110,7 +110,7 @@ Hébergez `PRIVACY.md` sur GitHub Pages ou renseignez l'URL du fichier dans le
 dépôt, par exemple :
 
 ```
-https://github.com/<utilisateur>/zero-friction/blob/main/PRIVACY.md
+https://github.com/<utilisateur>/korr/blob/main/PRIVACY.md
 ```
 
 ---
@@ -126,7 +126,7 @@ Offline French grammar checker for any text field
 ## Description
 
 ```
-Zéro Friction fixes French grammar wherever you type — Gmail, Slack, Notion,
+Korr fixes French grammar wherever you type — Gmail, Slack, Notion,
 anywhere — without sending a single character to the cloud.
 
 The whole correction engine ships inside the extension. No account, no server,
@@ -151,7 +151,7 @@ privacy claim is verifiable rather than promised.
 ```
 Salut Product Hunt 👋
 
-J'ai construit Zéro Friction parce que les correcteurs existants envoient tous
+J'ai construit Korr parce que les correcteurs existants envoient tous
 votre texte sur leurs serveurs, exigent un compte, et limitent l'usage gratuit.
 
 Le pari : tout faire tourner en local. Le moteur (Grammalecte, libre) est

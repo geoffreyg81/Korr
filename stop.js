@@ -26,11 +26,11 @@ if (!pids.length) {
 }
 
 // La ligne de commande prouve que le processus exécute server.js ; cette
-// signature HTTP confirme en plus que le port répond bien comme Zéro Friction.
+// signature HTTP confirme en plus que le port répond bien comme Korr.
 // Sans les deux preuves, npm stop échoue fermé et ne tue rien.
 if (!(await hasBackendSignature(PORT))) {
   console.error(
-    `Refus d'arrêter le processus du port ${PORT} : la signature HTTP de Zéro Friction n'a pas été confirmée.`
+    `Refus d'arrêter le processus du port ${PORT} : la signature HTTP de Korr n'a pas été confirmée.`
   );
   process.exit(1);
 }
@@ -125,7 +125,7 @@ function verifyBackendProcess(info) {
 
   const args = splitWindowsCommandLine(commandLine);
   if (!args.slice(1).some(isExpectedServerArgument)) {
-    return { ok: false, reason: "la ligne de commande ne lance pas le server.js de Zéro Friction" };
+    return { ok: false, reason: "la ligne de commande ne lance pas le server.js de Korr" };
   }
 
   return { ok: true };

@@ -1,6 +1,6 @@
 (() => {
-  const BUTTON_ID = "zero-friction-button";
-  const TOAST_ID = "zero-friction-toast";
+  const BUTTON_ID = "korr-button";
+  const TOAST_ID = "korr-toast";
   const BUTTON_SIZE = 32;
   const BUTTON_GAP = 8;
   const VIEWPORT_MARGIN = 8;

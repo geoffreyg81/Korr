@@ -1,4 +1,4 @@
-// Worker de correction : Grammalecte et les règles de Zéro Friction, chargés
+// Worker de correction : Grammalecte et les règles de Korr, chargés
 // dans le navigateur — sans backend Node.
 //
 // Grammalecte a été conçu pour tourner ici : « helpers.loadFile » lit ses
@@ -70,7 +70,7 @@ self.addEventListener("message", (event) => {
   }
 
   try {
-    const result = self.zeroFrictionRules.correctFrenchText(text);
+    const result = self.korrRules.correctFrenchText(text);
     self.postMessage({ id, ok: true, ...result, engine: "grammalecte" });
   } catch (error) {
     self.postMessage({ id, ok: false, error: error.message });

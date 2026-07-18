@@ -89,7 +89,7 @@ const server = http.createServer(async (request, response) => {
   try {
     if (request.method === "GET" && request.url === "/") {
       return sendJson(response, 200, {
-        name: "Zéro Friction",
+        name: "Korr",
         status: "backend actif",
         defaultEngine: "Grammalecte instantané",
         health: "/api/health"
@@ -126,7 +126,7 @@ server.on("error", (error) => {
 
 if (IS_MAIN_MODULE) {
   server.listen(PORT, HOST, () => {
-    console.log(`Zéro Friction prêt sur http://${HOST}:${PORT}`);
+    console.log(`Korr prêt sur http://${HOST}:${PORT}`);
     // Le port est ouvert immédiatement ; le moteur se charge juste après.
     // Une requête arrivée pendant le chargement attend simplement la fin.
     setImmediate(() => {

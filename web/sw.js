@@ -6,7 +6,7 @@
 
 "use strict";
 
-const VERSION = "zero-friction-v1";
+const VERSION = "korr-v1";
 
 // L'enveloppe de l'application : mise en cache dès l'installation.
 const SHELL = [

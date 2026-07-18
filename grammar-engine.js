@@ -84,7 +84,7 @@ export function initializeGrammarEngine() {
   engine = {
     grammar: context.gc_engine,
     spellChecker: context.gc_engine.getSpellChecker(),
-    rules: context.zeroFrictionRules
+    rules: context.korrRules
   };
   return engine;
 }
