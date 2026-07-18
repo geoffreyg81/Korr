@@ -17,6 +17,7 @@ const SHELL = [
   "app.css",
   "app.js",
   "manifest.webmanifest",
+  "favicon.ico",
   "grammalecte-worker.js",
   "grammar-rules.js",
   "icons/icon-128.png",

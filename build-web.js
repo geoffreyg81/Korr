@@ -58,6 +58,12 @@ for (const directory of DIRECTORIES) {
   fs.cpSync(path.join(PROJECT_DIR, directory), path.join(OUT_DIR, directory), { recursive: true });
 }
 
+// Les navigateurs demandent encore /favicon.ico même lorsqu'une icône PNG est
+// déclarée. On génère un véritable conteneur ICO à partir de notre PNG 32 px,
+// sans dépendance supplémentaire et sans dupliquer un fichier binaire source.
+const faviconPath = path.join(OUT_DIR, "favicon.ico");
+createIcoFromPng(path.join(PROJECT_DIR, "icons", "icon-32.png"), faviconPath);
+
 // L'application Windows. Deux façons de la distribuer :
 //
 // - ZF_DOWNLOAD_URL défini : le bouton pointe vers cette adresse, typiquement
@@ -89,7 +95,7 @@ if (downloadUrl) {
 // son activation. Les visiteurs ne restent donc plus bloqués sur une ancienne
 // version après un déploiement.
 const buildHash = createHash("sha256");
-for (const file of [...WEB_FILES, ...SHARED_FILES]) {
+for (const file of [...WEB_FILES, ...SHARED_FILES, "favicon.ico"]) {
   buildHash.update(fs.readFileSync(path.join(OUT_DIR, file)));
 }
 const buildId = buildHash.digest("hex").slice(0, 12);
@@ -124,4 +130,32 @@ function directorySize(directory) {
     total += entry.isDirectory() ? directorySize(full) : fs.statSync(full).size;
   }
   return total;
+}
+
+function createIcoFromPng(pngPath, icoPath) {
+  const png = fs.readFileSync(pngPath);
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (png.length < 24 || !png.subarray(0, 8).equals(signature)) {
+    throw new Error(`Image PNG invalide : ${path.relative(PROJECT_DIR, pngPath)}`);
+  }
+
+  const width = png.readUInt32BE(16);
+  const height = png.readUInt32BE(20);
+  if (width < 1 || width > 256 || height < 1 || height > 256) {
+    throw new Error(`Dimensions incompatibles avec ICO : ${width}x${height}`);
+  }
+
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(1, 2); // type 1 : icône
+  header.writeUInt16LE(1, 4); // une image
+
+  const entry = Buffer.alloc(16);
+  entry[0] = width === 256 ? 0 : width;
+  entry[1] = height === 256 ? 0 : height;
+  entry.writeUInt16LE(1, 4); // plans de couleur
+  entry.writeUInt16LE(32, 6); // profondeur
+  entry.writeUInt32LE(png.length, 8);
+  entry.writeUInt32LE(header.length + entry.length, 12);
+
+  fs.writeFileSync(icoPath, Buffer.concat([header, entry, png]));
 }
