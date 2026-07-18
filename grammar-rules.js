@@ -343,6 +343,14 @@ function grammalecte() {
     // « , voir même » : après une virgule, c’est la conjonction « voire ».
     replace(/(,\s*)voir(\s+même)(?![\p{L}\p{N}])/giu, "$1voire$2");
 
+    // Après un infinitif, « a » ne peut pas être le verbe avoir : c'est la
+    // préposition « à ». « venir a la réunion » → « venir à la réunion », sans
+    // toucher à « il a la clé » où « a » suit un sujet.
+    replace(
+      /\b([\p{L}]{3,}(?:er|ir|re))\s+a\s+(?=(?:la|le|les|l[’']|un|une|des|ce|cet|cette|ces|mon|ma|mes|ton|ta|tes|son|sa|ses|notre|nos|votre|vos|leur|leurs)\s)/giu,
+      "$1 à "
+    );
+
     // « pallier » est transitif direct : « pallier à/au/aux » est un barbarisme.
     // La préposition disparaît, l’article contracté redevient défini.
     replace(/\b(pallier)\s+aux\b/giu, "$1 les");
@@ -786,6 +794,7 @@ function grammalecte() {
       if (isUnsafePronounRewrite(original, error)) continue;
       if (error.sType === "infi" && !expectsInfinitive(normalizedText, error.nStart)) continue;
       if (isRiskyQuandToQuant(normalizedText, error)) continue;
+      if (isDistantNounAgreement(normalizedText, error)) continue;
       // Grammalecte propose parfois plusieurs pistes (« ce » → « cette » ou
       // « se ») : on laisse le contexte trancher plutôt que de prendre la
       // première venue.
@@ -1126,6 +1135,22 @@ function grammalecte() {
   // « s’il s’agit d’une action à accomplir ». Elle transformait « venir demain
   // désolé » en « désoler ». On ne la suit que là où un infinitif est attendu,
   // c’est-à-dire juste après un semi-auxiliaire ou une préposition.
+  // Adverbes qui ferment un groupe nominal : ce qui suit n'en fait plus partie.
+  const GROUP_BREAKING_ADVERBS = new Set([
+    "demain", "hier", "aujourd", "maintenant", "bientôt", "tantôt", "alors",
+    "ensuite", "puis", "enfin", "vite", "ici", "là", "dehors", "dedans",
+    "avant", "après", "toujours", "jamais", "souvent", "parfois", "déjà"
+  ]);
+
+  // Grammalecte accorde parfois un adjectif avec un nom dont un adverbe le
+  // sépare : dans « venir à la réunion demain désolé », « désolé » qualifie le
+  // locuteur, pas « réunion ». Suivre l'accord dégraderait le texte.
+  function isDistantNounAgreement(text, error) {
+    if (error.sType !== "gn") return false;
+    const previous = text.slice(0, error.nStart).trimEnd().match(/[\p{L}’'-]+$/u)?.[0] || "";
+    return GROUP_BREAKING_ADVERBS.has(previous.toLocaleLowerCase("fr-FR").replace(/[’'].*$/u, ""));
+  }
+
   // « Quant à X » introduit un thème puis une virgule. Si une proposition
   // conjuguée suit avant toute ponctuation, c'est le « quand » temporel :
   // « Quand à midi la cloche sonne, on mange » doit garder son « quand ».

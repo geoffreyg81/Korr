@@ -97,6 +97,15 @@ const cases = [
   ["Quand à midi la cloche sonne, on mange.", "Quand à midi la cloche sonne, on mange."],
   ["Il faut voir même les détails.", "Il faut voir même les détails."],
   ["Quelque chose me dit qu’il viendra.", "Quelque chose me dit qu’il viendra."],
+  // Après un infinitif, « a » est la préposition « à ».
+  ["Je dois aller a la gare.", "Je dois aller à la gare."],
+  ["Il a la clé de la maison.", "Il a la clé de la maison."],
+  ["Le train a du retard.", "Le train a du retard."],
+  // Un adverbe ferme le groupe nominal : pas d’accord avec le nom distant.
+  [
+    "slt, jpe pa venir a la réunion dmn dsl pour le retard.",
+    "Salut, je peux pas venir à la réunion demain désolé pour le retard."
+  ],
   // Infinitif attendu après « veuillez » / « vouloir » (tournures épistolaires).
   ["Veuillez trouvés ci-joint le rapport.", "Veuillez trouver ci-joint le rapport."],
   [

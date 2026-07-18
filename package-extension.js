@@ -36,7 +36,10 @@ const FILES = [
 ];
 const DIRECTORIES = ["icons", "vendor"];
 
-fs.rmSync(DIST_DIR, { recursive: true, force: true });
+// On ne nettoie que ce que ce script produit : « dist » héberge aussi le site
+// construit par build-web.js, qu'un effacement global détruirait.
+fs.rmSync(STAGING_DIR, { recursive: true, force: true });
+fs.rmSync(ZIP_PATH, { force: true });
 fs.mkdirSync(STAGING_DIR, { recursive: true });
 
 for (const file of FILES) {

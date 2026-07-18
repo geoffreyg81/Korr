@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Zéro Friction — correcteur de français hors ligne</title>
+    <meta name="description" content="Corrigez votre français directement dans le navigateur. Gratuit, sans compte, et 100 % hors ligne : votre texte ne quitte jamais votre appareil.">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/icon-128.png">
+    <link rel="apple-touch-icon" href="icons/icon-128.png">
+    <link rel="stylesheet" href="app.css">
+    <meta property="og:title" content="Zéro Friction — correcteur de français hors ligne">
+    <meta property="og:description" content="Le correcteur de français qui ne voit jamais votre texte. Gratuit, sans compte, hors ligne.">
+    <meta property="og:type" content="website">
+  </head>
+  <body>
+    <header class="hero">
+      <div class="brand">
+        <span class="logo">✓</span>
+        <span class="brand-name">Zéro Friction</span>
+      </div>
+      <h1>Le correcteur de français<br>qui ne voit <em>jamais</em> votre texte</h1>
+      <p class="pitch">
+        Tout se passe dans votre navigateur. Aucun serveur, aucun compte,
+        aucune limite. Fonctionne même sans connexion.
+      </p>
+      <ul class="badges">
+        <li>🔒 100 % hors ligne</li>
+        <li>⚡ Quelques millisecondes</li>
+        <li>🆓 Libre et gratuit</li>
+      </ul>
+    </header>
+
+    <main>
+      <section class="tool" aria-labelledby="tool-title">
+        <h2 id="tool-title" class="sr-only">Correcteur</h2>
+
+        <div class="editor">
+          <div class="editor-head">
+            <label for="input">Votre texte</label>
+            <button id="sample" class="link" type="button">Essayer un exemple</button>
+          </div>
+          <textarea id="input" rows="8" spellcheck="false"
+            placeholder="Collez ou tapez votre texte ici, puis appuyez sur Corriger…"></textarea>
+          <div class="editor-foot">
+            <span id="engine-state" class="engine-state">Chargement du correcteur…</span>
+            <button id="correct" class="primary" type="button" disabled>Corriger</button>
+          </div>
+        </div>
+
+        <div id="result" class="result" hidden>
+          <div class="editor-head">
+            <label for="output">Texte corrigé</label>
+            <span id="summary" class="summary"></span>
+          </div>
+          <textarea id="output" rows="8" readonly spellcheck="false"></textarea>
+          <div class="editor-foot">
+            <button id="copy" class="secondary" type="button">Copier</button>
+            <button id="reuse" class="secondary" type="button">Remplacer mon texte</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="features">
+        <h2>Ce qu'il corrige</h2>
+        <div class="grid">
+          <article>
+            <h3>Accords difficiles</h3>
+            <p>Participe passé avec le COD placé avant, verbes pronominaux, accords à distance.</p>
+            <p class="example"><s>les décisions qu'il a pris</s> → les décisions qu'il a <b>prises</b></p>
+          </article>
+          <article>
+            <h3>Concordance et subjonctif</h3>
+            <p>La règle des « si », le subjonctif après « bien que » ou « quoique ».</p>
+            <p class="example"><s>si j'aurais su</s> → si j'<b>avais</b> su</p>
+          </article>
+          <article>
+            <h3>Homophones</h3>
+            <p>et/est, ou/où, sa/ça, quand/quant — avec le contexte pour trancher.</p>
+            <p class="example"><s>elle et partie</s> → elle <b>est</b> partie</p>
+          </article>
+          <article>
+            <h3>Langage SMS</h3>
+            <p>Près de 180 abréviations reconnues et remises en français.</p>
+            <p class="example"><s>slt jsui dsl</s> → <b>Salut je suis désolé</b></p>
+          </article>
+          <article>
+            <h3>Typographie française</h3>
+            <p>L'espace insécable avant <code>! ? : ;</code>, sans toucher aux URL ni aux heures.</p>
+            <p class="example"><s>exceptionnel!</s> → exceptionnel<b>&nbsp;!</b></p>
+          </article>
+          <article>
+            <h3>Il sait s'abstenir</h3>
+            <p>Quand une correction est incertaine, il ne touche à rien. Plus de la moitié des tests vérifient qu'il laisse le texte tranquille.</p>
+            <p class="example">« elle et Marie » reste <b>intact</b></p>
+          </article>
+        </div>
+      </section>
+
+      <section class="privacy">
+        <h2>Pourquoi « hors ligne » n'est pas qu'une promesse</h2>
+        <p>
+          Le moteur de correction — <a href="https://grammalecte.net" rel="noopener">Grammalecte</a>,
+          libre — est téléchargé une fois puis exécuté sur votre appareil. La page ne fait aucune
+          requête vers un serveur d'analyse, parce qu'il n'en existe aucun.
+        </p>
+        <p>
+          Le code est public sous licence GPL&nbsp;3.0 : cette affirmation est
+          <strong>vérifiable</strong>, pas seulement déclarée. Coupez votre connexion après le
+          chargement, le correcteur continue de fonctionner.
+        </p>
+      </section>
+
+      <section class="install">
+        <h2>Aller plus loin</h2>
+        <div class="grid">
+          <article>
+            <h3>Installer l'application</h3>
+            <p>Ajoutez Zéro Friction à votre écran d'accueil ou à votre bureau pour l'ouvrir hors ligne, comme une vraie application.</p>
+            <button id="install" class="primary" type="button" hidden>Installer</button>
+            <p id="install-hint" class="hint">Depuis le menu du navigateur : « Installer l'application ».</p>
+          </article>
+          <article>
+            <h3>Extension navigateur</h3>
+            <p>Pour corriger directement dans Gmail, Slack ou n'importe quel champ de saisie, sans copier-coller.</p>
+            <p class="hint">Bientôt sur Edge Add-ons et Chrome Web Store.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Logiciel libre sous <a href="LICENSE">GNU GPL 3.0</a> ·
+        <a href="PRIVACY.md">Confidentialité</a> ·
+        Propulsé par <a href="https://grammalecte.net" rel="noopener">Grammalecte 2.3.0</a>
+      </p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
