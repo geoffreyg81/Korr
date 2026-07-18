@@ -3,3 +3,4 @@ node_modules/
 worker-test.html
 offscreen-test.html
 dist/
+.tools/

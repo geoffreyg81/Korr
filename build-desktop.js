@@ -17,6 +17,8 @@ const OUT_DIR = path.join(PROJECT_DIR, "dist", "desktop");
 const APP_DIR = path.join(OUT_DIR, "Korr");
 const INTERNAL_DIR = path.join(APP_DIR, "Fichiers de Korr - ne pas modifier");
 const ZIP_PATH = path.join(PROJECT_DIR, "dist", `korr-windows-${VERSION}.zip`);
+const ICO_PATH = path.join(OUT_DIR, "korr.ico");
+const SETUP_PATH = path.join(PROJECT_DIR, "dist", `Korr-Setup-${VERSION}.exe`);
 
 const FILES = [
   "server.js",
@@ -49,6 +51,8 @@ fs.cpSync(
   { recursive: true }
 );
 fs.cpSync(path.join(PROJECT_DIR, "icons"), path.join(INTERNAL_DIR, "icons"), { recursive: true });
+createIcoFromPng(path.join(PROJECT_DIR, "icons", "icon-32.png"), ICO_PATH);
+fs.copyFileSync(ICO_PATH, path.join(INTERNAL_DIR, "icons", "korr.ico"));
 
 // Runtime Node, embarqué sous licence MIT.
 const runtimeDir = path.join(INTERNAL_DIR, "runtime");
@@ -186,8 +190,44 @@ const sizeMo = fs.statSync(ZIP_PATH).size / 1024 / 1024;
 console.log(`Application prête : ${path.relative(PROJECT_DIR, ZIP_PATH)}`);
 console.log(`Téléchargement : ${sizeMo.toFixed(0)} Mo (runtime Node inclus, rien à installer)`);
 
+// Installateur Windows en un seul EXE. Inno Setup reste un outil de build :
+// l'utilisateur final n'a rien d'autre à télécharger.
+const innoCompiler = process.env.ISCC_PATH || path.join(PROJECT_DIR, ".tools", "inno-setup", "ISCC.exe");
+if (fs.existsSync(innoCompiler)) {
+  fs.rmSync(SETUP_PATH, { force: true });
+  execFileSync(innoCompiler, [
+    `/DAppVersion=${VERSION}`,
+    path.join(PROJECT_DIR, "installer.iss")
+  ], { cwd: PROJECT_DIR, windowsHide: true, stdio: "inherit" });
+  const setupSizeMo = fs.statSync(SETUP_PATH).size / 1024 / 1024;
+  console.log(`Installateur prêt : ${path.relative(PROJECT_DIR, SETUP_PATH)} (${setupSizeMo.toFixed(0)} Mo)`);
+} else {
+  console.warn("Inno Setup absent : ZIP créé, mais pas Korr-Setup.exe. Définissez ISCC_PATH ou installez Inno Setup.");
+}
+
 // Les fins de ligne Windows et l'encodage latin1 évitent les caractères
 // illisibles dans le Bloc-notes et dans les scripts VBScript.
 function writeWindowsFile(target, lines) {
   fs.writeFileSync(target, lines.join("\r\n"), "latin1");
+}
+
+function createIcoFromPng(pngPath, icoPath) {
+  const png = fs.readFileSync(pngPath);
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (png.length < 24 || !png.subarray(0, 8).equals(signature)) {
+    throw new Error(`Image PNG invalide : ${path.relative(PROJECT_DIR, pngPath)}`);
+  }
+  const width = png.readUInt32BE(16);
+  const height = png.readUInt32BE(20);
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(1, 2);
+  header.writeUInt16LE(1, 4);
+  const entry = Buffer.alloc(16);
+  entry[0] = width === 256 ? 0 : width;
+  entry[1] = height === 256 ? 0 : height;
+  entry.writeUInt16LE(1, 4);
+  entry.writeUInt16LE(32, 6);
+  entry.writeUInt32LE(png.length, 8);
+  entry.writeUInt32LE(header.length + entry.length, 12);
+  fs.writeFileSync(icoPath, Buffer.concat([header, entry, png]));
 }

@@ -90,6 +90,11 @@ L’extension couvre le navigateur ; l’application de bureau couvre **tout le
 reste** - Word, Discord, Bloc-notes, n’importe quel champ de n’importe quel
 logiciel Windows. 100 % PowerShell natif : rien à installer.
 
+Pour le public, `npm run build:desktop` produit un véritable installateur
+`dist/Korr-Setup-<version>.exe`. Il installe Korr dans le profil utilisateur,
+crée les raccourcis et fournit une désinstallation propre. Le ZIP portable est
+également généré comme solution secondaire.
+
 ```powershell
 npm run app
 ```

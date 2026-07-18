@@ -77,28 +77,28 @@ createIcoFromPng(path.join(PROJECT_DIR, "icons", "icon-32.png"), faviconPath);
 // - ZF_DOWNLOAD_URL défini : le bouton pointe vers cette adresse, typiquement
 //   une release GitHub. Le déploiement reste léger et échappe aux limites de
 //   taille des hébergeurs.
-// - sinon : le zip est copié dans le site, pratique pour tester en local.
+// - sinon : l'installateur EXE est copié dans le site, pratique en local.
 const downloadUrl = process.env.ZF_DOWNLOAD_URL;
-const desktopZip = path.join(PROJECT_DIR, "dist", `korr-windows-${version()}.zip`);
-const releaseDownloadUrl = `https://github.com/geoffreyg81/Korr/releases/download/v${version()}/korr-windows-${version()}.zip`;
+const desktopSetup = path.join(PROJECT_DIR, "dist", `Korr-Setup-${version()}.exe`);
+const releaseDownloadUrl = `https://github.com/geoffreyg81/Korr/releases/download/v${version()}/Korr-Setup-${version()}.exe`;
 
 if (downloadUrl) {
   const indexPath = path.join(OUT_DIR, "index.html");
   const html = fs.readFileSync(indexPath, "utf8").replace(
-    /href="korr-windows\.zip" download/u,
+    /href="Korr-Setup\.exe" download/u,
     `href="${downloadUrl}" rel="noopener"`
   );
   fs.writeFileSync(indexPath, html);
   console.log(`Téléchargement externe : ${downloadUrl}`);
-} else if (fs.existsSync(desktopZip)) {
-  fs.copyFileSync(desktopZip, path.join(OUT_DIR, "korr-windows.zip"));
-  const mo = fs.statSync(desktopZip).size / 1024 / 1024;
-  console.log(`Application Windows incluse dans le site : ${mo.toFixed(0)} Mo`);
+} else if (fs.existsSync(desktopSetup)) {
+  fs.copyFileSync(desktopSetup, path.join(OUT_DIR, "Korr-Setup.exe"));
+  const mo = fs.statSync(desktopSetup).size / 1024 / 1024;
+  console.log(`Installateur Windows inclus dans le site : ${mo.toFixed(0)} Mo`);
   console.log("  (définissez ZF_DOWNLOAD_URL pour pointer vers une release à la place)");
 } else {
   const indexPath = path.join(OUT_DIR, "index.html");
   const html = fs.readFileSync(indexPath, "utf8").replace(
-    /href="korr-windows\.zip" download/u,
+    /href="Korr-Setup\.exe" download/u,
     `href="${releaseDownloadUrl}" rel="noopener"`
   );
   fs.writeFileSync(indexPath, html);
