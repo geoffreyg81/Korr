@@ -121,7 +121,7 @@
         ? "Texte déjà correct."
         : result.fallback
           ? result.fallback
-        : result.engine === "grammalecte"
+        : result.engine === "grammalecte" || result.engine === "harper"
           ? `Texte corrigé${correctionCount}${Number.isFinite(result.durationMs) ? ` · ${result.durationMs} ms` : ""}.`
         : styleLabels[result.style]
           ? `Texte ${styleLabels[result.style]} par l’IA.`

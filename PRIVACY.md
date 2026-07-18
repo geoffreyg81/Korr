@@ -23,6 +23,7 @@ L'extension utilise le stockage local du navigateur (`chrome.storage.local`)
 pour retenir uniquement vos réglages :
 
 - la liste des sites où vous avez activé le bouton de correction ;
+- la langue choisie (automatique, français ou anglais) ;
 - le style de réponse choisi.
 
 Ces informations restent sur votre appareil et sont supprimées avec

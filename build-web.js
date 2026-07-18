@@ -21,8 +21,15 @@ function version() {
 // Fichiers propres au site.
 const WEB_FILES = ["index.html", "app.css", "app.js", "sw.js", "manifest.webmanifest"];
 // Moteur partagé avec l'extension.
-const SHARED_FILES = ["grammalecte-worker.js", "grammar-rules.js", "LICENSE", "PRIVACY.md"];
+const SHARED_FILES = [
+  "grammalecte-worker.js", "harper-worker.js", "language-detection.js",
+  "grammar-rules.js", "LICENSE", "PRIVACY.md"
+];
 const DIRECTORIES = ["icons", "vendor"];
+const HARPER_FILES = [
+  "index.js", "binary.js", "BinaryModule-DTTQwokQ.js", "harper_wasm_bg.wasm",
+  "LICENSE-HARPER", "LICENSE-FFLATE"
+];
 
 fs.rmSync(OUT_DIR, { recursive: true, force: true });
 fs.mkdirSync(OUT_DIR, { recursive: true });
@@ -57,6 +64,7 @@ for (const file of SHARED_FILES) {
 for (const directory of DIRECTORIES) {
   fs.cpSync(path.join(PROJECT_DIR, directory), path.join(OUT_DIR, directory), { recursive: true });
 }
+copyHarperRuntime(OUT_DIR);
 
 // Les navigateurs demandent encore /favicon.ico même lorsqu'une icône PNG est
 // déclarée. On génère un véritable conteneur ICO à partir de notre PNG 32 px,
@@ -98,6 +106,9 @@ const buildHash = createHash("sha256");
 for (const file of [...WEB_FILES, ...SHARED_FILES, "favicon.ico"]) {
   buildHash.update(fs.readFileSync(path.join(OUT_DIR, file)));
 }
+for (const file of HARPER_FILES) {
+  buildHash.update(fs.readFileSync(path.join(OUT_DIR, "vendor", "harper", file)));
+}
 const buildId = buildHash.digest("hex").slice(0, 12);
 const serviceWorkerPath = path.join(OUT_DIR, "sw.js");
 const serviceWorker = fs.readFileSync(serviceWorkerPath, "utf8");
@@ -119,7 +130,7 @@ for (const icon of manifest.icons) {
 
 const totalBytes = directorySize(OUT_DIR);
 console.log(`Site prêt : ${path.relative(PROJECT_DIR, OUT_DIR)}`);
-console.log(`Poids brut : ${(totalBytes / 1024 / 1024).toFixed(1)} Mo (~2 Mo transférés, gzip)`);
+console.log(`Poids brut : ${(totalBytes / 1024 / 1024).toFixed(1)} Mo (Harper est chargé uniquement pour l'anglais)`);
 console.log(`Icônes vérifiées : ${manifest.icons.length}`);
 console.log(`Cache web : korr-${buildId}`);
 
@@ -130,6 +141,19 @@ function directorySize(directory) {
     total += entry.isDirectory() ? directorySize(full) : fs.statSync(full).size;
   }
   return total;
+}
+
+function copyHarperRuntime(destination) {
+  const source = path.join(PROJECT_DIR, "node_modules", "harper.js", "dist");
+  const target = path.join(destination, "vendor", "harper");
+  fs.mkdirSync(target, { recursive: true });
+  for (const file of HARPER_FILES.slice(0, 4)) {
+    const input = path.join(source, file);
+    if (!fs.existsSync(input)) throw new Error(`Harper incomplet : ${file}`);
+    fs.copyFileSync(input, path.join(target, file));
+  }
+  fs.copyFileSync(path.join(PROJECT_DIR, "node_modules", "harper.js", "LICENSE"), path.join(target, "LICENSE-HARPER"));
+  fs.copyFileSync(path.join(PROJECT_DIR, "node_modules", "fflate", "LICENSE"), path.join(target, "LICENSE-FFLATE"));
 }
 
 function createIcoFromPng(pngPath, icoPath) {

@@ -19,6 +19,8 @@ const SHELL = [
   "manifest.webmanifest",
   "favicon.ico",
   "grammalecte-worker.js",
+  "harper-worker.js",
+  "language-detection.js",
   "grammar-rules.js",
   "icons/icon-128.png",
   "icons/icon-192.png",
@@ -27,7 +29,7 @@ const SHELL = [
 
 // Le moteur : volumineux, donc mis en cache à la première utilisation plutôt
 // qu'à l'installation, pour que la page s'affiche sans attendre.
-const ENGINE_PATTERN = /vendor\/grammalecte\//u;
+const ENGINE_PATTERN = /vendor\/(?:grammalecte|harper)\//u;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

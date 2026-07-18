@@ -1,7 +1,7 @@
 {
-  "name": "Korr - correcteur de français",
+  "name": "Korr - correcteur français et anglais",
   "short_name": "Korr",
-  "description": "Corrigez votre français hors ligne. Aucun serveur, aucun compte : votre texte ne quitte jamais votre appareil.",
+  "description": "Corrigez votre français et votre anglais hors ligne. Votre texte ne quitte jamais votre appareil.",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "./",

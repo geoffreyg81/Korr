@@ -1,43 +1,56 @@
-// Hôte du Worker de correction.
-//
-// Le service worker MV3 ne peut pas héberger Grammalecte : il est arrêté après
-// quelques secondes d'inactivité et ne fournit pas XMLHttpRequest, dont
-// « helpers.loadFile » a besoin. Ce document offscreen, lui, reste en vie et
-// garde le moteur chaud entre deux corrections.
+// Hôte persistant des moteurs hors ligne de Korr.
 
 "use strict";
 
-const worker = new Worker("grammalecte-worker.js");
-const pending = new Map();
-let nextId = 1;
+function createWorkerClient(url, options) {
+  const worker = new Worker(url, options);
+  const pending = new Map();
+  let nextId = 1;
 
-worker.addEventListener("message", (event) => {
-  const { id, ...payload } = event.data || {};
-  const resolve = pending.get(id);
-  if (!resolve) return;
-  pending.delete(id);
-  resolve(payload);
-});
-
-worker.addEventListener("error", (event) => {
-  // Une erreur de chargement casse toutes les requêtes en attente.
-  for (const [id, resolve] of pending) {
-    resolve({ ok: false, error: `Moteur indisponible : ${event.message}` });
+  worker.addEventListener("message", (event) => {
+    const { id, ...payload } = event.data || {};
+    const resolve = pending.get(id);
+    if (!resolve) return;
     pending.delete(id);
-  }
-});
+    resolve(payload);
+  });
 
-function askWorker(type, text) {
-  return new Promise((resolve) => {
+  worker.addEventListener("error", (event) => {
+    for (const [id, resolve] of pending) {
+      resolve({ ok: false, error: `Moteur indisponible : ${event.message}` });
+      pending.delete(id);
+    }
+  });
+
+  return (type, text) => new Promise((resolve) => {
     const id = nextId++;
     pending.set(id, resolve);
     worker.postMessage({ id, type, text });
   });
 }
 
+const askFrench = createWorkerClient("grammalecte-worker.js");
+let askEnglish = null;
+
+function englishClient() {
+  if (!askEnglish) askEnglish = createWorkerClient("harper-worker.js", { type: "module" });
+  return askEnglish;
+}
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.target !== "offscreen") return false;
 
-  askWorker(message.type === "PING" ? "PING" : "CORRECT", message.text).then(sendResponse);
+  if (message.type === "PING") {
+    askFrench("PING").then(sendResponse);
+    return true;
+  }
+
+  const requested = ["fr", "en"].includes(message.language) ? message.language : "auto";
+  const language = requested === "auto"
+    ? globalThis.korrLanguage.detectLanguage(message.text)
+    : requested;
+  const ask = language === "en" ? englishClient() : askFrench;
+
+  ask("CORRECT", message.text).then((result) => sendResponse({ ...result, language }));
   return true;
 });

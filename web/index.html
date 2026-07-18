@@ -3,15 +3,15 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Korr - correcteur de français hors ligne</title>
-    <meta name="description" content="Corrigez votre français directement dans le navigateur. Gratuit, sans compte, et 100 % hors ligne : votre texte ne quitte jamais votre appareil.">
+    <title>Korr - correcteur français et anglais hors ligne</title>
+    <meta name="description" content="Corrigez votre français et votre anglais dans le navigateur. Gratuit, sans compte et 100 % hors ligne.">
     <meta name="theme-color" content="#4f46e5">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="icons/icon-128.png">
     <link rel="stylesheet" href="app.css">
-    <meta property="og:title" content="Korr - correcteur de français hors ligne">
-    <meta property="og:description" content="Le correcteur de français qui ne voit jamais votre texte. Gratuit, sans compte, hors ligne.">
+    <meta property="og:title" content="Korr - correcteur français et anglais hors ligne">
+    <meta property="og:description" content="Le correcteur français et anglais qui ne voit jamais votre texte. Gratuit et hors ligne.">
     <meta property="og:type" content="website">
   </head>
   <body>
@@ -20,7 +20,7 @@
         <img class="logo" src="icons/icon-128.png" alt="" width="34" height="34">
         <span class="brand-name">Korr</span>
       </div>
-      <h1>Le correcteur de français<br>qui ne voit <em>jamais</em> votre texte</h1>
+      <h1>Le correcteur français et anglais<br>qui ne voit <em>jamais</em> votre texte</h1>
       <p class="pitch">
         Tout se passe dans votre navigateur. Aucun serveur, aucun compte,
         aucune limite. Fonctionne même sans connexion.
@@ -39,7 +39,15 @@
         <div class="editor">
           <div class="editor-head">
             <label for="input">Votre texte</label>
-            <button id="sample" class="link" type="button">Essayer un exemple</button>
+            <div class="editor-options">
+              <label for="language">Langue</label>
+              <select id="language">
+                <option value="auto">Auto</option>
+                <option value="fr">Français</option>
+                <option value="en">English</option>
+              </select>
+              <button id="sample" class="link" type="button">Essayer un exemple</button>
+            </div>
           </div>
           <textarea id="input" rows="8" spellcheck="false"
             placeholder="Collez ou tapez votre texte ici, puis appuyez sur Corriger…"></textarea>
@@ -101,8 +109,8 @@
       <section class="privacy">
         <h2>Pourquoi « hors ligne » n'est pas qu'une promesse</h2>
         <p>
-          Le moteur de correction - <a href="https://grammalecte.net" rel="noopener">Grammalecte</a>,
-          libre - est téléchargé une fois puis exécuté sur votre appareil. La page ne fait aucune
+          Les moteurs libres <a href="https://grammalecte.net" rel="noopener">Grammalecte</a> et
+          <a href="https://writewithharper.com" rel="noopener">Harper</a> sont exécutés sur votre appareil. La page ne fait aucune
           requête vers un serveur d'analyse, parce qu'il n'en existe aucun.
         </p>
         <p>
@@ -163,10 +171,12 @@
       <p>
         Logiciel libre sous <a href="LICENSE">GNU GPL 3.0</a> ·
         <a href="PRIVACY.md">Confidentialité</a> ·
-        Propulsé par <a href="https://grammalecte.net" rel="noopener">Grammalecte 2.3.0</a>
+        Propulsé par <a href="https://grammalecte.net" rel="noopener">Grammalecte</a> et
+        <a href="https://writewithharper.com" rel="noopener">Harper</a>
       </p>
     </footer>
 
+    <script src="language-detection.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

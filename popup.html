@@ -11,8 +11,8 @@
       <header>
         <img class="logo" src="icons/icon-128.png" alt="" width="42" height="42">
         <div class="header-copy">
-          <h1>Korr <span class="version">v0.5.0</span></h1>
-          <p>Correcteur français, hors ligne.</p>
+          <h1>Korr <span class="version">v0.6.0</span></h1>
+          <p>Français et anglais, hors ligne.</p>
         </div>
       </header>
 
@@ -28,6 +28,16 @@
           <span class="switch-track" aria-hidden="true"></span>
         </label>
       </section>
+
+      <fieldset id="language-picker" class="language-picker">
+        <legend>Langue du texte</legend>
+        <div class="style-chips">
+          <label class="chip"><input type="radio" name="language" value="auto"><span>Auto</span></label>
+          <label class="chip"><input type="radio" name="language" value="fr"><span>Français</span></label>
+          <label class="chip"><input type="radio" name="language" value="en"><span>English</span></label>
+        </div>
+        <p class="style-hint">Auto choisit Grammalecte ou Harper selon le texte.</p>
+      </fieldset>
 
       <fieldset id="style-picker" class="style-picker">
         <legend>Style de réponse</legend>

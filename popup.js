@@ -5,6 +5,7 @@ const currentSiteLabel = document.getElementById("current-site");
 const stylePicker = document.getElementById("style-picker");
 const styleHint = document.getElementById("style-hint");
 const styleInputs = [...document.querySelectorAll('input[name="style"]')];
+const languageInputs = [...document.querySelectorAll('input[name="language"]')];
 
 const STYLE_HINTS = {
   corriger: "Corrige les fautes sans rien reformuler.",
@@ -23,11 +24,24 @@ async function initialize() {
   // Nettoie les clés des versions précédentes (clé OpenAI du MVP, mode
   // « instant »/« deep » remplacé par la détection automatique du backend).
   await chrome.storage.local.remove(["apiKey", "mode"]);
-  const { style = "corriger" } = await chrome.storage.local.get("style");
+  const { style = "corriger", language = "auto" } = await chrome.storage.local.get(["style", "language"]);
   selectStyle(style);
+  selectLanguage(language);
 
   await initializeSiteSetting();
   await checkBackend();
+}
+
+function selectLanguage(value) {
+  const target = languageInputs.find((input) => input.value === value) || languageInputs[0];
+  if (target) target.checked = true;
+}
+
+for (const input of languageInputs) {
+  input.addEventListener("change", async () => {
+    await chrome.storage.local.set({ language: input.value });
+    flashStatus(`Langue : ${input.value === "auto" ? "détection automatique" : input.value === "fr" ? "français" : "anglais"}.`);
+  });
 }
 
 function selectStyle(value) {

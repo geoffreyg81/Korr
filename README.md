@@ -1,6 +1,6 @@
-# Korr - correcteur français local
+# Korr - correcteur français et anglais local
 
-Extension Edge/Chrome qui corrige le français directement dans les champs de
+Extension Edge/Chrome qui corrige le français et l'anglais directement dans les champs de
 saisie. Gratuite, sans clé API, sans abonnement, sans compte - et **hors
 ligne** : le texte ne quitte jamais votre ordinateur.
 
@@ -11,8 +11,9 @@ des styles de réécriture par IA.
 
 ## Correction instantanée (par défaut)
 
-Moteur **Grammalecte 2.3.0** et règles maison, exécutés dans l'extension
-elle-même :
+Moteurs exécutés dans l'extension elle-même : **Grammalecte 2.3.0** et règles
+maison pour le français, **Harper** pour l'anglais. Le menu propose Auto,
+Français et English. En Auto, la détection reste locale.
 
 - fautes d'orthographe, de grammaire, de conjugaison et d'accord ;
 - accord du participe passé avec le COD placé avant l'auxiliaire ;
@@ -20,8 +21,8 @@ elle-même :
   et ou/où ;
 - langage SMS : environ 180 abréviations et des règles contextuelles.
 
-Le moteur se charge en deux secondes au démarrage du navigateur, puis chaque
-correction prend quelques millisecondes.
+Grammalecte chauffe au démarrage. Harper et son module WebAssembly ne sont
+chargés qu'à la première correction anglaise, puis restent disponibles.
 
 ## Styles de réécriture (facultatif, demandent le backend)
 

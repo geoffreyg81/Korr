@@ -36,9 +36,9 @@ async function ensureOffscreen() {
   return offscreenReady;
 }
 
-async function correctLocally(text) {
+async function correctLocally(text, language = "auto") {
   await ensureOffscreen();
-  const result = await chrome.runtime.sendMessage({ target: "offscreen", type: "CORRECT", text });
+  const result = await chrome.runtime.sendMessage({ target: "offscreen", type: "CORRECT", text, language });
   if (!result?.ok) throw new Error(result?.error || "Le moteur local n'a pas répondu.");
   return result;
 }
@@ -78,14 +78,14 @@ async function correctText(rawText) {
     throw new Error(`Le texte est trop long (maximum ${MAX_INPUT_CHARACTERS.toLocaleString("fr-FR")} caractères).`);
   }
 
-  const { style = DEFAULT_STYLE } = await chrome.storage.local.get("style");
-  if (style === DEFAULT_STYLE) return correctLocally(text);
+  const { style = DEFAULT_STYLE, language = "auto" } = await chrome.storage.local.get(["style", "language"]);
+  if (style === DEFAULT_STYLE) return correctLocally(text, language);
 
   // Style de réécriture : il exige l'IA, donc le backend.
   try {
     return await correctWithBackend(text, style);
   } catch {
-    const local = await correctLocally(text);
+    const local = await correctLocally(text, language);
     return { ...local, fallback: "Backend IA indisponible · corrigé par le moteur local." };
   }
 }

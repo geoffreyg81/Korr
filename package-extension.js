@@ -30,6 +30,8 @@ const FILES = [
   "offscreen.html",
   "offscreen.js",
   "grammalecte-worker.js",
+  "harper-worker.js",
+  "language-detection.js",
   "grammar-rules.js",
   "LICENSE",
   "PRIVACY.md"
@@ -58,6 +60,7 @@ for (const directory of DIRECTORIES) {
   }
   fs.cpSync(source, path.join(STAGING_DIR, directory), { recursive: true });
 }
+copyHarperRuntime(STAGING_DIR);
 
 // Vérifie que rien de superflu n'a été embarqué.
 const forbidden = ["server.js", "grammar-engine.js", "app-tray.ps1", "app.vbs", "stop.js", "autostart.js", ".vendor"];
@@ -78,3 +81,17 @@ const sizeMo = fs.statSync(ZIP_PATH).size / 1024 / 1024;
 console.log(`Paquet prêt : ${path.relative(PROJECT_DIR, ZIP_PATH)}`);
 console.log(`Taille : ${sizeMo.toFixed(1)} Mo (limite des boutiques : 100 Mo)`);
 console.log(`Version : ${manifest.version}`);
+
+function copyHarperRuntime(destination) {
+  const source = path.join(PROJECT_DIR, "node_modules", "harper.js", "dist");
+  const target = path.join(destination, "vendor", "harper");
+  const files = ["index.js", "binary.js", "BinaryModule-DTTQwokQ.js", "harper_wasm_bg.wasm"];
+  fs.mkdirSync(target, { recursive: true });
+  for (const file of files) {
+    const input = path.join(source, file);
+    if (!fs.existsSync(input)) throw new Error(`Harper incomplet : ${file}`);
+    fs.copyFileSync(input, path.join(target, file));
+  }
+  fs.copyFileSync(path.join(PROJECT_DIR, "node_modules", "harper.js", "LICENSE"), path.join(target, "LICENSE-HARPER"));
+  fs.copyFileSync(path.join(PROJECT_DIR, "node_modules", "fflate", "LICENSE"), path.join(target, "LICENSE-FFLATE"));
+}
