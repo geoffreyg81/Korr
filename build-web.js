@@ -80,6 +80,7 @@ createIcoFromPng(path.join(PROJECT_DIR, "icons", "icon-32.png"), faviconPath);
 // - sinon : le zip est copié dans le site, pratique pour tester en local.
 const downloadUrl = process.env.ZF_DOWNLOAD_URL;
 const desktopZip = path.join(PROJECT_DIR, "dist", `korr-windows-${version()}.zip`);
+const releaseDownloadUrl = `https://github.com/geoffreyg81/zero-friction/releases/download/v${version()}/korr-windows.zip`;
 
 if (downloadUrl) {
   const indexPath = path.join(OUT_DIR, "index.html");
@@ -95,7 +96,13 @@ if (downloadUrl) {
   console.log(`Application Windows incluse dans le site : ${mo.toFixed(0)} Mo`);
   console.log("  (définissez ZF_DOWNLOAD_URL pour pointer vers une release à la place)");
 } else {
-  console.warn("⚠ Application Windows absente : lancez « npm run build:desktop », ou définissez ZF_DOWNLOAD_URL.");
+  const indexPath = path.join(OUT_DIR, "index.html");
+  const html = fs.readFileSync(indexPath, "utf8").replace(
+    /href="korr-windows\.zip" download/u,
+    `href="${releaseDownloadUrl}" rel="noopener"`
+  );
+  fs.writeFileSync(indexPath, html);
+  console.log(`Téléchargement GitHub Release : ${releaseDownloadUrl}`);
 }
 
 // Empreinte déterministe de l'enveloppe publiée. Le service worker change dès
