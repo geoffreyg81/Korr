@@ -2,3 +2,4 @@ node_modules/
 .cache/
 worker-test.html
 offscreen-test.html
+dist/

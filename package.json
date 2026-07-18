@@ -15,10 +15,11 @@
     "autostart:install-app": "node autostart.js install-app",
     "autostart:remove-app": "node autostart.js remove-app",
     "autostart:status": "node autostart.js status",
-    "check": "node --check server.js && node --check grammar-engine.js && node --check background.js && node --check content.js && node --check popup.js && node --check autostart.js && node --check stop.js && node test-server-guards.js && node test-grammar-engine.js",
+    "check": "node --check server.js && node --check grammar-engine.js && node --check background.js && node --check content.js && node --check popup.js && node --check autostart.js && node --check stop.js && node test-server-guards.js && node --check package-extension.js && node test-grammar-engine.js",
     "model:pull": "ollama pull gemma3:4b",
     "model:light": "ollama pull gemma3:1b",
-    "model:benchmark": "node benchmark-model.js"
+    "model:benchmark": "node benchmark-model.js",
+    "package": "node package-extension.js"
   },
   "engines": {
     "node": ">=18.17"
