@@ -66,7 +66,11 @@ function Start-BackendIfDown {
     return $true
   } catch {
     try {
-      Start-Process -FilePath "node" -ArgumentList "server.js" -WorkingDirectory $projectDir -WindowStyle Hidden
+      # Runtime embarqué s'il est présent (paquet autonome), sinon Node du système
+      # (dépôt de développement).
+      $bundled = Join-Path $projectDir "runtime" | Join-Path -ChildPath "node.exe"
+      $nodePath = if (Test-Path $bundled) { $bundled } else { "node" }
+      Start-Process -FilePath $nodePath -ArgumentList "server.js" -WorkingDirectory $projectDir -WindowStyle Hidden
       Start-Sleep -Milliseconds 1800
       return $true
     } catch { return $false }

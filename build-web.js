@@ -13,6 +13,10 @@ import { fileURLToPath } from "node:url";
 const PROJECT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.join(PROJECT_DIR, "dist", "web");
 
+function version() {
+  return JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "package.json"), "utf8")).version;
+}
+
 // Fichiers propres au site.
 const WEB_FILES = ["index.html", "app.css", "app.js", "sw.js", "manifest.webmanifest"];
 // Moteur partagé avec l'extension.
@@ -40,6 +44,18 @@ for (const file of SHARED_FILES) {
 }
 for (const directory of DIRECTORIES) {
   fs.cpSync(path.join(PROJECT_DIR, directory), path.join(OUT_DIR, directory), { recursive: true });
+}
+
+// L'application Windows, si elle a déjà été construite. Le site fonctionne
+// sans elle, mais le bouton de téléchargement pointerait dans le vide : on
+// prévient plutôt que de livrer un lien mort.
+const desktopZip = path.join(PROJECT_DIR, "dist", `zero-friction-windows-${version()}.zip`);
+if (fs.existsSync(desktopZip)) {
+  fs.copyFileSync(desktopZip, path.join(OUT_DIR, "zero-friction-windows.zip"));
+  const mo = fs.statSync(desktopZip).size / 1024 / 1024;
+  console.log(`Application Windows incluse : ${mo.toFixed(0)} Mo`);
+} else {
+  console.warn("⚠ Application Windows absente : lancez « npm run build:desktop » avant, sinon le bouton de téléchargement sera inactif.");
 }
 
 // Les icônes déclarées dans le manifeste doivent exister, sinon l'application

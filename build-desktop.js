@@ -1,0 +1,166 @@
+// Construit l'application de bureau autonome, à télécharger depuis le site.
+//
+// L'utilisateur final n'a pas Node.js : le paquet embarque donc le runtime
+// (licence MIT, redistribuable) à côté du correcteur. Aucune installation
+// préalable, aucune ligne de commande.
+//
+//   npm run build:desktop   ->  dist/zero-friction-windows-<version>.zip
+
+import fs from "node:fs";
+import path from "node:path";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+const PROJECT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const VERSION = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "package.json"), "utf8")).version;
+const OUT_DIR = path.join(PROJECT_DIR, "dist", "desktop");
+const APP_DIR = path.join(OUT_DIR, "Zero Friction");
+const ZIP_PATH = path.join(PROJECT_DIR, "dist", `zero-friction-windows-${VERSION}.zip`);
+
+const FILES = [
+  "server.js",
+  "grammar-engine.js",
+  "grammar-rules.js",
+  "stop.js",
+  "app-tray.ps1",
+  "LICENSE",
+  "PRIVACY.md"
+];
+
+fs.rmSync(OUT_DIR, { recursive: true, force: true });
+fs.rmSync(ZIP_PATH, { force: true });
+fs.mkdirSync(APP_DIR, { recursive: true });
+
+for (const file of FILES) {
+  const source = path.join(PROJECT_DIR, file);
+  if (!fs.existsSync(source)) {
+    console.error(`Fichier manquant : ${file}`);
+    process.exit(1);
+  }
+  fs.copyFileSync(source, path.join(APP_DIR, file));
+}
+
+// Le moteur : Grammalecte complet est inutile, seul le sous-ensemble embarqué
+// sert. On le range là où grammar-engine.js le cherche.
+fs.cpSync(
+  path.join(PROJECT_DIR, "vendor", "grammalecte"),
+  path.join(APP_DIR, ".vendor", "grammalecte-js", "grammalecte"),
+  { recursive: true }
+);
+fs.cpSync(path.join(PROJECT_DIR, "icons"), path.join(APP_DIR, "icons"), { recursive: true });
+
+// Runtime Node, embarqué sous licence MIT.
+const runtimeDir = path.join(APP_DIR, "runtime");
+fs.mkdirSync(runtimeDir);
+fs.copyFileSync(process.execPath, path.join(runtimeDir, "node.exe"));
+fs.writeFileSync(
+  path.join(runtimeDir, "LICENCE-NODEJS.txt"),
+  [
+    "Ce dossier contient Node.js, redistribué sous licence MIT.",
+    "Node.js est un projet de la OpenJS Foundation.",
+    "Texte complet de la licence : https://github.com/nodejs/node/blob/main/LICENSE",
+    ""
+  ].join("\r\n"),
+  "latin1"
+);
+
+writeWindowsFile(path.join(APP_DIR, "Zéro Friction.vbs"), [
+  "' Lance Zéro Friction sans fenêtre.",
+  "Set fso = CreateObject(\"Scripting.FileSystemObject\")",
+  "appDir = fso.GetParentFolderName(WScript.ScriptFullName)",
+  "Set shell = CreateObject(\"WScript.Shell\")",
+  "shell.CurrentDirectory = appDir",
+  "shell.Run \"powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"\"\" & appDir & \"\\app-tray.ps1\"\"\", 0, False",
+  ""
+]);
+
+writeWindowsFile(path.join(APP_DIR, "Démarrage automatique.vbs"), [
+  "' Ajoute (ou retire) Zéro Friction au démarrage de Windows.",
+  "Set fso = CreateObject(\"Scripting.FileSystemObject\")",
+  "Set shell = CreateObject(\"WScript.Shell\")",
+  "appDir = fso.GetParentFolderName(WScript.ScriptFullName)",
+  "startup = shell.SpecialFolders(\"Startup\")",
+  "linkPath = startup & \"\\Zero Friction.lnk\"",
+  "If fso.FileExists(linkPath) Then",
+  "  fso.DeleteFile linkPath",
+  "  MsgBox \"Zéro Friction ne démarrera plus automatiquement.\", 64, \"Zéro Friction\"",
+  "Else",
+  "  Set link = shell.CreateShortcut(linkPath)",
+  "  link.TargetPath = appDir & \"\\Zéro Friction.vbs\"",
+  "  link.WorkingDirectory = appDir",
+  "  link.Description = \"Correcteur de français Zéro Friction\"",
+  "  link.Save",
+  "  MsgBox \"Zéro Friction démarrera avec Windows.\", 64, \"Zéro Friction\"",
+  "End If",
+  ""
+]);
+
+writeWindowsFile(path.join(APP_DIR, "LISEZ-MOI.txt"), [
+  "Zéro Friction — correcteur de français",
+  "======================================",
+  "",
+  "DÉMARRER",
+  "",
+  "  Double-cliquez sur « Zéro Friction.vbs ».",
+  "",
+  "  Une icône violette apparaît près de l'horloge. Si vous ne la voyez pas,",
+  "  cliquez sur le chevron ^ à gauche de l'horloge, puis faites-la glisser",
+  "  sur la barre des tâches pour l'y garder.",
+  "",
+  "UTILISER — dans n'importe quelle application",
+  "",
+  "  1. Sélectionnez du texte (Word, navigateur, messagerie, courriel…).",
+  "  2. Appuyez sur Ctrl+Alt+C.",
+  "  3. Le texte corrigé remplace la sélection. Ctrl+Z pour annuler.",
+  "",
+  "  Ctrl+Alt+P   réécrit en style professionnel *",
+  "  Ctrl+Alt+A   réécrit en style amical *",
+  "  Ctrl+Alt+R   raccourcit le texte *",
+  "",
+  "  * Ces trois styles demandent Ollama, à installer séparément. La",
+  "    correction avec Ctrl+Alt+C fonctionne sans rien d'autre.",
+  "",
+  "DÉMARRAGE AUTOMATIQUE",
+  "",
+  "  Double-cliquez sur « Démarrage automatique.vbs » pour que le correcteur",
+  "  se lance avec Windows. Un second double-clic le retire.",
+  "",
+  "QUITTER",
+  "",
+  "  Clic droit sur l'icône, puis « Quitter ».",
+  "",
+  "VIE PRIVÉE",
+  "",
+  "  Tout se passe sur votre ordinateur. Aucun texte n'est envoyé sur",
+  "  Internet : il n'y a ni serveur, ni compte, ni traceur. Voir PRIVACY.md.",
+  "",
+  "AVERTISSEMENT WINDOWS",
+  "",
+  "  L'application n'étant pas signée, Windows peut afficher « Windows a",
+  "  protégé votre ordinateur ». Cliquez sur « Informations complémentaires »",
+  "  puis « Exécuter quand même ». Le code est public et vérifiable :",
+  "  https://github.com/ggine/zero-friction",
+  "",
+  "LICENCE",
+  "",
+  "  Logiciel libre sous GNU GPL 3.0 (voir LICENSE).",
+  "  Correcteur Grammalecte 2.3.0 — https://grammalecte.net",
+  "  Runtime Node.js sous licence MIT (voir runtime/LICENCE-NODEJS.txt).",
+  ""
+]);
+
+execFileSync("powershell.exe", [
+  "-NoProfile",
+  "-Command",
+  `Compress-Archive -Path "${APP_DIR}" -DestinationPath "${ZIP_PATH}" -Force`
+], { windowsHide: true });
+
+const sizeMo = fs.statSync(ZIP_PATH).size / 1024 / 1024;
+console.log(`Application prête : ${path.relative(PROJECT_DIR, ZIP_PATH)}`);
+console.log(`Téléchargement : ${sizeMo.toFixed(0)} Mo (runtime Node inclus, rien à installer)`);
+
+// Les fins de ligne Windows et l'encodage latin1 évitent les caractères
+// illisibles dans le Bloc-notes et dans les scripts VBScript.
+function writeWindowsFile(target, lines) {
+  fs.writeFileSync(target, lines.join("\r\n"), "latin1");
+}
