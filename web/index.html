@@ -16,109 +16,116 @@
   </head>
   <body>
     <header class="hero">
+      <div class="site-language">
+        <label for="ui-language" data-i18n="interfaceLanguage">Interface</label>
+        <select id="ui-language" aria-label="Interface language">
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+        </select>
+      </div>
       <div class="brand">
         <img class="logo" src="icons/icon-128.png" alt="" width="34" height="34">
         <span class="brand-name">Korr</span>
       </div>
-      <h1>Le correcteur français et anglais<br>qui ne voit <em>jamais</em> votre texte</h1>
-      <p class="pitch">
+      <h1 data-i18n-html="heroTitle">Le correcteur français et anglais<br>qui ne voit <em>jamais</em> votre texte</h1>
+      <p class="pitch" data-i18n="heroPitch">
         Tout se passe dans votre navigateur. Aucun serveur, aucun compte,
         aucune limite. Fonctionne même sans connexion.
       </p>
       <ul class="badges">
-        <li>🔒 100 % hors ligne</li>
-        <li>⚡ Correction locale rapide</li>
-        <li>🆓 Libre et gratuit</li>
+        <li data-i18n="badgeOffline">🔒 100 % hors ligne</li>
+        <li data-i18n="badgeFast">⚡ Correction locale rapide</li>
+        <li data-i18n="badgeFree">🆓 Libre et gratuit</li>
       </ul>
     </header>
 
     <main>
       <section class="tool" aria-labelledby="tool-title">
-        <h2 id="tool-title" class="sr-only">Correcteur</h2>
+        <h2 id="tool-title" class="sr-only" data-i18n="toolTitle">Correcteur</h2>
 
         <div class="editor">
           <div class="editor-head">
-            <label for="input">Votre texte</label>
+            <label for="input" data-i18n="yourText">Votre texte</label>
             <div class="editor-options">
-              <label for="language">Langue</label>
+              <label for="language" data-i18n="textLanguage">Langue du texte</label>
               <select id="language">
                 <option value="auto">Auto</option>
-                <option value="fr">Français</option>
-                <option value="en">English</option>
+                <option value="fr" data-i18n="french">Français</option>
+                <option value="en" data-i18n="english">English</option>
               </select>
-              <button id="sample" class="link" type="button">Essayer un exemple</button>
+              <button id="sample" class="link" type="button" data-i18n="tryExample">Essayer un exemple</button>
             </div>
           </div>
-          <textarea id="input" rows="8" spellcheck="false"
+          <textarea id="input" rows="8" spellcheck="false" data-i18n-placeholder="inputPlaceholder"
             placeholder="Collez ou tapez votre texte ici, puis appuyez sur Corriger…"></textarea>
           <div class="editor-foot">
-            <span id="engine-state" class="engine-state">Chargement du correcteur…</span>
-            <button id="correct" class="primary" type="button" disabled>Corriger</button>
+            <span id="engine-state" class="engine-state" data-i18n="loading">Chargement du correcteur…</span>
+            <button id="correct" class="primary" type="button" disabled data-i18n="correct">Corriger</button>
           </div>
         </div>
 
         <div id="result" class="result" hidden>
           <div class="editor-head">
-            <label for="output">Texte corrigé</label>
+            <label for="output" data-i18n="correctedText">Texte corrigé</label>
             <span id="summary" class="summary"></span>
           </div>
           <textarea id="output" rows="8" readonly spellcheck="false"></textarea>
           <div class="editor-foot">
-            <button id="copy" class="secondary" type="button">Copier</button>
-            <button id="reuse" class="secondary" type="button">Remplacer mon texte</button>
+            <button id="copy" class="secondary" type="button" data-i18n="copy">Copier</button>
+            <button id="reuse" class="secondary" type="button" data-i18n="reuse">Remplacer mon texte</button>
           </div>
         </div>
       </section>
 
       <section class="features">
-        <h2>Deux langues, deux moteurs spécialisés</h2>
+        <h2 data-i18n="featuresTitle">Deux langues, deux moteurs spécialisés</h2>
         <div class="grid">
           <article>
-            <h3>Accords difficiles</h3>
-            <p>Participe passé avec le COD placé avant, verbes pronominaux, accords à distance.</p>
+            <h3 data-i18n="agreementTitle">Accords difficiles</h3>
+            <p data-i18n="agreementText">Participe passé avec le COD placé avant, verbes pronominaux, accords à distance.</p>
             <p class="example"><s>les décisions qu'il a pris</s> → les décisions qu'il a <b>prises</b></p>
           </article>
           <article>
-            <h3>Concordance et subjonctif</h3>
-            <p>La règle des « si », le subjonctif après « bien que » ou « quoique ».</p>
+            <h3 data-i18n="tenseTitle">Concordance et subjonctif</h3>
+            <p data-i18n="tenseText">La règle des « si », le subjonctif après « bien que » ou « quoique ».</p>
             <p class="example"><s>si j'aurais su</s> → si j'<b>avais</b> su</p>
           </article>
           <article>
-            <h3>Homophones français</h3>
-            <p>et/est, ou/où, sa/ça, quand/quant - avec le contexte pour trancher.</p>
+            <h3 data-i18n="homophonesTitle">Homophones français</h3>
+            <p data-i18n="homophonesText">et/est, ou/où, sa/ça, quand/quant - avec le contexte pour trancher.</p>
             <p class="example"><s>elle et partie</s> → elle <b>est</b> partie</p>
           </article>
           <article>
-            <h3>Langage SMS</h3>
-            <p>Près de 180 abréviations reconnues et remises en français.</p>
+            <h3 data-i18n="smsTitle">Langage SMS</h3>
+            <p data-i18n="smsText">Près de 180 abréviations reconnues et remises en français.</p>
             <p class="example"><s>slt jsui dsl</s> → <b>Salut je suis désolé</b></p>
           </article>
           <article>
-            <h3>Typographie française</h3>
-            <p>L'espace insécable avant <code>! ? : ;</code>, sans toucher aux URL ni aux heures.</p>
+            <h3 data-i18n="typographyTitle">Typographie française</h3>
+            <p data-i18n-html="typographyText">L'espace insécable avant <code>! ? : ;</code>, sans toucher aux URL ni aux heures.</p>
             <p class="example"><s>exceptionnel!</s> → exceptionnel<b>&nbsp;!</b></p>
           </article>
           <article>
-            <h3>Grammaire anglaise</h3>
-            <p>Temps composés, confusions fréquentes, mots manquants et expressions incorrectes.</p>
+            <h3 data-i18n="englishGrammarTitle">Grammaire anglaise</h3>
+            <p data-i18n="englishGrammarText">Temps composés, confusions fréquentes, mots manquants et expressions incorrectes.</p>
             <p class="example"><s>I have went home</s> → I have <b>gone</b> home</p>
           </article>
           <article>
-            <h3>Anglais naturel</h3>
-            <p>Harper détecte les formulations comme <code>could of</code> ou les mots mal séparés.</p>
+            <h3 data-i18n="naturalEnglishTitle">Anglais naturel</h3>
+            <p data-i18n-html="naturalEnglishText">Harper détecte les formulations comme <code>could of</code> ou les mots mal séparés.</p>
             <p class="example"><s>could of, alot</s> → <b>could have, a lot</b></p>
           </article>
         </div>
       </section>
 
       <section class="privacy">
-        <h2>Pourquoi « hors ligne » n'est pas qu'une promesse</h2>
-        <p>
+        <h2 data-i18n="privacyTitle">Pourquoi « hors ligne » n'est pas qu'une promesse</h2>
+        <p data-i18n-html="privacyText1">
           Les moteurs libres <a href="https://grammalecte.net" rel="noopener">Grammalecte</a> et
           <a href="https://writewithharper.com" rel="noopener">Harper</a> sont exécutés sur votre appareil. La page ne fait aucune
           requête vers un serveur d'analyse, parce qu'il n'en existe aucun.
         </p>
-        <p>
+        <p data-i18n-html="privacyText2">
           Le code est public sous licence GPL&nbsp;3.0 : cette affirmation est
           <strong>vérifiable</strong>, pas seulement déclarée. Coupez votre connexion après le
           chargement, le correcteur continue de fonctionner.
@@ -127,8 +134,8 @@
 
       <section class="download" id="telecharger">
         <div class="download-card">
-          <h2>Corrigez partout sur votre PC</h2>
-          <p class="download-pitch">
+          <h2 data-i18n="downloadTitle">Corrigez partout sur votre PC</h2>
+          <p class="download-pitch" data-i18n-html="downloadPitch">
             Installez l'application Windows : sélectionnez du texte dans
             <strong>n'importe quel logiciel</strong> - Word, Outlook, Discord,
             un jeu - appuyez sur <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd>,
@@ -137,18 +144,18 @@
           <a class="download-button" href="Korr-Setup.exe" download>
             <span class="download-icon">⬇</span>
             <span>
-              <strong>Télécharger Korr pour Windows</strong>
-              <small>Installateur · environ 23 Mo</small>
+              <strong data-i18n="downloadButton">Télécharger Korr pour Windows</strong>
+              <small data-i18n="downloadSize">Installateur · environ 23 Mo</small>
             </span>
           </a>
           <ul class="download-steps">
-            <li>Téléchargez <code>Korr-Setup.exe</code></li>
-            <li>Double-cliquez sur l’installateur</li>
-            <li>Suivez les quelques étapes affichées</li>
-            <li>Lancez Korr depuis le menu Démarrer</li>
-            <li>Sélectionnez du texte, puis <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd></li>
+            <li data-i18n-html="step1">Téléchargez <code>Korr-Setup.exe</code></li>
+            <li data-i18n="step2">Double-cliquez sur l’installateur</li>
+            <li data-i18n="step3">Suivez les quelques étapes affichées</li>
+            <li data-i18n="step4">Lancez Korr depuis le menu Démarrer</li>
+            <li data-i18n-html="step5">Sélectionnez du texte, puis <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd></li>
           </ul>
-          <p class="hint">
+          <p class="hint" data-i18n-html="windowsHint">
             Korr n’est pas encore signé numériquement. Si Edge bloque le téléchargement, ouvrez-le avec
             <kbd>Ctrl</kbd>+<kbd>J</kbd>, puis choisissez <strong>Conserver</strong> et
             <strong>Conserver quand même</strong>. Si Windows affiche SmartScreen, cliquez sur
@@ -158,25 +165,25 @@
       </section>
 
       <section class="install">
-        <h2>Autres façons de l'utiliser</h2>
+        <h2 data-i18n="otherWays">Autres façons de l'utiliser</h2>
         <div class="grid">
           <article>
-            <h3>Application web</h3>
-            <p>Installez cette page comme application : elle s'ouvre hors ligne, sur ordinateur comme sur téléphone.</p>
-            <button id="install" class="primary" type="button" hidden>Installer</button>
-            <p id="install-hint" class="hint">Depuis le menu du navigateur : « Installer l'application ».</p>
+            <h3 data-i18n="webAppTitle">Application web</h3>
+            <p data-i18n="webAppText">Installez cette page comme application : elle s'ouvre hors ligne, sur ordinateur comme sur téléphone.</p>
+            <button id="install" class="primary" type="button" hidden data-i18n="install">Installer</button>
+            <p id="install-hint" class="hint" data-i18n="installHint">Depuis le menu du navigateur : « Installer l'application ».</p>
           </article>
           <article>
-            <h3>Extension navigateur</h3>
-            <p>Pour corriger directement dans Gmail, Slack ou n'importe quel champ de saisie, sans copier-coller.</p>
-            <p class="hint">Bientôt sur Edge Add-ons et Chrome Web Store.</p>
+            <h3 data-i18n="extensionTitle">Extension navigateur</h3>
+            <p data-i18n="extensionText">Pour corriger directement dans Gmail, Slack ou n'importe quel champ de saisie, sans copier-coller.</p>
+            <p class="hint" data-i18n="extensionSoon">Bientôt sur Edge Add-ons et Chrome Web Store.</p>
           </article>
         </div>
       </section>
     </main>
 
     <footer>
-      <p>
+      <p data-i18n-html="footer">
         Logiciel libre sous <a href="LICENSE">GNU GPL 3.0</a> ·
         <a href="PRIVACY.md">Confidentialité</a> ·
         Propulsé par <a href="https://grammalecte.net" rel="noopener">Grammalecte</a> et
@@ -184,6 +191,7 @@
       </p>
     </footer>
 
+    <script src="i18n.js"></script>
     <script src="language-detection.js"></script>
     <script src="app.js"></script>
   </body>

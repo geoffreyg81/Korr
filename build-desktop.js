@@ -15,7 +15,8 @@ const PROJECT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const VERSION = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "package.json"), "utf8")).version;
 const OUT_DIR = path.join(PROJECT_DIR, "dist", "desktop");
 const APP_DIR = path.join(OUT_DIR, "Korr");
-const INTERNAL_DIR = path.join(APP_DIR, "Fichiers de Korr - ne pas modifier");
+const INTERNAL_FOLDER = "Korr engine - moteur - do not modify";
+const INTERNAL_DIR = path.join(APP_DIR, INTERNAL_FOLDER);
 const ZIP_PATH = path.join(PROJECT_DIR, "dist", `korr-windows-${VERSION}.zip`);
 const ICO_PATH = path.join(OUT_DIR, "korr.ico");
 const SETUP_PATH = path.join(PROJECT_DIR, "dist", `Korr-Setup-${VERSION}.exe`);
@@ -27,7 +28,8 @@ const FILES = [
   "stop.js",
   "app-tray.ps1",
   "LICENSE",
-  "PRIVACY.md"
+  "PRIVACY.md",
+  "PRIVACY.en.md"
 ];
 
 fs.rmSync(OUT_DIR, { recursive: true, force: true });
@@ -69,13 +71,13 @@ fs.writeFileSync(
   "latin1"
 );
 
-writeWindowsFile(path.join(APP_DIR, "1 - DÉMARRER KORR.vbs"), [
+writeWindowsFile(path.join(APP_DIR, "1 - START KORR - DÉMARRER KORR.vbs"), [
   "' Lance Korr sans fenêtre. Ne pas déplacer ce fichier hors du dossier Korr.",
   "Set fso = CreateObject(\"Scripting.FileSystemObject\")",
   "rootDir = fso.GetParentFolderName(WScript.ScriptFullName)",
-  "appDir = fso.BuildPath(rootDir, \"Fichiers de Korr - ne pas modifier\")",
+  `appDir = fso.BuildPath(rootDir, "${INTERNAL_FOLDER}")`,
   "If Not fso.FolderExists(appDir) Then",
-  "  MsgBox \"Korr est encore dans le fichier ZIP. Fermez cette fenêtre, faites un clic droit sur le ZIP, choisissez 'Extraire tout', puis lancez Korr depuis le dossier extrait.\", 48, \"Korr - extraction nécessaire\"",
+  "  MsgBox \"Korr is still inside the ZIP. Right-click the ZIP, select 'Extract All', then launch Korr from the extracted folder.\" & vbCrLf & vbCrLf & \"Korr est encore dans le ZIP. Clic droit sur le ZIP, choisissez 'Extraire tout', puis lancez Korr depuis le dossier extrait.\", 48, \"Korr - extraction required / nécessaire\"",
   "  WScript.Quit 1",
   "End If",
   "Set shell = CreateObject(\"WScript.Shell\")",
@@ -84,28 +86,28 @@ writeWindowsFile(path.join(APP_DIR, "1 - DÉMARRER KORR.vbs"), [
   ""
 ]);
 
-writeWindowsFile(path.join(APP_DIR, "2 - LANCER KORR AVEC WINDOWS.vbs"), [
+writeWindowsFile(path.join(APP_DIR, "2 - START WITH WINDOWS - LANCER AVEC WINDOWS.vbs"), [
   "' Ajoute (ou retire) Korr au démarrage de Windows.",
   "Set fso = CreateObject(\"Scripting.FileSystemObject\")",
   "Set shell = CreateObject(\"WScript.Shell\")",
   "appDir = fso.GetParentFolderName(WScript.ScriptFullName)",
-  "engineDir = fso.BuildPath(appDir, \"Fichiers de Korr - ne pas modifier\")",
+  `engineDir = fso.BuildPath(appDir, "${INTERNAL_FOLDER}")`,
   "If Not fso.FolderExists(engineDir) Then",
-  "  MsgBox \"Korr est encore dans le fichier ZIP. Utilisez d'abord 'Extraire tout', puis recommencez depuis le dossier extrait.\", 48, \"Korr - extraction nécessaire\"",
+  "  MsgBox \"Extract the ZIP before using this option.\" & vbCrLf & vbCrLf & \"Extrayez le ZIP avant d'utiliser cette option.\", 48, \"Korr - extraction required / nécessaire\"",
   "  WScript.Quit 1",
   "End If",
   "startup = shell.SpecialFolders(\"Startup\")",
   "linkPath = startup & \"\\Korr.lnk\"",
   "If fso.FileExists(linkPath) Then",
   "  fso.DeleteFile linkPath",
-  "  MsgBox \"Korr ne démarrera plus automatiquement.\", 64, \"Korr\"",
+  "  MsgBox \"Korr will no longer start with Windows.\" & vbCrLf & vbCrLf & \"Korr ne démarrera plus automatiquement.\", 64, \"Korr\"",
   "Else",
   "  Set link = shell.CreateShortcut(linkPath)",
-  "  link.TargetPath = appDir & \"\\1 - DÉMARRER KORR.vbs\"",
+  "  link.TargetPath = appDir & \"\\1 - START KORR - DÉMARRER KORR.vbs\"",
   "  link.WorkingDirectory = appDir",
-  "  link.Description = \"Correcteur de français Korr\"",
+  "  link.Description = \"Korr grammar checker / correcteur\"",
   "  link.Save",
-  "  MsgBox \"Korr démarrera avec Windows.\", 64, \"Korr\"",
+  "  MsgBox \"Korr will start with Windows.\" & vbCrLf & vbCrLf & \"Korr démarrera avec Windows.\", 64, \"Korr\"",
   "End If",
   ""
 ]);
@@ -153,7 +155,7 @@ writeWindowsFile(path.join(APP_DIR, "0 - À LIRE AVANT DE COMMENCER.txt"), [
   "",
   "À NE PAS MODIFIER",
   "",
-  "  Le dossier « Fichiers de Korr - ne pas modifier » contient le moteur.",
+  `  Le dossier « ${INTERNAL_FOLDER} » contient le moteur.`,
   "  Vous pouvez l'ignorer, mais ne le supprimez pas et ne le déplacez pas.",
   "",
   "QUITTER",
@@ -177,6 +179,59 @@ writeWindowsFile(path.join(APP_DIR, "0 - À LIRE AVANT DE COMMENCER.txt"), [
   "  Logiciel libre sous GNU GPL 3.0 (voir LICENSE).",
   "  Correcteur Grammalecte 2.3.0 - https://grammalecte.net",
   "  Runtime Node.js sous licence MIT (dans le dossier technique).",
+  ""
+]);
+
+writeWindowsFile(path.join(APP_DIR, "0 - READ BEFORE STARTING.txt"), [
+  "KORR - QUICK START",
+  "======================================",
+  "",
+  "IF WINDOWS BLOCKS KORR",
+  "",
+  "  Korr is not digitally signed yet. Select More info, then Run anyway",
+  "  if Windows SmartScreen appears.",
+  "",
+  "PORTABLE ZIP ONLY",
+  "",
+  "  Right-click the ZIP and select Extract All before launching Korr.",
+  "  Do not launch files directly from the ZIP preview window.",
+  "",
+  "START KORR",
+  "",
+  "  Double-click 1 - START KORR - DÉMARRER KORR.",
+  "  A purple icon appears near the Windows clock.",
+  "",
+  "USE KORR IN ANY APPLICATION",
+  "",
+  "  1. Select text in Word, a browser, email or any other program.",
+  "  2. Press Ctrl+Alt+C.",
+  "  3. Korr replaces the selection. Press Ctrl+Z to undo.",
+  "",
+  "  Ctrl+Alt+P   professional rewrite *",
+  "  Ctrl+Alt+A   friendly rewrite *",
+  "  Ctrl+Alt+R   concise rewrite *",
+  "",
+  "  * These styles require the optional local Ollama service.",
+  "",
+  "START WITH WINDOWS (OPTIONAL)",
+  "",
+  "  Double-click 2 - START WITH WINDOWS - LANCER AVEC WINDOWS.",
+  "  Run it again to disable automatic startup.",
+  "",
+  "DO NOT MODIFY",
+  "",
+  `  The folder named ${INTERNAL_FOLDER} contains the engine.`,
+  "  Do not delete or move it.",
+  "",
+  "PRIVACY",
+  "",
+  "  Everything runs on your computer. No text is sent over the internet.",
+  "",
+  "LICENSE",
+  "",
+  "  Open-source software under GNU GPL 3.0.",
+  "  Grammalecte 2.3.0 - https://grammalecte.net",
+  "  Node.js runtime under the MIT license.",
   ""
 ]);
 

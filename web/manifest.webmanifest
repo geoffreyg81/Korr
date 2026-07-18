@@ -1,7 +1,7 @@
 {
-  "name": "Korr - correcteur français et anglais",
+  "name": "Korr - French and English grammar checker",
   "short_name": "Korr",
-  "description": "Corrigez votre français et votre anglais hors ligne. Votre texte ne quitte jamais votre appareil.",
+  "description": "Offline French and English grammar checker. Free, private and open source.",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "./",

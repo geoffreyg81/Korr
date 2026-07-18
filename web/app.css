@@ -47,10 +47,20 @@ code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.92em; 
 
 /* ---------- Hero ---------- */
 .hero {
+  position: relative;
   padding: 44px 20px 40px;
   text-align: center;
   background:
     radial-gradient(ellipse 70% 100% at 50% 0%, var(--accent-soft), transparent 70%);
+}
+.site-language {
+  position: absolute; top: 16px; right: 20px;
+  display: flex; align-items: center; gap: 8px;
+  color: var(--text-2); font-size: 12px; font-weight: 650;
+}
+.site-language select {
+  padding: 6px 9px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel); color: var(--text); font: inherit;
 }
 .brand { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 22px; }
 /* Le logo porte déjà son fond et ses coins arrondis : on ne l'habille pas. */
@@ -210,6 +220,8 @@ footer {
 footer p { margin: 0; }
 
 @media (max-width: 560px) {
+  .hero { padding-top: 76px; }
+  .site-language { top: 16px; right: 16px; }
   .editor-head { align-items: flex-start; }
   .editor-options { flex-wrap: wrap; justify-content: flex-end; }
   .editor-foot { flex-direction: column-reverse; align-items: stretch; }

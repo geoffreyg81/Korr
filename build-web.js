@@ -19,11 +19,11 @@ function version() {
 }
 
 // Fichiers propres au site.
-const WEB_FILES = ["index.html", "app.css", "app.js", "sw.js", "manifest.webmanifest"];
+const WEB_FILES = ["index.html", "app.css", "app.js", "i18n.js", "sw.js", "manifest.webmanifest"];
 // Moteur partagé avec l'extension.
 const SHARED_FILES = [
   "grammalecte-worker.js", "harper-worker.js", "language-detection.js",
-  "grammar-rules.js", "LICENSE", "PRIVACY.md"
+  "grammar-rules.js", "LICENSE", "PRIVACY.md", "PRIVACY.en.md"
 ];
 const DIRECTORIES = ["icons", "vendor"];
 const HARPER_FILES = [

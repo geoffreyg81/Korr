@@ -14,16 +14,30 @@ const sampleButton = document.getElementById("sample");
 const languageSelect = document.getElementById("language");
 const installButton = document.getElementById("install");
 const installHint = document.getElementById("install-hint");
+const i18n = globalThis.korrI18n;
+const t = (key, values) => i18n.t(key, values);
 
 const FRENCH_SAMPLE = `Salut, je ne peux pas venir à la réunion demain, désolé pour le retard.
 
 Les décisions importantes que la direction a pris la semaine dernière, nous nous sommes rendus compte trop tard qu'elles étaient mauvaises. Si j'aurais su, je n'y serai pas aller. Bien que le directeur a validé le projet, j'ai préféré de ne rien dire.`;
 const ENGLISH_SAMPLE = `Hello, I have went home yesterday and I could of called you sooner. This solution is alot better, but their is still a few problems to solve.`;
 
-function setState(message, className = "") {
-  engineState.textContent = message;
+let stateTranslation = { key: "loading", values: {}, className: "" };
+let summaryTranslation = null;
+
+function setState(key, values = {}, className = "") {
+  stateTranslation = { key, values, className };
+  engineState.textContent = t(key, values);
   engineState.className = `engine-state ${className}`.trim();
 }
+
+window.addEventListener("korr:locale", () => {
+  const { key, values, className } = stateTranslation;
+  setState(key, values, className);
+  if (summaryTranslation) {
+    summary.textContent = t(summaryTranslation.key, summaryTranslation.values);
+  }
+});
 
 function createWorkerClient(url, options) {
   const worker = new Worker(url, options);
@@ -39,9 +53,9 @@ function createWorkerClient(url, options) {
   });
 
   worker.addEventListener("error", (event) => {
-    setState(`Le correcteur n'a pas pu se charger : ${event.message}`, "is-error");
+    setState("loadError", { error: event.message }, "is-error");
     for (const [id, resolve] of pending) {
-      resolve({ ok: false, error: "Moteur indisponible." });
+      resolve({ ok: false, error: t("engineUnavailable") });
       pending.delete(id);
     }
   });
@@ -67,20 +81,18 @@ function englishClient() {
   const started = performance.now();
   const response = await askFrench("PING");
   if (!response.ok) {
-    setState(response.error || "Le correcteur n'a pas pu se charger.", "is-error");
+    setState("loadError", { error: response.error || t("engineUnavailable") }, "is-error");
     return;
   }
   ready = true;
   correctButton.disabled = false;
-  setState(`Correcteur prêt en ${Math.round(performance.now() - started)} ms · hors ligne`, "is-ready");
+  setState("readyMs", { ms: Math.round(performance.now() - started) }, "is-ready");
 })();
 
 languageSelect.value = localStorage.getItem("korr-language") || "auto";
 languageSelect.addEventListener("change", () => {
   localStorage.setItem("korr-language", languageSelect.value);
-  setState(languageSelect.value === "en" && !englishReady
-    ? "Harper sera chargé à la première correction anglaise · hors ligne"
-    : "Correcteur prêt · hors ligne", "is-ready");
+  setState(languageSelect.value === "en" && !englishReady ? "harperFirst" : "ready", {}, "is-ready");
 });
 
 async function runCorrection() {
@@ -92,31 +104,34 @@ async function runCorrection() {
   if (!ready) return;
 
   correctButton.disabled = true;
-  const previousLabel = correctButton.textContent;
-  correctButton.textContent = "Correction…";
+  correctButton.textContent = t("correcting");
 
   const language = languageSelect.value === "auto"
     ? globalThis.korrLanguage.detectLanguage(text)
     : languageSelect.value;
-  if (language === "en" && !englishReady) correctButton.textContent = "Chargement de Harper…";
+  if (language === "en" && !englishReady) correctButton.textContent = t("loadingHarper");
   const response = await (language === "en" ? englishClient() : askFrench)("CORRECT", text);
   if (language === "en" && response.ok) englishReady = true;
 
   correctButton.disabled = false;
-  correctButton.textContent = previousLabel;
+  correctButton.textContent = t("correct");
 
   if (!response.ok) {
-    setState(response.error || "La correction a échoué.", "is-error");
+    setState("correctionFailed", {}, "is-error");
     return;
   }
 
-  setState(`${language === "en" ? "Harper · English" : "Grammalecte · Français"} · hors ligne`, "is-ready");
+  setState(language === "en" ? "engineEnglish" : "engineFrench", {}, "is-ready");
   output.value = response.text;
   result.hidden = false;
   const count = Number(response.corrections) || 0;
-  summary.textContent = response.text === text
-    ? "Aucune faute détectée"
-    : `${count} correction${count > 1 ? "s" : ""} · ${Math.round(response.durationMs)} ms`;
+  summaryTranslation = response.text === text
+    ? { key: "noErrors", values: {} }
+    : {
+      key: count === 1 ? "correctionOne" : "correctionMany",
+      values: { count, ms: Math.round(response.durationMs) }
+    };
+  summary.textContent = t(summaryTranslation.key, summaryTranslation.values);
   result.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
@@ -128,19 +143,21 @@ input.addEventListener("keydown", (event) => {
   }
 });
 sampleButton.addEventListener("click", () => {
-  input.value = languageSelect.value === "en" ? ENGLISH_SAMPLE : FRENCH_SAMPLE;
+  const useEnglishSample = languageSelect.value === "en" ||
+    (languageSelect.value === "auto" && i18n.locale === "en");
+  input.value = useEnglishSample ? ENGLISH_SAMPLE : FRENCH_SAMPLE;
   input.focus();
   runCorrection();
 });
 copyButton.addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(output.value);
-    copyButton.textContent = "Copié ✓";
+    copyButton.textContent = t("copied");
   } catch {
     output.select();
-    copyButton.textContent = "Sélectionné";
+    copyButton.textContent = t("selected");
   }
-  setTimeout(() => { copyButton.textContent = "Copier"; }, 1800);
+  setTimeout(() => { copyButton.textContent = t("copy"); }, 1800);
 });
 reuseButton.addEventListener("click", () => {
   input.value = output.value;
@@ -164,7 +181,7 @@ installButton.addEventListener("click", async () => {
 });
 window.addEventListener("appinstalled", () => {
   installButton.hidden = true;
-  installHint.textContent = "Application installée ✓";
+  installHint.textContent = t("installed");
   installHint.hidden = false;
 });
 

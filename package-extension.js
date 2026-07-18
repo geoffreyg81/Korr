@@ -34,7 +34,8 @@ const FILES = [
   "language-detection.js",
   "grammar-rules.js",
   "LICENSE",
-  "PRIVACY.md"
+  "PRIVACY.md",
+  "PRIVACY.en.md"
 ];
 const DIRECTORIES = ["icons", "vendor"];
 

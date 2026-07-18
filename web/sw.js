@@ -16,6 +16,7 @@ const SHELL = [
   "index.html",
   "app.css",
   "app.js",
+  "i18n.js",
   "manifest.webmanifest",
   "favicon.ico",
   "grammalecte-worker.js",
