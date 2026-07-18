@@ -15,9 +15,10 @@ const languageSelect = document.getElementById("language");
 const installButton = document.getElementById("install");
 const installHint = document.getElementById("install-hint");
 
-const SAMPLE = `Salut, je ne peux pas venir à la réunion demain, désolé pour le retard.
+const FRENCH_SAMPLE = `Salut, je ne peux pas venir à la réunion demain, désolé pour le retard.
 
 Les décisions importantes que la direction a pris la semaine dernière, nous nous sommes rendus compte trop tard qu'elles étaient mauvaises. Si j'aurais su, je n'y serai pas aller. Bien que le directeur a validé le projet, j'ai préféré de ne rien dire.`;
+const ENGLISH_SAMPLE = `Hello, I have went home yesterday and I could of called you sooner. This solution is alot better, but their is still a few problems to solve.`;
 
 function setState(message, className = "") {
   engineState.textContent = message;
@@ -127,8 +128,7 @@ input.addEventListener("keydown", (event) => {
   }
 });
 sampleButton.addEventListener("click", () => {
-  input.value = SAMPLE;
-  languageSelect.value = "auto";
+  input.value = languageSelect.value === "en" ? ENGLISH_SAMPLE : FRENCH_SAMPLE;
   input.focus();
   runCorrection();
 });
