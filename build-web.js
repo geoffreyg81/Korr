@@ -80,7 +80,7 @@ createIcoFromPng(path.join(PROJECT_DIR, "icons", "icon-32.png"), faviconPath);
 // - sinon : le zip est copié dans le site, pratique pour tester en local.
 const downloadUrl = process.env.ZF_DOWNLOAD_URL;
 const desktopZip = path.join(PROJECT_DIR, "dist", `korr-windows-${version()}.zip`);
-const releaseDownloadUrl = `https://github.com/geoffreyg81/zero-friction/releases/download/v${version()}/korr-windows.zip`;
+const releaseDownloadUrl = `https://github.com/geoffreyg81/Korr/releases/download/v${version()}/korr-windows-${version()}.zip`;
 
 if (downloadUrl) {
   const indexPath = path.join(OUT_DIR, "index.html");
