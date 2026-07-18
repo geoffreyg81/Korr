@@ -323,6 +323,26 @@ function grammalecte() {
     replace(/\bdesfois(?![\p{L}\p{N}])/giu, "des fois");
     replace(/\b(plein(?:e)?s?\s+de\s+)(truc|chose|idée|problème)(?!\p{L})/giu, "$1$2s");
 
+    // « sa » devant un verbe est le pronom « ça » : « sa fait longtemps » →
+    // « ça fait longtemps ». Sans cette règle, Grammalecte proposait « son
+    // fait ». La liste ne contient que des verbes, jamais des noms.
+    replace(/\bsa(?=\s+(?:va|fait|marche|dépend|craint|suffit|ira|irait|allait|passe|change|commence|continue|recommence|m’|t’|me|te|nous|vous)\b)/giu, "ça");
+
+    // Conjugaisons barbares : aucune de ces formes n’existe en français, et le
+    // dictionnaire les « rapprochait » d’un mot valide mais absurde
+    // (« croivent » → « croisent », « disez » → « dise »).
+    replace(/\bcroivent(?![\p{L}\p{N}])/giu, (m) => preserveCase(m, "croient"));
+    replace(/\bcroive(s?)(?![\p{L}\p{N}])/giu, (m) => preserveCase(m, m.toLowerCase().endsWith("s") ? "croies" : "croie"));
+    replace(/\bdisez(?![\p{L}\p{N}])/giu, (m) => preserveCase(m, "dites"));
+    replace(/\bfaisez(?![\p{L}\p{N}])/giu, (m) => preserveCase(m, "faites"));
+    replace(/\bvoyent(?![\p{L}\p{N}])/giu, (m) => preserveCase(m, "voient"));
+
+    // « est-ce-que » ne prend jamais de trait d’union entre « ce » et « que ».
+    replace(/\b([Ee]st)-ce-que\b/gu, "$1-ce que");
+
+    // « , voir même » : après une virgule, c’est la conjonction « voire ».
+    replace(/(,\s*)voir(\s+même)(?![\p{L}\p{N}])/giu, "$1voire$2");
+
     // « pallier » est transitif direct : « pallier à/au/aux » est un barbarisme.
     // La préposition disparaît, l’article contracté redevient défini.
     replace(/\b(pallier)\s+aux\b/giu, "$1 les");
@@ -765,6 +785,7 @@ function grammalecte() {
       const original = normalizedText.slice(error.nStart, error.nEnd);
       if (isUnsafePronounRewrite(original, error)) continue;
       if (error.sType === "infi" && !expectsInfinitive(normalizedText, error.nStart)) continue;
+      if (isRiskyQuandToQuant(normalizedText, error)) continue;
       // Grammalecte propose parfois plusieurs pistes (« ce » → « cette » ou
       // « se ») : on laisse le contexte trancher plutôt que de prendre la
       // première venue.
@@ -1105,6 +1126,25 @@ function grammalecte() {
   // « s’il s’agit d’une action à accomplir ». Elle transformait « venir demain
   // désolé » en « désoler ». On ne la suit que là où un infinitif est attendu,
   // c’est-à-dire juste après un semi-auxiliaire ou une préposition.
+  // « Quant à X » introduit un thème puis une virgule. Si une proposition
+  // conjuguée suit avant toute ponctuation, c'est le « quand » temporel :
+  // « Quand à midi la cloche sonne, on mange » doit garder son « quand ».
+  function isRiskyQuandToQuant(text, error) {
+    const original = text.slice(error.nStart, error.nEnd).toLocaleLowerCase("fr-FR");
+    if (original !== "quand") return false;
+    const suggestion = firstSuggestion(error.aSuggestions).toLocaleLowerCase("fr-FR");
+    if (!suggestion.startsWith("quant")) return false;
+
+    const following = text.slice(error.nEnd).split(/[,.!?;:]/u)[0] || "";
+    return (following.match(/[\p{L}’'-]+/gu) || []).some(isConjugatedVerbForm);
+  }
+
+  function isConjugatedVerbForm(word) {
+    return morphOf(word).some(
+      (morph) => /:V/u.test(morph) && /:(?:I[pqsf]|S[pq]|K|E)(?=[:/])/u.test(morph)
+    );
+  }
+
   function expectsInfinitive(text, start) {
     const previous = text.slice(0, start).trimEnd().match(/[\p{L}’'-]+$/u)?.[0] || "";
     return INFINITIVE_TRIGGERS.has(previous.toLocaleLowerCase("fr-FR"));

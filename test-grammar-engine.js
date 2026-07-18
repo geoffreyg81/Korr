@@ -84,6 +84,19 @@ const cases = [
   // Garde-fous : « ce sont » présentatif et « des urgences » (nom) intacts.
   ["Ce sont des problèmes graves.", "Ce sont des problèmes graves."],
   ["Le service des urgences est ouvert.", "Le service des urgences est ouvert."],
+  // Corpus des fautes fréquentes : barbarismes de conjugaison, locutions.
+  ["Ils croivent que c’est facile.", "Ils croient que c’est facile."],
+  ["Vous disez toujours la même chose.", "Vous dites toujours la même chose."],
+  ["Vous faisez du bon travail.", "Vous faites du bon travail."],
+  ["Sa fait longtemps qu’on attend.", "Ça fait longtemps qu’on attend."],
+  ["Est-ce-que tu viens ce soir ?", "Est-ce que tu viens ce soir ?"],
+  ["Il est doué, voir même brillant.", "Il est doué, voire brillant."],
+  ["Quelque soit la situation, il reste calme.", "Quelle que soit la situation, il reste calme."],
+  ["Quand à moi, je reste ici.", "Quant à moi, je reste ici."],
+  // Garde-fous : « quand » temporel, « voir même » légitime, « quelque » adverbe.
+  ["Quand à midi la cloche sonne, on mange.", "Quand à midi la cloche sonne, on mange."],
+  ["Il faut voir même les détails.", "Il faut voir même les détails."],
+  ["Quelque chose me dit qu’il viendra.", "Quelque chose me dit qu’il viendra."],
   // Infinitif attendu après « veuillez » / « vouloir » (tournures épistolaires).
   ["Veuillez trouvés ci-joint le rapport.", "Veuillez trouver ci-joint le rapport."],
   [

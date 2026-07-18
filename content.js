@@ -114,12 +114,15 @@
         amical: "réécrit en style amical",
         concis: "raccourci à l’essentiel"
       };
+      const correctionCount = Number.isFinite(result.corrections) && result.corrections > 0
+        ? ` · ${result.corrections} correction${result.corrections > 1 ? "s" : ""}`
+        : "";
       const successMessage = result.text === snapshot.text
         ? "Texte déjà correct."
         : result.fallback
           ? result.fallback
         : result.engine === "grammalecte"
-          ? `Texte corrigé instantanément${Number.isFinite(result.durationMs) ? ` · ${result.durationMs} ms` : ""}.`
+          ? `Texte corrigé${correctionCount}${Number.isFinite(result.durationMs) ? ` · ${result.durationMs} ms` : ""}.`
         : styleLabels[result.style]
           ? `Texte ${styleLabels[result.style]} par l’IA.`
           : "Texte corrigé par l’IA approfondie.";
