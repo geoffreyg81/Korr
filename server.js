@@ -2,6 +2,8 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { correctFrenchText, initializeGrammarEngine } from "./grammar-engine.js";
+import { correctEnglishText, initializeEnglishEngine } from "./english-engine.js";
+import "./language-detection.js";
 
 const IS_MAIN_MODULE = Boolean(
   process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
@@ -27,6 +29,9 @@ const STYLES = {
     label: "correction",
     prompt: `Tu es un correcteur automatique. Corrige uniquement orthographe, grammaire, conjugaison, ponctuation et syntaxe.
 Préserve sens, ton, langue et mise en forme. Ne donne jamais de variantes. Si le genre est inconnu, utilise le masculin non marqué.
+Conserve exactement les retours à la ligne et le découpage en paragraphes du texte reçu.
+Relis chaque accord sujet-verbe et participe-COD, les verbes impersonnels, les adjectifs verbaux et toute virgule entre un sujet et son verbe. Rétablis l’ordre syntaxique naturel si nécessaire.
+Ne remplace jamais un mot déjà correct par une graphie voisine et ne reformule pas le vocabulaire au-delà des anglicismes manifestes.
 Réponds uniquement avec le texte corrigé, sans explication ni guillemets.`,
     minRatio: 0.7,
     maxRatio: 1.3,
@@ -37,7 +42,7 @@ Réponds uniquement avec le texte corrigé, sans explication ni guillemets.`,
   },
   professionnel: {
     label: "style professionnel",
-    prompt: `Tu es un assistant de rédaction. Réécris le texte en français professionnel, courtois et clair, comme dans un courriel de travail soigné.
+    prompt: `Tu es un assistant de rédaction. Réécris le texte dans sa langue d'origine avec un ton professionnel, courtois et clair, comme dans un courriel de travail soigné.
 Corrige toutes les fautes. Conserve toutes les informations, le sens et la langue. N'invente rien, n'ajoute aucune formule de politesse absente du texte.
 Réponds uniquement avec le texte réécrit, sans explication ni guillemets.`,
     minRatio: 0.6,
@@ -49,7 +54,7 @@ Réponds uniquement avec le texte réécrit, sans explication ni guillemets.`,
   },
   amical: {
     label: "style amical",
-    prompt: `Tu es un assistant de rédaction. Réécris le texte en français naturel, chaleureux et détendu, comme un message à un ami.
+    prompt: `Tu es un assistant de rédaction. Réécris le texte dans sa langue d'origine avec un ton naturel, chaleureux et détendu, comme un message à un ami.
 Garde le tutoiement ou le vouvoiement d'origine. Corrige toutes les fautes. Conserve toutes les informations et le sens. N'invente rien.
 Réponds uniquement avec le texte réécrit, sans explication ni guillemets.`,
     minRatio: 0.6,
@@ -91,7 +96,7 @@ const server = http.createServer(async (request, response) => {
       return sendJson(response, 200, {
         name: "Korr",
         status: "backend actif",
-        defaultEngine: "Grammalecte instantané",
+        defaultEngine: "Grammalecte + Harper instantanés",
         health: "/api/health"
       });
     }
@@ -129,12 +134,18 @@ if (IS_MAIN_MODULE) {
     console.log(`Korr prêt sur http://${HOST}:${PORT}`);
     // Le port est ouvert immédiatement ; le moteur se charge juste après.
     // Une requête arrivée pendant le chargement attend simplement la fin.
-    setImmediate(() => {
+    setImmediate(async () => {
       initializeGrammarEngine();
       // Phrase de chauffe : le tout premier passage paie la compilation JIT des
       // chemins d'analyse, autant l'absorber ici plutôt qu'à la première requête.
       correctFrenchText("Une petite frase de chauffe pour préparer le moteur avant la première correction.");
       console.log("Correcteur instantané Grammalecte chargé.");
+      try {
+        await initializeEnglishEngine();
+        console.log("Correcteur anglais Harper chargé.");
+      } catch (error) {
+        console.warn(`Harper indisponible : ${error?.message || error}`);
+      }
       console.log(`Mode approfondi optionnel : ${DEFAULT_MODEL}`);
     });
   });
@@ -158,7 +169,7 @@ async function handleHealth(response) {
 
   return sendJson(response, 200, {
     status: "ok",
-    instantEngine: "Grammalecte 2.3.0",
+    instantEngine: "Grammalecte 2.3.0 + Harper 2.4.0",
     ollama,
     defaultModel: DEFAULT_MODEL,
     models
@@ -173,6 +184,10 @@ async function handleCorrection(request, response) {
   const styleName = Object.hasOwn(STYLES, body.style) ? body.style : "corriger";
   const style = STYLES[styleName];
   const model = validateModel(body.model) || DEFAULT_MODEL;
+  const requestedLanguage = ["fr", "en"].includes(body.language) ? body.language : "auto";
+  const language = requestedLanguage === "auto"
+    ? globalThis.korrLanguage.detectLanguage(text)
+    : requestedLanguage;
 
   if (!text.trim()) return sendJson(response, 400, { error: "Aucun texte à corriger." });
   if (text.length > MAX_INPUT_CHARACTERS) {
@@ -182,24 +197,39 @@ async function handleCorrection(request, response) {
   }
 
   if (mode === "instant") {
-    const result = correctFrenchText(text);
+    const result = await correctInstantText(text, language);
     return sendJson(response, 200, {
       ...result,
-      engine: "grammalecte"
+      engine: instantEngineName(language),
+      language,
+      ...(language === "mixed" ? {
+        fallback: "Texte français et anglais mélangé : choisissez explicitement la langue."
+      } : {})
     });
   }
 
   // Le moteur déterministe nettoie d’abord les fautes simples. Le modèle se
   // concentre ainsi sur la syntaxe, puis sa réponse repasse dans le même filet.
-  const instantResult = correctFrenchText(text);
+  const instantResult = await correctInstantText(text, language);
   const preparedText = instantResult.text;
+
+  if (language === "mixed") {
+    return sendJson(response, 200, {
+      ...instantResult,
+      engine: "mixed",
+      language,
+      style: styleName,
+      fallback: "Texte français et anglais mélangé : choisissez explicitement la langue."
+    });
+  }
 
   // Un SMS déjà remis au propre n'a pas besoin de l'IA pour une simple
   // correction ; les styles de réécriture, eux, gardent leur raison d'être.
   if (instantResult.smsDetected && styleName === "corriger") {
     return sendJson(response, 200, {
       ...instantResult,
-      engine: "grammalecte",
+      engine: instantEngineName(language),
+      language,
       style: styleName,
       fallback: "Langage SMS corrigé en mode rapide · IA 4B inutile."
     });
@@ -253,19 +283,21 @@ async function handleCorrection(request, response) {
   if (!isPlausibleCorrection(preparedText, correctedText, style)) {
     return sendJson(response, 200, {
       ...instantResult,
-      engine: "grammalecte",
+      engine: instantEngineName(language),
+      language,
       style: styleName,
       fallback: "Réponse IA écartée car elle s’éloignait trop du texte."
     });
   }
 
-  const verifiedResult = correctFrenchText(correctedText);
+  const verifiedResult = await correctInstantText(correctedText, language);
   // Grammalecte est normalement conservateur, mais le résultat effectivement
   // renvoyé doit respecter les mêmes protections que la sortie brute du LLM.
   if (!isPlausibleCorrection(preparedText, verifiedResult.text, style)) {
     return sendJson(response, 200, {
       ...instantResult,
-      engine: "grammalecte",
+      engine: instantEngineName(language),
+      language,
       style: styleName,
       fallback: "Réponse IA écartée après vérification de son contenu."
     });
@@ -274,10 +306,23 @@ async function handleCorrection(request, response) {
   return sendJson(response, 200, {
     ...verifiedResult,
     durationMs: Math.round(performance.now() - startedAt),
-    engine: "ollama+grammalecte",
+    engine: language === "en" ? "ollama+harper" : "ollama+grammalecte",
+    language,
     style: styleName,
     model
   });
+}
+
+async function correctInstantText(text, language) {
+  if (language === "mixed") {
+    return { text, corrections: 0, durationMs: 0 };
+  }
+  return language === "en" ? correctEnglishText(text) : correctFrenchText(text);
+}
+
+function instantEngineName(language) {
+  if (language === "mixed") return "mixed";
+  return language === "en" ? "harper" : "grammalecte";
 }
 
 function isPlausibleCorrection(source, candidate, style) {

@@ -141,6 +141,7 @@ button { font-family: inherit; font-size: 14px; cursor: pointer; }
 }
 .engine-state { color: var(--text-3); font-size: 13px; }
 .engine-state.is-ready { color: var(--ok); }
+.engine-state.is-warning { color: #b45309; }
 .engine-state.is-error { color: #dc2626; }
 .summary { color: var(--ok); font-size: 13px; font-weight: 650; }
 

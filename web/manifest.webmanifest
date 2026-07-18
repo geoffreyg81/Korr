@@ -2,7 +2,7 @@
   "name": "Korr - French and English grammar checker",
   "short_name": "Korr",
   "description": "Offline French and English grammar checker. Free, private and open source.",
-  "lang": "fr",
+  "lang": "en",
   "dir": "ltr",
   "start_url": "./",
   "scope": "./",

@@ -23,7 +23,7 @@ const WEB_FILES = ["index.html", "app.css", "app.js", "i18n.js", "sw.js", "manif
 // Moteur partagé avec l'extension.
 const SHARED_FILES = [
   "grammalecte-worker.js", "harper-worker.js", "language-detection.js",
-  "grammar-rules.js", "LICENSE", "PRIVACY.md", "PRIVACY.en.md"
+  "grammar-rules.js", "english-rules.js", "LICENSE", "PRIVACY.md", "PRIVACY.en.md"
 ];
 const DIRECTORIES = ["icons", "vendor"];
 const HARPER_FILES = [
@@ -113,8 +113,8 @@ const buildHash = createHash("sha256");
 for (const file of [...WEB_FILES, ...SHARED_FILES, "favicon.ico"]) {
   buildHash.update(fs.readFileSync(path.join(OUT_DIR, file)));
 }
-for (const file of HARPER_FILES) {
-  buildHash.update(fs.readFileSync(path.join(OUT_DIR, "vendor", "harper", file)));
+for (const directory of ["icons", path.join("vendor", "grammalecte"), path.join("vendor", "harper")]) {
+  hashDirectory(buildHash, path.join(OUT_DIR, directory), directory);
 }
 const buildId = buildHash.digest("hex").slice(0, 12);
 const serviceWorkerPath = path.join(OUT_DIR, "sw.js");
@@ -148,6 +148,20 @@ function directorySize(directory) {
     total += entry.isDirectory() ? directorySize(full) : fs.statSync(full).size;
   }
   return total;
+}
+
+function hashDirectory(hash, directory, relativeDirectory) {
+  const entries = fs.readdirSync(directory, { withFileTypes: true })
+    .sort((left, right) => left.name.localeCompare(right.name));
+  for (const entry of entries) {
+    const full = path.join(directory, entry.name);
+    const relative = path.join(relativeDirectory, entry.name).replaceAll("\\", "/");
+    if (entry.isDirectory()) hashDirectory(hash, full, relative);
+    else {
+      hash.update(relative);
+      hash.update(fs.readFileSync(full));
+    }
+  }
 }
 
 function copyHarperRuntime(destination) {

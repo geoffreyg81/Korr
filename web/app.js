@@ -24,6 +24,9 @@ const ENGLISH_SAMPLE = `Hello, I have went home yesterday and I could of called 
 
 let stateTranslation = { key: "loading", values: {}, className: "" };
 let summaryTranslation = null;
+const WORKER_TIMEOUT_MS = 60_000;
+
+importSharedText();
 
 function setState(key, values = {}, className = "") {
   stateTranslation = { key, values, className };
@@ -39,47 +42,79 @@ window.addEventListener("korr:locale", () => {
   }
 });
 
-function createWorkerClient(url, options) {
+function createWorkerClient(url, options, onFatal) {
   const worker = new Worker(url, options);
   const pending = new Map();
   let nextId = 1;
+  let failed = false;
+
+  const fail = (message) => {
+    if (failed) return;
+    failed = true;
+    worker.terminate();
+    setState("loadError", { error: message }, "is-error");
+    for (const [id, entry] of pending) {
+      clearTimeout(entry.timer);
+      entry.resolve({ ok: false, error: message });
+      pending.delete(id);
+    }
+    onFatal?.();
+  };
 
   worker.addEventListener("message", (event) => {
     const { id, ...payload } = event.data || {};
-    const resolve = pending.get(id);
-    if (!resolve) return;
+    const entry = pending.get(id);
+    if (!entry) return;
     pending.delete(id);
-    resolve(payload);
+    clearTimeout(entry.timer);
+    entry.resolve(payload);
   });
 
   worker.addEventListener("error", (event) => {
-    setState("loadError", { error: event.message }, "is-error");
-    for (const [id, resolve] of pending) {
-      resolve({ ok: false, error: t("engineUnavailable") });
-      pending.delete(id);
-    }
+    fail(event.message || t("engineUnavailable"));
   });
 
   return (type, text) => new Promise((resolve) => {
+    if (failed) {
+      resolve({ ok: false, error: t("engineUnavailable") });
+      return;
+    }
     const id = nextId++;
-    pending.set(id, resolve);
+    const timer = setTimeout(() => fail(t("engineTimeout")), WORKER_TIMEOUT_MS);
+    pending.set(id, { resolve, timer });
     worker.postMessage({ id, type, text });
   });
 }
 
-const askFrench = createWorkerClient("grammalecte-worker.js");
+let askFrench = null;
 let askEnglish = null;
 let ready = false;
 let englishReady = false;
 
 function englishClient() {
-  if (!askEnglish) askEnglish = createWorkerClient("harper-worker.js", { type: "module" });
+  if (!askEnglish) {
+    askEnglish = createWorkerClient("harper-worker.js", { type: "module" }, () => {
+      askEnglish = null;
+      englishReady = false;
+    });
+  }
   return askEnglish;
 }
 
+function frenchClient() {
+  if (!askFrench) {
+    askFrench = createWorkerClient("grammalecte-worker.js", undefined, () => {
+      askFrench = null;
+      ready = false;
+    });
+  }
+  return askFrench;
+}
+
 (async () => {
+  await prepareOfflineRuntime();
   const started = performance.now();
-  const response = await askFrench("PING");
+  const response = await frenchClient()("PING");
   if (!response.ok) {
     setState("loadError", { error: response.error || t("engineUnavailable") }, "is-error");
     return;
@@ -109,8 +144,19 @@ async function runCorrection() {
   const language = languageSelect.value === "auto"
     ? globalThis.korrLanguage.detectLanguage(text)
     : languageSelect.value;
+  if (language === "mixed") {
+    correctButton.disabled = false;
+    correctButton.textContent = t("correct");
+    setState("mixedDetected", {}, "is-warning");
+    output.value = text;
+    result.hidden = false;
+    summaryTranslation = { key: "mixedHelp", values: {} };
+    summary.textContent = t(summaryTranslation.key);
+    result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    return;
+  }
   if (language === "en" && !englishReady) correctButton.textContent = t("loadingHarper");
-  const response = await (language === "en" ? englishClient() : askFrench)("CORRECT", text);
+  const response = await (language === "en" ? englishClient() : frenchClient())("CORRECT", text);
   if (language === "en" && response.ok) englishReady = true;
 
   correctButton.disabled = false;
@@ -181,12 +227,43 @@ installButton.addEventListener("click", async () => {
 });
 window.addEventListener("appinstalled", () => {
   installButton.hidden = true;
+  installHint.dataset.i18n = "installed";
   installHint.textContent = t("installed");
   installHint.hidden = false;
 });
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
-  });
+if (window.matchMedia("(display-mode: standalone)").matches) {
+  installHint.dataset.i18n = "installed";
+  installHint.textContent = t("installed");
+}
+
+function importSharedText() {
+  const url = new URL(window.location.href);
+  const title = url.searchParams.get("title")?.trim() || "";
+  const text = url.searchParams.get("text")?.trim() || "";
+  const shared = [title, text].filter(Boolean).join("\n\n");
+  if (!shared) return;
+  input.value = shared;
+  url.searchParams.delete("title");
+  url.searchParams.delete("text");
+  history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+async function prepareOfflineRuntime() {
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    await navigator.serviceWorker.register("sw.js");
+    await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise((resolve) => setTimeout(resolve, 8_000))
+    ]);
+    if (!navigator.serviceWorker.controller) {
+      await Promise.race([
+        new Promise((resolve) => navigator.serviceWorker.addEventListener("controllerchange", resolve, { once: true })),
+        new Promise((resolve) => setTimeout(resolve, 2_000))
+      ]);
+    }
+  } catch {
+    // Le correcteur reste utilisable en ligne même si le cache PWA échoue.
+  }
 }

@@ -126,6 +126,18 @@ const cases = [
     "Les ministres qui se sont succédé ont échoué."
   ],
   ["Ils se sont demandés pourquoi.", "Ils se sont demandé pourquoi."],
+
+  // Corpus expert : anglicismes, nombres ordinaux, impersonnel, adjectif
+  // verbal, accord avec infinitif, syntaxe de Yoda et virgules sujet-verbe.
+  [
+    "A l'aube des années quatres-vingts , l'entreprise digital , a décidée d'initier une nouvelle stratégie. Les chaleurs extrêmes qu'il a faites l'été dernier, a complètement desséchées nos plantes verts claires. Elles étaient tout contentes, les secrétaires, de recevoir de la part de la direction , deux cents euro de primes !\n\nIl faut arrêter de chercher midi à quatorze heure. Nous devons solutionner les problèmes qui nous impacte lourdement. La cantatrice que j'ai entendu chanter hier soir, as eue un travail très fatiguant. Quoique vous en pensez: il faut des mesures rapides adoptées.\n\nVeuillez trouvé ci-joints les contrats d'embauches , que nous nous sommes permit de modifier en toute impunité.",
+    "À l’aube des années quatre-vingt, l’entreprise numérique a décidé d’entamer une nouvelle stratégie. Les chaleurs extrêmes qu’il a fait l’été dernier ont complètement desséché nos plantes vert clair. Elles étaient toutes contentes, les secrétaires, de recevoir de la part de la direction deux cents euros de primes !\n\nIl faut arrêter de chercher midi à quatorze heures. Nous devons résoudre les problèmes qui nous impactent lourdement. La cantatrice que j’ai entendue chanter hier soir a eu un travail très fatigant. Quoi que vous en pensiez, il faut adopter des mesures rapides.\n\nVeuillez trouver ci-joint les contrats d’embauche que nous nous sommes permis de modifier en toute impunité."
+  ],
+  // Garde-fous des règles précédentes.
+  ["Son empreinte digitale, relevée hier, a été comparée.", "Son empreinte digitale, relevée hier, a été comparée."],
+  ["La directrice, épuisée, a quitté la réunion.", "La directrice, épuisée, a quitté la réunion."],
+  ["Ce travail est fatiguant les participants.", "Ce travail est fatiguant les participants."],
+  ["La cantatrice a eue un travail très fatigant.", "La cantatrice a eu un travail très fatigant."],
   ["Elles se sont parlées longtemps.", "Elles se sont parlé longtemps."],
   // Le « se » COD garde l’accord ; les formes déjà correctes ne bougent pas.
   ["Elles se sont lavées ce matin.", "Elles se sont lavées ce matin."],
@@ -223,6 +235,103 @@ const cases = [
     "Le rapport du CT est validé, la PR est prête pour relecture.",
     "Le rapport du CT est validé, la PR est prête pour relecture."
   ],
+  // Garde-fous ciblés : concordance, relatives et capitalisation.
+  ["Si tu fais attention, tu seras prêt.", "Si tu fais attention, tu seras prêt."],
+  ["Si le lait tourne, je serai malade.", "Si le lait tourne, je serai malade."],
+  [
+    "Si j’avais su, je ne serais pas venu, mais demain je serai là.",
+    "Si j’avais su, je ne serais pas venu, mais demain je serai là."
+  ],
+  [
+    "Il dit que je pense que cette solution est bonne.",
+    "Il dit que je pense que cette solution est bonne."
+  ],
+  ["Il hésite pas à venir.", "Il n’hésite pas à venir."],
+  [
+    "Le dossier sur lequel on n’a travaillé ni lundi ni mardi reste vide.",
+    "Le dossier sur lequel on n’a travaillé ni lundi ni mardi reste vide."
+  ],
+  [
+    "Le dossier sur lequel on n’a travaillé qu’une heure reste incomplet.",
+    "Le dossier sur lequel on n’a travaillé qu’une heure reste incomplet."
+  ],
+  [
+    "Les questions qu’elles se sont demandées étaient difficiles.",
+    "Les questions qu’elles se sont demandées étaient difficiles."
+  ],
+  [
+    "Plusieurs employées ce sont plaint de ne pas être entendues.",
+    "Plusieurs employées se sont plaintes de ne pas être entendues."
+  ],
+
+  // Accords de sujets et homophones en contexte certain.
+  ["Tout le monde sont arrivés.", "Tout le monde est arrivé."],
+  [
+    "Chacun des employés ont reçu le document.",
+    "Chacun des employés a reçu le document."
+  ],
+  ["Beaucoup de femmes sont venu.", "Beaucoup de femmes sont venues."],
+  ["Ces mon livre.", "C’est mon livre."],
+  ["C’est enfants sont sages.", "Ces enfants sont sages."],
+  ["Je veux savoir si ces possible.", "Je veux savoir si c’est possible."],
+  ["Je me demande ou il est.", "Je me demande où il est."],
+  ["Peux-tu me dire ou elle va ?", "Peux-tu me dire où elle va ?"],
+  [
+    "Il faut qu’on est terminé avant midi.",
+    "Il faut qu’on ait terminé avant midi."
+  ],
+
+  // Accords du COD placé avant et leurs contre-exemples.
+  [
+    "Les photos que j’ai pris hier sont belles.",
+    "Les photos que j’ai prises hier sont belles."
+  ],
+  [
+    "Les photos que j’ai publié hier sont belles.",
+    "Les photos que j’ai publiées hier sont belles."
+  ],
+  [
+    "Les photos que j’ai fait hier sont belles.",
+    "Les photos que j’ai faites hier sont belles."
+  ],
+  [
+    "Les expériences que j’ai vécu étaient utiles.",
+    "Les expériences que j’ai vécues étaient utiles."
+  ],
+  [
+    "Les trois ans que j’ai vécu ici ont été difficiles.",
+    "Les trois ans que j’ai vécu ici ont été difficiles."
+  ],
+  ["Sa marche est lente.", "Sa marche est lente."],
+  ["Sa passe est précise.", "Sa passe est précise."],
+  [
+    "Bien que l’as du volant soit prudent, je reste inquiet.",
+    "Bien que l’as du volant soit prudent, je reste inquiet."
+  ],
+  [
+    "Bien que Paul a priori favorable se soit tu, nous attendons.",
+    "Bien que Paul a priori favorable se soit tu, nous attendons."
+  ],
+  ["Des robes marron sont vendues.", "Des robes marron sont vendues."],
+  ["Des robes marrons sont vendues.", "Des robes marron sont vendues."],
+
+  // Marques, acronymes, balisage et locutions à ne pas dégrader.
+  ["J’utilise OpenAI pour travailler.", "J’utilise OpenAI pour travailler."],
+  [
+    "slt dsl le CT et la PR sont OK",
+    "Salut désolé le CT et la PR sont OK"
+  ],
+  [
+    '<a href="https://example.com">Bonjour</a>',
+    '<a href="https://example.com">Bonjour</a>'
+  ],
+  [
+    "Une succession d’urgences a retardé le projet.",
+    "Une succession d’urgences a retardé le projet."
+  ],
+  ["Il pallie aux problèmes.", "Il pallie les problèmes."],
+  ["Il a pallié aux problèmes.", "Il a pallié les problèmes."],
+  ["Elle s’est permise de partir.", "Elle s’est permis de partir."],
   [
     "Salutation ! Je t’écris ce petit message pour te raconter ma journée d’hier qui c’est très mal passé. J’aimerais bien que tu lises ça attentivement. Tout d’abords, je me suis réveillé en retard parce que mon réveil n’a pas sonne. J’ai couru pour rattraper le bus, mais il était déjà parti.\n\nEnsuite, quand je suis arrivé au bureau, mes collègues m’ont dit que j’avais oublié le dossier sur lequel on n’a travaillé toutes la semaine. Ce vraiment dommage vu l’effort qu’on n’y a mit et le temps qu’il nous a fallu pourléchait.\n\nLes quelques fleurs que j’ai cueilli dans le jardin ce matin ont est déjà fane. C’est pierre à cause de la chaleur qu’il fait en ce moment. Repense les températures devrait baisser un peu des fois. Les chevaux que j’ai vus dans les champs d’a coté avait l’air d’avoir coiffe eux aussi. Même les petits oiseaux ne chantaient plus, s’enrênerait compte fait un peu mal au cœur.\n\nJe te laisse, faut que j’y aille. Hésite pas à m’appeler si tu as besoin de quoi que se soit. On se voit très bientôt j’espère !",
     "Salutations ! Je t’écris ce petit message pour te raconter ma journée d’hier qui s’est très mal passée. J’aimerais bien que tu lises ça attentivement. Tout d’abord, je me suis réveillé en retard parce que mon réveil n’a pas sonné. J’ai couru pour rattraper le bus, mais il était déjà parti.\n\nEnsuite, quand je suis arrivé au bureau, mes collègues m’ont dit que j’avais oublié le dossier sur lequel on a travaillé toute la semaine. C’est vraiment dommage vu l’effort qu’on y a mis et le temps qu’il nous a fallu pour l’écrire.\n\nLes quelques fleurs que j’ai cueillies dans le jardin ce matin sont déjà fanées. C’est peut-être à cause de la chaleur qu’il fait en ce moment. Je pense que les températures devraient baisser un peu des fois. Les chevaux que j’ai vus dans les champs d’à côté avaient l’air d’avoir soif eux aussi. Même les petits oiseaux ne chantaient plus. S’en rendre compte fait un peu mal au cœur.\n\nJe te laisse, faut que j’y aille. N’hésite pas à m’appeler si tu as besoin de quoi que ce soit. On se voit très bientôt, j’espère !"
@@ -233,10 +342,17 @@ let failures = 0;
 for (const [input, expected] of cases) {
   const result = correctFrenchText(input);
   console.log(`${result.durationMs} ms | ${input} -> ${result.text}`);
-  if (expected && result.text !== expected) failures += 1;
+  if (expected && result.text !== expected) {
+    failures += 1;
+    console.error(
+      `ÉCHEC ${failures}\nEntrée   : ${input}\nAttendu  : ${expected}\nObtenu   : ${result.text}`
+    );
+  }
 }
 
 if (failures) {
   console.error(`${failures} correction(s) attendue(s) ont échoué.`);
   process.exitCode = 1;
+} else {
+  console.log(`${cases.length} corrections et garde-fous vérifiés.`);
 }

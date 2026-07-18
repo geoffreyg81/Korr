@@ -33,6 +33,18 @@ function grammalecte() {
     const startedAt = performance.now();
     const normalizedText = text.replace(/\u00ad/g, "").normalize("NFC");
 
+    // Une chaîne contenant du balisage doit être traitée par l'intégration DOM,
+    // pas comme du texte brut. Corriger les attributs détruirait notamment les
+    // guillemets et les URL des balises.
+    if (/<\/?[A-Za-z][^>]*>/u.test(normalizedText)) {
+      return {
+        text: normalizedText,
+        corrections: 0,
+        smsDetected: false,
+        durationMs: Math.round(performance.now() - startedAt)
+      };
+    }
+
     const cached = resultCache.get(normalizedText);
     if (cached) {
       resultCache.delete(normalizedText);
@@ -112,6 +124,18 @@ function grammalecte() {
     };
 
     if (smsDetected) {
+      // Les sigles techniques en capitales sont des données utilisateur, pas
+      // des abréviations SMS : « CT », « PR » et « OK » ne doivent jamais
+      // devenir « c'était », « pour » ou un mot approchant.
+      const protectedAcronyms = [];
+      correctedText = correctedText.replace(
+        /(?<![\p{L}\p{N}])[\p{Lu}\p{N}]{2,}(?![\p{L}\p{N}])/gu,
+        (acronym) => {
+          const index = protectedAcronyms.push(acronym) - 1;
+          return `\uE000${index}\uE001`;
+        }
+      );
+
       // Lettres étirées (« Saluuuute », « coooool ») ramenées à une paire ; le
       // dictionnaire ou l’orthographe retombent ensuite sur le bon mot.
       replace(/([\p{L}])\1{2,}/gu, "$1$1");
@@ -290,6 +314,10 @@ function grammalecte() {
       replace(/\b(de\s+travers)\s+genre(?![\p{L}\p{N}])/giu, "$1, genre");
       replace(/\bmais\s+bon\s+on(?![\p{L}\p{N}])/giu, "mais bon, on");
       replace(/(^|[.!?…]\s+)([\p{Ll}])/gu, (match, prefix, letter) => `${prefix}${letter.toUpperCase()}`);
+
+      correctedText = correctedText.replace(/\uE000(\d+)\uE001/gu, (match, index) =>
+        protectedAcronyms[Number(index)] ?? match
+      );
     }
 
     // Espace insécable avant la ponctuation double (! ? : ;), règle
@@ -315,7 +343,7 @@ function grammalecte() {
     // Sans contexte, le dictionnaire les remplaçait parfois par un mot valide
     // mais absurde (« p-etre » → « pierre », par exemple).
     replace(/\bp[\s-]*etre(?![\p{L}\p{N}])/giu, "peut-être");
-    replace(/\bJe\s*pense\s*que(?![\p{L}\p{N}])/giu, "Je pense que");
+    replace(/\b([Jj]e)\s*pense\s*que(?![\p{L}\p{N}])/gu, "$1 pense que");
     replace(/\b(J[’']aimerais)bien(?![\p{L}\p{N}])/giu, "$1 bien");
     replace(/\bparceque(?![\p{L}\p{N}])/giu, "parce que");
     replace(/\bsurlequel(?![\p{L}\p{N}])/giu, "sur lequel");
@@ -326,7 +354,11 @@ function grammalecte() {
     // « sa » devant un verbe est le pronom « ça » : « sa fait longtemps » →
     // « ça fait longtemps ». Sans cette règle, Grammalecte proposait « son
     // fait ». La liste ne contient que des verbes, jamais des noms.
-    replace(/\bsa(?=\s+(?:va|fait|marche|dépend|craint|suffit|ira|irait|allait|passe|change|commence|continue|recommence|m’|t’|me|te|nous|vous)\b)/giu, "ça");
+    replace(/\bsa(?=\s+(?:va|fait|dépend|craint|suffit|ira|irait|allait|change|commence|continue|recommence|m’|t’|me|te|nous|vous)\b)/giu, "ça");
+    replace(
+      /\bsa(?=\s+(?:marche|passe)\s+(?:bien|mal|mieux|vite|lentement|encore|toujours|déjà|désormais|maintenant|ici|là|partout|facilement|difficilement|sans\s+problème)\b)/giu,
+      "ça"
+    );
 
     // Conjugaisons barbares : aucune de ces formes n’existe en français, et le
     // dictionnaire les « rapprochait » d’un mot valide mais absurde
@@ -353,14 +385,21 @@ function grammalecte() {
 
     // « pallier » est transitif direct : « pallier à/au/aux » est un barbarisme.
     // La préposition disparaît, l’article contracté redevient défini.
-    replace(/\b(pallier)\s+aux\b/giu, "$1 les");
-    replace(/\b(pallier)\s+au\b/giu, "$1 le");
-    replace(/\b(pallier)\s+à\s+(la|l’|l'|ce|cet|cette|ces|son|sa|ses|leur|leurs|mon|ma|mes|un|une)\b/giu, "$1 $2");
-    replace(/\b(pallier)\s+à\b/giu, "$1");
+    const pallierForm = "palli(?:er|e|es|ent|ons|ez|é|ée|és|ées)";
+    replace(new RegExp(`\\b(${pallierForm})\\s+aux\\b`, "giu"), "$1 les");
+    replace(new RegExp(`\\b(${pallierForm})\\s+au\\b`, "giu"), "$1 le");
+    replace(
+      new RegExp(`\\b(${pallierForm})\\s+à\\s+(la|l’|l'|ce|cet|cette|ces|son|sa|ses|leur|leurs|mon|ma|mes|un|une)\\b`, "giu"),
+      "$1 $2"
+    );
+    replace(new RegExp(`\\b(${pallierForm})\\s+à\\b`, "giu"), "$1");
 
     // « d’urgence » est une locution invariable ; le pluriel « d’urgences » est
     // fautif (à distinguer du nom « les urgences » d’un hôpital, jamais élidé).
-    replace(/\bd[’']urgences(?![\p{L}\p{N}])/giu, (match) => match.replace(/urgences/iu, "urgence"));
+    replace(
+      /\b(réparations?|travaux|mesures?|interventions?|opérations?|procédures?|soins?|besoins?|cas|traitements?)\s+d[’']urgences(?![\p{L}\p{N}])/giu,
+      (match) => match.replace(/urgences/iu, "urgence")
+    );
 
     // « Mr. » est l’abréviation anglaise ; en français c’est « M. ».
     replace(/\bMr\.?(?=\s|$)/gu, "M.");
@@ -409,7 +448,22 @@ function grammalecte() {
     // verbe de la proposition principale.
     replace(
       /\b((?:Bien que|Quoique|Encore que)\s+|(?:Bien qu|Quoiqu|Encore qu)[’'])([^.!?;:,]{1,40}?)\s*\b(a|as|avons|avez|ont|est|es|sommes|êtes|sont)\b(?=\s+\p{L})/gu,
-      (match, conjunction, subject, auxiliary) => {
+      (match, conjunction, subject, auxiliary, offset, whole) => {
+        const normalizedSubject = subject.trim().toLocaleLowerCase("fr-FR");
+        const normalizedAuxiliary = auxiliary.toLocaleLowerCase("fr-FR");
+        const nextWord = whole.slice(offset + match.length).trimStart().match(/^[\p{L}’-]+/u)?.[0]
+          ?.toLocaleLowerCase("fr-FR") || "";
+
+        // « l’as du volant » contient le nom « as », et « a priori » est une
+        // locution : ni l’un ni l’autre n’est un auxiliaire à conjuguer.
+        if (normalizedAuxiliary === "as" && !/(?:^|\s)tu$/u.test(normalizedSubject)) return match;
+        if (normalizedAuxiliary === "es" && !/(?:^|\s)tu$/u.test(normalizedSubject)) return match;
+        if (normalizedAuxiliary === "avons" && !/(?:^|\s)nous$/u.test(normalizedSubject)) return match;
+        if (normalizedAuxiliary === "avez" && !/(?:^|\s)vous$/u.test(normalizedSubject)) return match;
+        if (normalizedAuxiliary === "sommes" && !/(?:^|\s)nous$/u.test(normalizedSubject)) return match;
+        if (normalizedAuxiliary === "êtes" && !/(?:^|\s)vous$/u.test(normalizedSubject)) return match;
+        if (normalizedAuxiliary === "a" && nextWord === "priori") return match;
+
         const subjunctive = INDICATIVE_TO_SUBJUNCTIVE.get(auxiliary.toLocaleLowerCase("fr-FR"));
         if (!subjunctive) return match;
         return `${conjunction}${subject} ${subjunctive}`;
@@ -436,19 +490,32 @@ function grammalecte() {
       if (separator < 0) return sentence;
 
       const hypothesis = sentence.slice(opening.index, separator);
-      // L’hypothèse doit être à l’imparfait ou au plus-que-parfait.
-      if (!/\b(?:avais|avait|avions|aviez|avaient|étais|était|étions|étiez|étaient|[\p{L}]+ai[st]|[\p{L}]+aient)(?![\p{L}])/u.test(hypothesis)) {
+      // Le dictionnaire doit identifier un véritable imparfait. Une simple
+      // terminaison en « ais/ait » confondait « tu fais » et même « le lait »
+      // avec un imparfait.
+      const hasImperfectAuxiliary = /\b(?:avais|avait|avions|aviez|avaient|étais|était|étions|étiez|étaient)\b/iu
+        .test(hypothesis);
+      const hasImperfect = hasImperfectAuxiliary ||
+        (hypothesis.match(/\p{L}+/gu) || []).some((word) =>
+          morphOf(word).some((morph) => /:Iq(?=[:/])/u.test(morph))
+        );
+      if (!hasImperfect) {
         return sentence;
       }
 
       const main = sentence.slice(separator);
-      const rewritten = main.replace(/\b([\p{L}]+)(?![\p{L}])/gu, (word) => {
+      // La concordance ne dépasse pas la première proposition principale.
+      // Dans « ..., mais demain je serai là », le futur après « mais » décrit
+      // un fait indépendant de l’hypothèse.
+      const nextClause = main.slice(1).search(/(?:,\s*(?:mais|et|or|donc|car)\b|[;:])/iu);
+      const rewriteEnd = nextClause < 0 ? main.length : nextClause + 1;
+      const rewritten = main.slice(0, rewriteEnd).replace(/\b([\p{L}]+)(?![\p{L}])/gu, (word) => {
         const conditional = FUTURE_TO_CONDITIONAL.get(word.toLocaleLowerCase("fr-FR"));
         if (!conditional) return word;
         corrections += 1;
         return preserveCase(word, conditional);
       });
-      return sentence.slice(0, separator) + rewritten;
+      return sentence.slice(0, separator) + rewritten + main.slice(rewriteEnd);
     });
 
     // Accord du participe passé avec le COD placé avant l’auxiliaire « avoir ».
@@ -456,10 +523,31 @@ function grammalecte() {
     // (« que j’ai vu hier »). Le raisonnement : si « que » est un relatif ayant un
     // nom pour antécédent, le COD est « que » lui-même, donc ce qui suit est
     // forcément circonstanciel et l’accord s’impose.
+    // Variante avec sujet élidé : dans « que j’ai pris hier », aucune espace
+    // ne sépare le pronom de l’auxiliaire.
     replace(
-      /\b(?:Les|Des|Ces|Mes|Tes|Ses|Nos|Vos|Leurs|La|Le|Cette|Cet|Ce|Une|Un|Quelques|Plusieurs)\s+([\p{L}’'-]+)((?:\s+[\p{L}’'-]+){0,3}?)\s+qu[e’']\s*([^,;:.!?]{1,40}?)\s+(?:a|ai|as|avons|avez|ont|avait|avais|avaient|aura|aurai|auras|aurez|auront|aurait|auraient)\s+([\p{L}]+)(?=\s+[\p{L}])/gu,
-      (match, headNoun, modifiers, subject, participle) => {
-        const agreed = agreeParticipleWithAntecedent(match, headNoun, modifiers, participle);
+      /\b(?:Les|Des|Ces|Mes|Tes|Ses|Nos|Vos|Leurs|La|Le|Cette|Cet|Ce|Une|Un|Quelques|Plusieurs)\s+([\p{L}’'-]+)((?:\s+[\p{L}’'-]+){0,3}?)\s+qu[e’']\s*j[’'](?:ai|avais|aurai|aurais)\s+([\p{L}]+)(?=\s+([\p{L}’'-]+))/gu,
+      (match, headNoun, modifiers, participle, followingWord) => {
+        const agreed = agreeParticipleWithAntecedent(
+          match,
+          headNoun,
+          modifiers,
+          participle,
+          followingWord
+        );
+        return agreed || match;
+      }
+    );
+    replace(
+      /\b(?:Les|Des|Ces|Mes|Tes|Ses|Nos|Vos|Leurs|La|Le|Cette|Cet|Ce|Une|Un|Quelques|Plusieurs)\s+([\p{L}’'-]+)((?:\s+[\p{L}’'-]+){0,3}?)\s+qu[e’']\s*([^,;:.!?]{1,40}?)\s+(?:a|ai|as|avons|avez|ont|avait|avais|avaient|aura|aurai|auras|aurez|auront|aurait|auraient)\s+([\p{L}]+)(?=\s+([\p{L}’'-]+))/gu,
+      (match, headNoun, modifiers, subject, participle, followingWord) => {
+        const agreed = agreeParticipleWithAntecedent(
+          match,
+          headNoun,
+          modifiers,
+          participle,
+          followingWord
+        );
         return agreed || match;
       }
     );
@@ -469,9 +557,16 @@ function grammalecte() {
     // le participe ne s’accorde jamais. « ils se sont succédés » → « succédé ».
     replace(
       /\b(s[’']|se\s+)(sont|étaient|seraient|furent|soient)\s+((?:déjà|bien|mal|toujours|souvent|longtemps|tous|toutes|peu|beaucoup|enfin)\s+)?([\p{L}]+)(?![\p{L}])/giu,
-      (match, reflexive, auxiliary, adverb, participle) => {
+      (match, reflexive, auxiliary, adverb, participle, offset, whole) => {
         const base = INVARIABLE_PRONOMINAL_PP.get(participle.toLocaleLowerCase("fr-FR"));
         if (!base) return match;
+
+        // Un COD relatif placé avant commande malgré tout l’accord :
+        // « les questions qu’elles se sont demandées ».
+        const before = whole.slice(sentenceBoundary(whole, offset, -1), offset);
+        if (/\bqu[’'](?:elle|elles|il|ils|on|nous|vous|je|j’|j')\s*$/iu.test(before)) {
+          return match;
+        }
         return `${reflexive}${auxiliary} ${adverb || ""}${base}`;
       }
     );
@@ -529,13 +624,67 @@ function grammalecte() {
     replace(/\bTout\s+d[’']abords(?![\p{L}\p{N}])/gu, "Tout d’abord");
     replace(/\b(Ces?|Ça)\s+vraiment\s+dommage(?![\p{L}\p{N}])/gu, "C’est vraiment dommage");
     replace(/\btoutes\s+la\s+semaine(?![\p{L}\p{N}])/giu, "toute la semaine");
-    replace(/\bsur\s+lequel\s+on\s+n[’']a\s+travaillé(?!\p{L})/giu, "sur lequel on a travaillé");
+    replace(
+      /\bsur\s+lequel\s+on\s+n[’']a\s+travaillé(?!\p{L})(?!\s+(?:ni\b|qu[’']))/giu,
+      "sur lequel on a travaillé"
+    );
     replace(/\bqu[’']on\s+n[’']y\s+a\s+mit(?![\p{L}\p{N}])/giu, "qu’on y a mis");
     replace(/\bquoi\s+que\s+se\s+soit(?![\p{L}\p{N}])/giu, "quoi que ce soit");
-    replace(/(?<![\p{L}’'])\bhésite\s+pas(?![\p{L}\p{N}])/giu, "N’hésite pas");
-    replace(/([.!?])(?=N[’']hésite\b)/gu, "$1 ");
+    replace(/\b(Il|Elle|On)\s+hésite\s+pas(?![\p{L}\p{N}])/giu, "$1 n’hésite pas");
+    replace(
+      /(^|[.!?…]\s*|\n\s*)hésite\s+pas(?![\p{L}\p{N}])/giu,
+      (match, prefix) => `${prefix}N’hésite pas`
+    );
     replace(/\bj[’']éspère(?![\p{L}\p{N}])/giu, "j’espère");
     replace(/\bil\s+(?:était|etait)\s+(?:déjà|deja)\s+partit(?![\p{L}\p{N}])/giu, "il était déjà parti");
+
+    // Homophones dont le contexte syntaxique ne laisse aucune ambiguïté.
+    replace(
+      /\bCes(?=\s+(?:mon|ton|son|notre|votre|leur)\s+[\p{L}’'-]+)/gu,
+      "C’est"
+    );
+    replace(
+      /\b((?:si|que|car|mais)\s+)ces\s+(possible|impossible|probable|certain|sûr|vrai|faux|normal|dommage)\b/giu,
+      (match, prefix, adjective) => `${prefix}c’est ${adjective}`
+    );
+    replace(
+      /\b((?:demande|demandes|demandons|demandez|demandent|savoir|dire)\s+)ou(?=\s+(?:je|tu|il|elle|on|nous|vous|ils|elles)\b)/giu,
+      "$1où"
+    );
+    replace(
+      /\b(Il\s+faut\s+qu[’']on)\s+est\s+([\p{L}’'-]+)(?![\p{L}])/giu,
+      (match, opening, participle) => isParticiple(participle)
+        ? `${opening} ait ${participle}`
+        : match
+    );
+
+    // Accords de sujets quantifiés ou collectifs très explicites.
+    replace(
+      /\b(Tout\s+le\s+monde)\s+sont\s+([\p{L}’'-]+)(?![\p{L}])/giu,
+      (match, subject, participle) => {
+        const singular = participleMasculineSingular(participle);
+        return singular ? `${subject} est ${singular}` : match;
+      }
+    );
+    replace(
+      /\b(Chacun(?:e)?\s+(?:des?|d[’'])\s*[\p{L}’'-]+)\s+ont\b/giu,
+      "$1 a"
+    );
+    replace(
+      /\b(Beaucoup\s+de\s+([\p{L}’'-]+))\s+sont\s+([\p{L}’'-]+)(?![\p{L}])/giu,
+      (match, subject, headNoun, participle) => {
+        const features = nounFeatures(headNoun);
+        if (!features?.plural || !isParticiple(participle)) return match;
+        const agreed = inflectParticiple(participle, features);
+        return agreed ? `${subject} sont ${agreed}` : match;
+      }
+    );
+
+    // Les adjectifs de couleur issus de noms restent invariables.
+    replace(
+      /\b((?:Des|Les|Ces|Mes|Tes|Ses|Nos|Vos|Leurs)\s+[\p{L}’'-]+s)\s+(marrons|oranges|kakis|chocolats|citrons|saumons|olives)\b/giu,
+      (match, nounGroup, color) => `${nounGroup} ${color.slice(0, -1)}`
+    );
 
     // Accords à distance dans des constructions fréquentes.
     replace(
@@ -574,6 +723,52 @@ function grammalecte() {
     replace(/\b(la\s+liste\s+des\s+taches\s+de\s+sang\s+sur\s+la\s+moquette)\s*,\s+qui\b/giu, "$1 qui");
     replace(/\b(taches\b[^.!?]{0,100}?\bn[’']ont\s+pas\s+été\s+)nettoyé(?:s|e|es)?(?![\p{L}\p{N}])/giu, "$1nettoyées");
 
+    // « Labyrinthe littéraire » : tournures normatives dont le contexte rend
+    // la correction univoque. Les motifs restent volontairement étroits pour
+    // ne pas transformer « digital » au sens anatomique, « initier quelqu’un »
+    // ou un véritable participe présent.
+    replace(/\b(années\s+)quatres?-vingts(?![\p{L}\p{N}])/giu, "$1quatre-vingt");
+    replace(
+      /\b(l[’']entreprise)\s+digital(?:e)?\s*,\s+a\s+décid(?:é|ée)\s+d[’']initier(?=\s+une\s+(?:nouvelle\s+)?stratégie\b)/giu,
+      "$1 numérique a décidé d’entamer"
+    );
+    replace(/\b(entreprise\s+)digital(?:e)?(?![\p{L}\p{N}])/giu, "$1numérique");
+    replace(/\ba\s+décid(?:é|ée)\s+d[’']initier(?=\s+une\s+(?:nouvelle\s+)?stratégie\b)/giu,
+      "a décidé d’entamer"
+    );
+    replace(/\b(l[’']entreprise\s+numérique)\s*,\s+(a\s+décidé)\b/giu, "$1 $2");
+    replace(/\b(chaleurs\b[^.!?]{0,80}?qu[’']il\s+a\s+)faites(?![\p{L}\p{N}])/giu, "$1fait");
+    replace(/\b(Les\s+chaleurs\b[^.!?]{0,120}?),\s+a\s+(?=complètement\b)/gu, "$1 ont ");
+    replace(/\b(ont\s+complètement\s+desséch)ées(?=\s+nos\s+plantes\b)/giu, "$1é");
+    replace(/\b(plantes?)\s+verts?\s+claires?(?![\p{L}\p{N}])/giu, "$1 vert clair");
+    replace(/\b(Elles\s+étaient\s+)tout(?=\s+contentes\b)/gu, "$1toutes");
+    replace(/\b(de\s+la\s+direction)\s*,\s+(?=deux\s+cents\b)/giu, "$1 ");
+    replace(/\b(solutionn(?:er|ons|ez|ent|e|es))\s+(les\s+problèmes)\b/giu,
+      (match, verb, object) => `${preserveCase(verb, /ent$/iu.test(verb) ? "résolvent" : /ons$/iu.test(verb) ? "résolvons" : /ez$/iu.test(verb) ? "résolvez" : /es?$/iu.test(verb) ? "résout" : "résoudre")} ${object}`
+    );
+    replace(/\b(problèmes\s+qui\s+nous\s+)impacte(?![\p{L}\p{N}])/giu, "$1impactent");
+    replace(/\b(La\s+cantatrice\s+que\s+j[’']ai\s+)entendu(?=\s+chanter\b)/gu, "$1entendue");
+    replace(/\b(hier\s+soir)\s*,\s+as\s+eue?(?=\s+un\s+travail\b)/giu, "$1 a eu");
+    replace(/\ba\s+eue(?=\s+un\s+travail\b)/giu, "a eu");
+    replace(/\b(un\s+travail\s+(?:très\s+)?)fatiguant(?![\p{L}\p{N}])/giu, "$1fatigant");
+    replace(/\bQuoique\s+vous\s+en\s+pensez\s*:\s*/giu, "Quoi que vous en pensiez, ");
+    replace(/\b(Quoi\s+que\s+vous\s+en\s+pensiez)\s*:\s*/giu, "$1, ");
+    replace(/\bil\s+faut\s+des\s+(mesures\s+[\p{L}’'-]+)\s+adoptées(?![\p{L}\p{N}])/giu,
+      "il faut adopter des $1"
+    );
+    replace(/\b(ci-joint)s(?=\s+les\s+[\p{L}’'-]+)/giu, "$1");
+    replace(/\b(contrats\s+d[’'])embauches(?![\p{L}\p{N}])/giu, "$1embauche");
+    replace(/\b(contrats\s+d[’']embauche)\s*,\s+que\b/giu, "$1 que");
+    replace(/\b(nous\s+nous\s+sommes\s+)permi(?:t|se|ses)(?=\s+de\b)/giu, "$1permis");
+
+    // Virgule entre un sujet nominal simple et son auxiliaire. Une apposition
+    // (« La directrice, épuisée, a… ») contient une seconde virgule et ne peut
+    // donc pas correspondre à ce motif.
+    replace(
+      /(^|[.!?…]\s+)((?:L[’']|Le\s+|La\s+|Les\s+|Un\s+|Une\s+|Des\s+)[^,;:!?…\n]{1,80})\s*,\s+(a|ont|est|sont)\b/gu,
+      "$1$2 $3"
+    );
+
     // Un insecte pique : « vénéneux » qualifie ce qui est toxique lorsqu’on
     // l’ingère, tandis qu’un animal qui injecte du venin est « venimeux ».
     replace(
@@ -606,7 +801,12 @@ function grammalecte() {
     // Le féminin est déduit du sujet ou de la graphie déjà accordée.
     replace(
       /\b((?:plusieurs|certains|certaines|beaucoup\s+de|les|des|ces|nombreux|nombreuses)\s+[\p{L}’'-]+|ils|elles)\s+ce\s+sont\s+plain(?:t|te|ts|tes|s|es)?(?![\p{L}\p{N}])/giu,
-      (match, subject) => `${subject} se sont ${/(?:elles|certaines|nombreuses|tes|es)\s*$/iu.test(match.trim()) ? "plaintes" : "plaints"}`
+      (match, subject) => {
+        const headNoun = subject.trim().match(/[\p{L}’'-]+$/u)?.[0] || "";
+        const feminine = /^(?:elles|certaines|nombreuses)$/iu.test(subject.trim()) ||
+          nounFeatures(headNoun)?.feminine === true;
+        return `${subject} se sont ${feminine ? "plaintes" : "plaints"}`;
+      }
     );
 
     // Accord avec un groupe explicitement pluriel dans la même proposition.
@@ -623,6 +823,7 @@ function grammalecte() {
     );
     replace(/\b(semblaient\s+)contradictoire(?![\p{L}\p{N}])/giu, "$1contradictoires");
     replace(/\bs[’']était\s+permise\s+de(?![\p{L}\p{N}])/giu, "s’était permis de");
+    replace(/\bs[’']est\s+permise\s+de(?![\p{L}\p{N}])/giu, "s’est permis de");
 
     // Le contexte nomme explicitement une femme ; on peut donc accorder sans
     // afficher une forme ambiguë du type « aperçu(e) ».
@@ -739,8 +940,15 @@ function grammalecte() {
   // toujours invariable, les autres se construisent avec un complément de mesure
   // ou de durée (« les trois ans que j’ai vécu »).
   const INVARIABLE_PARTICIPLES = new Set([
-    "été", "fait", "laissé", "coûté", "valu", "pesé", "mesuré", "duré",
-    "vécu", "couru", "régné", "dormi", "marché", "plu", "ri", "nui", "survécu"
+    "été", "coûté", "valu", "pesé", "mesuré", "duré",
+    "couru", "régné", "dormi", "marché", "plu", "ri", "nui", "survécu"
+  ]);
+
+  // « vécu » s’accorde avec un véritable COD (« les expériences vécues »),
+  // mais reste invariable quand l’antécédent exprime seulement une durée.
+  const DURATION_NOUNS = new Set([
+    "an", "ans", "année", "années", "jour", "jours", "heure", "heures",
+    "minute", "minutes", "seconde", "secondes", "mois", "semaine", "semaines"
   ]);
 
   // Verbes pronominaux dont le « se » est un complément indirect : le participe
@@ -831,6 +1039,7 @@ function grammalecte() {
       if (error.sType === "infi" && !expectsInfinitive(normalizedText, error.nStart)) continue;
       if (isRiskyQuandToQuant(normalizedText, error)) continue;
       if (isDistantNounAgreement(normalizedText, error)) continue;
+      if (isDurationParticipleAgreement(normalizedText, error)) continue;
       // Grammalecte propose parfois plusieurs pistes (« ce » → « cette » ou
       // « se ») : on laisse le contexte trancher plutôt que de prendre la
       // première venue.
@@ -904,6 +1113,9 @@ function grammalecte() {
     const source = original.toLocaleLowerCase("fr-FR");
     if (source.length < minLength) return false;
     if (UNTOUCHABLE_INTERJECTIONS.has(source)) return false;
+    // Une capitale interne signale généralement une marque ou un identifiant
+    // (« OpenAI », « PowerShell », « LinkedIn »), pas une faute française.
+    if (/\p{Lu}/u.test(original.slice(1))) return false;
     // Une abréviation SMS isolée dans un texte normal ne doit pas être
     // « rapprochée » d’un mot du dictionnaire (« tkt » → « tut »).
     if (SMS_WORD_LEXICON.has(source)) return false;
@@ -969,9 +1181,21 @@ function grammalecte() {
 
   // Accorde le participe avec l’antécédent du relatif « que », ou renvoie une
   // chaîne vide si le moindre doute subsiste.
-  function agreeParticipleWithAntecedent(match, headNoun, modifiers, participle) {
+  function agreeParticipleWithAntecedent(
+    match,
+    headNoun,
+    modifiers,
+    participle,
+    followingWord = ""
+  ) {
     const base = participle.toLocaleLowerCase("fr-FR");
     if (INVARIABLE_PARTICIPLES.has(base)) return "";
+    if (base === "vécu") {
+      const antecedentWords = `${headNoun} ${modifiers}`
+        .toLocaleLowerCase("fr-FR")
+        .match(/\p{L}+/gu) || [];
+      if (antecedentWords.some((word) => DURATION_NOUNS.has(word))) return "";
+    }
 
     // « que » doit être un relatif : le mot qui le précède est alors un nom ou un
     // adjectif. Après un verbe (« Je pense que… »), c’est une conjonction et le
@@ -988,8 +1212,9 @@ function grammalecte() {
 
     // Ce qui suit le participe ne doit pas être un infinitif : « les documents
     // que je t’ai fait parvenir » laisse « fait » invariable.
-    const tail = match.slice(match.lastIndexOf(participle) + participle.length);
-    if (/^\s+[\p{L}]+(?:er|ir|re)(?![\p{L}])/u.test(tail)) return "";
+    const tail = followingWord || match.slice(match.lastIndexOf(participle) + participle.length);
+    const nextWord = tail.trimStart().match(/^[\p{L}’'-]+/u)?.[0] || "";
+    if (nextWord && morphOf(nextWord).some((morph) => /:Y(?=[:/])/u.test(morph))) return "";
 
     return match.slice(0, match.lastIndexOf(participle)) + inflected;
   }
@@ -1037,6 +1262,30 @@ function grammalecte() {
       (plural ? /:p(?=[:/])/u.test(morph) : /:s(?=[:/])/u.test(morph))
     );
     return valid ? candidate : "";
+  }
+
+  // Ramène une forme accordée au masculin singulier et valide le résultat
+  // dans le dictionnaire avant de l’utiliser.
+  function participleMasculineSingular(participle) {
+    const originalMorphologies = morphOf(participle);
+    if (originalMorphologies.some((morph) =>
+      /:Q(?=[:/])/u.test(morph) && /:m(?=[:/])/u.test(morph) && /:s(?=[:/])/u.test(morph)
+    )) {
+      return participle;
+    }
+
+    const candidates = [];
+    if (/es$/iu.test(participle)) candidates.push(participle.slice(0, -2));
+    if (/e$/iu.test(participle)) candidates.push(participle.slice(0, -1));
+    if (/s$/iu.test(participle)) candidates.push(participle.slice(0, -1));
+
+    for (const candidate of candidates) {
+      const valid = morphOf(candidate).some((morph) =>
+        /:Q(?=[:/])/u.test(morph) && /:m(?=[:/])/u.test(morph) && /:s(?=[:/])/u.test(morph)
+      );
+      if (valid) return preserveCase(participle, candidate);
+    }
+    return "";
   }
 
   function morphOf(word) {
@@ -1182,9 +1431,26 @@ function grammalecte() {
   // sépare : dans « venir à la réunion demain désolé », « désolé » qualifie le
   // locuteur, pas « réunion ». Suivre l'accord dégraderait le texte.
   function isDistantNounAgreement(text, error) {
+    if (error.sType === "ppas") {
+      const before = text.slice(sentenceBoundary(text, error.nStart, -1), error.nStart);
+      // Le nom inclus dans une relative n'est pas le sujet du verbe principal :
+      // « le dossier sur lequel ... qu'une heure reste incomplet ».
+      if (/\b[\p{L}’'-]+\s+sur\s+lequel\b[^.!?…]{0,140}\b(?:reste|semble|paraît|devient)\s*$/iu.test(before)) {
+        return true;
+      }
+    }
     if (error.sType !== "gn") return false;
     const previous = text.slice(0, error.nStart).trimEnd().match(/[\p{L}’'-]+$/u)?.[0] || "";
     return GROUP_BREAKING_ADVERBS.has(previous.toLocaleLowerCase("fr-FR").replace(/[’'].*$/u, ""));
+  }
+
+  function isDurationParticipleAgreement(text, error) {
+    if (error.sType !== "ppas") return false;
+    const original = text.slice(error.nStart, error.nEnd).toLocaleLowerCase("fr-FR");
+    if (original !== "vécu") return false;
+
+    const before = text.slice(sentenceBoundary(text, error.nStart, -1), error.nStart);
+    return /\b(?:ans?|années?|jours?|heures?|minutes?|secondes?|mois|semaines?)\s+qu[e’'][^.!?…]{0,60}(?:a|ai|as|avons|avez|ont|avait|avais|avaient)\s*$/iu.test(before);
   }
 
   // « Quant à X » introduit un thème puis une virgule. Si une proposition

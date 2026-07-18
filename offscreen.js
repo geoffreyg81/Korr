@@ -2,38 +2,65 @@
 
 "use strict";
 
-function createWorkerClient(url, options) {
+const WORKER_TIMEOUT_MS = 60_000;
+
+function createWorkerClient(url, options, onFatal) {
   const worker = new Worker(url, options);
   const pending = new Map();
   let nextId = 1;
+  let failed = false;
+
+  const fail = (message) => {
+    if (failed) return;
+    failed = true;
+    worker.terminate();
+    for (const [id, entry] of pending) {
+      clearTimeout(entry.timer);
+      entry.resolve({ ok: false, error: message });
+      pending.delete(id);
+    }
+    onFatal?.();
+  };
 
   worker.addEventListener("message", (event) => {
     const { id, ...payload } = event.data || {};
-    const resolve = pending.get(id);
-    if (!resolve) return;
+    const entry = pending.get(id);
+    if (!entry) return;
     pending.delete(id);
-    resolve(payload);
+    clearTimeout(entry.timer);
+    entry.resolve(payload);
   });
 
   worker.addEventListener("error", (event) => {
-    for (const [id, resolve] of pending) {
-      resolve({ ok: false, error: `Moteur indisponible : ${event.message}` });
-      pending.delete(id);
-    }
+    fail(`Moteur indisponible : ${event.message}`);
   });
 
   return (type, text) => new Promise((resolve) => {
+    if (failed) {
+      resolve({ ok: false, error: "Moteur indisponible." });
+      return;
+    }
     const id = nextId++;
-    pending.set(id, resolve);
+    const timer = setTimeout(() => fail("Le moteur a mis trop de temps à répondre."), WORKER_TIMEOUT_MS);
+    pending.set(id, { resolve, timer });
     worker.postMessage({ id, type, text });
   });
 }
 
-const askFrench = createWorkerClient("grammalecte-worker.js");
+let askFrench = null;
 let askEnglish = null;
 
+function frenchClient() {
+  if (!askFrench) {
+    askFrench = createWorkerClient("grammalecte-worker.js", undefined, () => { askFrench = null; });
+  }
+  return askFrench;
+}
+
 function englishClient() {
-  if (!askEnglish) askEnglish = createWorkerClient("harper-worker.js", { type: "module" });
+  if (!askEnglish) {
+    askEnglish = createWorkerClient("harper-worker.js", { type: "module" }, () => { askEnglish = null; });
+  }
   return askEnglish;
 }
 
@@ -41,7 +68,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.target !== "offscreen") return false;
 
   if (message.type === "PING") {
-    askFrench("PING").then(sendResponse);
+    frenchClient()("PING").then(sendResponse);
     return true;
   }
 
@@ -49,7 +76,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const language = requested === "auto"
     ? globalThis.korrLanguage.detectLanguage(message.text)
     : requested;
-  const ask = language === "en" ? englishClient() : askFrench;
+  if (language === "mixed") {
+    sendResponse({
+      ok: true,
+      text: String(message.text || ""),
+      corrections: 0,
+      durationMs: 0,
+      engine: "mixed",
+      language,
+      fallback: "Texte français et anglais mélangé : choisissez la langue manuellement."
+    });
+    return false;
+  }
+  const ask = language === "en" ? englishClient() : frenchClient();
 
   ask("CORRECT", message.text).then((result) => sendResponse({ ...result, language }));
   return true;

@@ -2,13 +2,14 @@
   "manifest_version": 3,
   "name": "Korr - correcteur français et anglais",
   "version": "0.6.0",
+  "minimum_chrome_version": "116",
   "description": "Corrige le français et l'anglais dans n'importe quel champ de saisie. Gratuit et hors ligne.",
   "permissions": [
     "storage",
     "activeTab",
     "offscreen"
   ],
-  "optional_host_permissions": [
+  "host_permissions": [
     "http://127.0.0.1:8787/*"
   ],
   "background": {

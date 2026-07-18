@@ -117,10 +117,10 @@
       const correctionCount = Number.isFinite(result.corrections) && result.corrections > 0
         ? ` · ${result.corrections} correction${result.corrections > 1 ? "s" : ""}`
         : "";
-      const successMessage = result.text === snapshot.text
-        ? "Texte déjà correct."
-        : result.fallback
-          ? result.fallback
+      const successMessage = result.fallback
+        ? result.fallback
+        : result.text === snapshot.text
+          ? "Texte déjà correct."
         : result.engine === "grammalecte" || result.engine === "harper"
           ? `Texte corrigé${correctionCount}${Number.isFinite(result.durationMs) ? ` · ${result.durationMs} ms` : ""}.`
         : styleLabels[result.style]

@@ -8,25 +8,52 @@
     "au", "aux", "avec", "ce", "ces", "dans", "de", "des", "du", "elle",
     "en", "est", "et", "il", "je", "la", "le", "les", "mais", "ne", "nous",
     "on", "ou", "pas", "pour", "que", "qui", "sa", "se", "son", "sur", "tu",
-    "un", "une", "vous"
+    "un", "une", "vous", "aujourd", "bonjour", "ceci", "cela", "comme", "donc",
+    "ici", "leur", "leurs", "merci", "notre", "nos", "suis", "très", "votre", "vos"
   ]);
   const ENGLISH_WORDS = new Set([
     "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "from",
     "has", "have", "he", "her", "his", "i", "in", "is", "it", "its", "not",
     "of", "on", "or", "she", "that", "the", "their", "they", "this", "to",
     "was", "we", "were", "with", "you", "your", "hello", "world", "thanks",
-    "please", "today", "tomorrow", "yesterday", "good", "morning", "evening"
+    "please", "today", "tomorrow", "yesterday", "good", "morning", "evening",
+    "am", "been", "being", "can", "cannot", "could", "did", "do", "does",
+    "done", "each", "every", "few", "had", "help", "here", "how", "if",
+    "into", "like", "many", "may", "me", "might", "more", "most", "much",
+    "must", "my", "need", "new", "no", "now", "one", "only", "our", "out",
+    "over", "people", "report", "result", "same", "sentence", "several", "should",
+    "some", "still", "than", "them", "then", "there", "these", "thing", "those",
+    "through", "time", "too", "under", "up", "very", "want", "what", "when",
+    "where", "which", "who", "why", "will", "work", "would", "again", "asap",
+    "broke", "call", "car", "down", "email", "fine", "know", "later", "look",
+    "looks", "meet", "monday", "tuesday", "wednesday", "thursday", "friday",
+    "saturday", "sunday", "january", "february", "march", "april", "june", "july",
+    "august", "september", "october", "november", "december", "try"
   ]);
-  const STRONG_ENGLISH = new Set(["hello", "thanks", "please", "today", "tomorrow", "yesterday"]);
-  const STRONG_FRENCH = new Set(["bonjour", "merci", "aujourd'hui", "demain", "hier"]);
+  const STRONG_ENGLISH = new Set([
+    "hello", "thanks", "please", "today", "tomorrow", "yesterday", "the",
+    "this", "that", "these", "those", "you", "your", "we", "they", "he",
+    "she", "my", "it", "is", "are", "was", "were", "have", "has", "do",
+    "does", "did", "can", "could", "will", "would", "should", "monday", "tuesday",
+    "wednesday", "thursday", "friday", "saturday", "sunday"
+  ]);
+  const STRONG_FRENCH = new Set([
+    "bonjour", "merci", "aujourd'hui", "demain", "hier", "le", "la", "les",
+    "je", "tu", "il", "elle", "nous", "vous", "est", "sont", "une", "des",
+    "dans", "avec", "pour", "que", "qui", "suis", "notre", "votre"
+  ]);
+
+  const ENGLISH_CONTRACTION = /\b(?:aren['’]t|can['’]t|couldn['’]t|didn['’]t|doesn['’]t|don['’]t|hasn['’]t|haven['’]t|isn['’]t|let['’]s|shouldn['’]t|wasn['’]t|weren['’]t|won['’]t|wouldn['’]t|i['’]m|i['’]ve|we['’]re|we['’]ve|they['’]re|you['’]re)\b/giu;
 
   function detectLanguage(text) {
     const normalized = String(text || "").toLocaleLowerCase();
     const words = normalized.match(/[a-zà-öø-ÿ]+/gu) || [];
-    let french = /[àâçéèêëîïôùûüÿœæ]/u.test(normalized) ? 2 : 0;
+    const hasFrenchDiacritics = /[àâçéèêëîïôùûüÿœæ]/u.test(normalized);
+    let french = hasFrenchDiacritics ? 2 : 0;
     let english = 0;
     let strongFrench = 0;
-    let strongEnglish = 0;
+    let strongEnglish = (normalized.match(ENGLISH_CONTRACTION) || []).length;
+    english += strongEnglish * 2;
 
     for (const word of words) {
       if (FRENCH_WORDS.has(word)) french += 1;
@@ -35,8 +62,14 @@
       if (STRONG_ENGLISH.has(word)) strongEnglish += 1;
     }
 
+    // Un mélange net ne doit jamais être envoyé en bloc à un seul dictionnaire :
+    // Harper et Grammalecte pourraient alors "corriger" les mots de l'autre
+    // langue. L'interface demandera à l'utilisateur de choisir manuellement.
+    if (strongEnglish > 0 && strongFrench > 0) return "mixed";
+
     // Il faut un signal anglais net : les textes courts et ambigus restent FR.
     if (strongEnglish > strongFrench) return "en";
+    if (strongFrench > strongEnglish) return "fr";
     return english >= 2 && english > french * 1.25 ? "en" : "fr";
   }
 

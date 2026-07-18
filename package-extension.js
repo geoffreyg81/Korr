@@ -31,6 +31,7 @@ const FILES = [
   "offscreen.js",
   "grammalecte-worker.js",
   "harper-worker.js",
+  "english-rules.js",
   "language-detection.js",
   "grammar-rules.js",
   "LICENSE",

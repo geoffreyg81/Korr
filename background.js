@@ -58,11 +58,11 @@ async function isBackendAvailable() {
   }
 }
 
-async function correctWithBackend(text, style) {
+async function correctWithBackend(text, style, language) {
   const response = await fetch(`${BACKEND_URL}/api/correct`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode: "deep", style, model: DEFAULT_MODEL, text })
+    body: JSON.stringify({ mode: "deep", style, model: DEFAULT_MODEL, text, language })
   });
 
   const data = await response.json().catch(() => ({}));
@@ -83,7 +83,7 @@ async function correctText(rawText) {
 
   // Style de réécriture : il exige l'IA, donc le backend.
   try {
-    return await correctWithBackend(text, style);
+    return await correctWithBackend(text, style, language);
   } catch {
     const local = await correctLocally(text, language);
     return { ...local, fallback: "Backend IA indisponible · corrigé par le moteur local." };

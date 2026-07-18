@@ -3,41 +3,22 @@
 
 import { Dialect, LocalLinter } from "./vendor/harper/index.js";
 import { binary } from "./vendor/harper/binary.js";
+import "./english-rules.js";
 
 const linter = new LocalLinter({ binary, dialect: Dialect.American });
 let setupPromise = null;
 
 function initialize() {
-  if (!setupPromise) setupPromise = linter.setup();
+  if (!setupPromise) {
+    setupPromise = linter.setup().then(() => globalThis.korrEnglishRules.configureHarper(linter));
+  }
   return setupPromise;
 }
 
 async function correctEnglishText(source) {
   const started = performance.now();
   await initialize();
-  const lints = await linter.lint(source, { language: "plaintext" });
-  const applicable = lints
-    .filter((lint) => lint.suggestion_count() > 0)
-    .sort((left, right) => right.span().start - left.span().start);
-
-  let text = source;
-  let corrections = 0;
-  let nextBoundary = Infinity;
-
-  // De droite à gauche, les positions des erreurs restantes ne bougent pas.
-  // Les diagnostics qui se chevauchent sont ignorés pour éviter une double
-  // modification incertaine de la même portion.
-  for (const lint of applicable) {
-    const span = lint.span();
-    if (span.end > nextBoundary) continue;
-    const suggestion = lint.suggestions()[0];
-    const updated = await linter.applySuggestion(text, lint, suggestion);
-    if (updated !== text) {
-      text = updated;
-      corrections += 1;
-      nextBoundary = span.start;
-    }
-  }
+  const { text, corrections } = await globalThis.korrEnglishRules.correctWithHarper(linter, source);
 
   return {
     text,

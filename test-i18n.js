@@ -6,9 +6,9 @@ const source = fs.readFileSync("web/i18n.js", "utf8");
 const keys = new Set([...html.matchAll(/data-i18n(?:-html|-placeholder)?="([^"]+)"/gu)].map((match) => match[1]));
 
 for (const key of [
-  "loadError", "engineUnavailable", "readyMs", "harperFirst", "ready",
+  "loadError", "engineUnavailable", "engineTimeout", "readyMs", "harperFirst", "ready",
   "correcting", "loadingHarper", "correctionFailed", "engineEnglish",
-  "engineFrench", "noErrors", "correctionOne", "correctionMany", "copied",
+  "engineFrench", "mixedDetected", "mixedHelp", "noErrors", "correctionOne", "correctionMany", "copied",
   "selected", "installed"
 ]) keys.add(key);
 

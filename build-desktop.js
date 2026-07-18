@@ -25,6 +25,9 @@ const FILES = [
   "server.js",
   "grammar-engine.js",
   "grammar-rules.js",
+  "english-engine.js",
+  "english-rules.js",
+  "language-detection.js",
   "stop.js",
   "app-tray.ps1",
   "LICENSE",
@@ -52,6 +55,7 @@ fs.cpSync(
   path.join(INTERNAL_DIR, ".vendor", "grammalecte-js", "grammalecte"),
   { recursive: true }
 );
+copyHarperRuntime();
 fs.cpSync(path.join(PROJECT_DIR, "icons"), path.join(INTERNAL_DIR, "icons"), { recursive: true });
 createIcoFromPng(path.join(PROJECT_DIR, "icons", "icon-32.png"), ICO_PATH);
 fs.copyFileSync(ICO_PATH, path.join(INTERNAL_DIR, "icons", "korr.ico"));
@@ -172,12 +176,13 @@ writeWindowsFile(path.join(APP_DIR, "0 - À LIRE AVANT DE COMMENCER.txt"), [
   "  L'application n'étant pas signée, Windows peut afficher « Windows a",
   "  protégé votre ordinateur ». Cliquez sur « Informations complémentaires »",
   "  puis « Exécuter quand même ». Le code est public et vérifiable :",
-  "  https://github.com/ggine/korr",
+  "  https://github.com/geoffreyg81/Korr",
   "",
   "LICENCE",
   "",
   "  Logiciel libre sous GNU GPL 3.0 (voir LICENSE).",
-  "  Correcteur Grammalecte 2.3.0 - https://grammalecte.net",
+  "  Correcteurs Grammalecte 2.3.0 et Harper 2.4.0.",
+  "  https://grammalecte.net - https://writewithharper.com",
   "  Runtime Node.js sous licence MIT (dans le dossier technique).",
   ""
 ]);
@@ -230,7 +235,8 @@ writeWindowsFile(path.join(APP_DIR, "0 - READ BEFORE STARTING.txt"), [
   "LICENSE",
   "",
   "  Open-source software under GNU GPL 3.0.",
-  "  Grammalecte 2.3.0 - https://grammalecte.net",
+  "  Grammalecte 2.3.0 and Harper 2.4.0.",
+  "  https://grammalecte.net - https://writewithharper.com",
   "  Node.js runtime under the MIT license.",
   ""
 ]);
@@ -264,6 +270,26 @@ if (fs.existsSync(innoCompiler)) {
 // illisibles dans le Bloc-notes et dans les scripts VBScript.
 function writeWindowsFile(target, lines) {
   fs.writeFileSync(target, lines.join("\r\n"), "latin1");
+}
+
+function copyHarperRuntime() {
+  const source = path.join(PROJECT_DIR, "node_modules", "harper.js", "dist");
+  const target = path.join(INTERNAL_DIR, "vendor", "harper");
+  const files = ["index.js", "binaryInlined.js", "BinaryModule-DTTQwokQ.js"];
+  fs.mkdirSync(target, { recursive: true });
+  for (const file of files) {
+    const input = path.join(source, file);
+    if (!fs.existsSync(input)) throw new Error(`Harper incomplet : ${file}`);
+    fs.copyFileSync(input, path.join(target, file));
+  }
+  fs.copyFileSync(
+    path.join(PROJECT_DIR, "node_modules", "harper.js", "LICENSE"),
+    path.join(target, "LICENSE-HARPER")
+  );
+  fs.copyFileSync(
+    path.join(PROJECT_DIR, "node_modules", "fflate", "LICENSE"),
+    path.join(target, "LICENSE-FFLATE")
+  );
 }
 
 function createIcoFromPng(pngPath, icoPath) {
