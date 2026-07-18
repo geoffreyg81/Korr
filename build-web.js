@@ -18,7 +18,7 @@ function version() {
 }
 
 // Fichiers propres au site.
-const WEB_FILES = ["index.html", "app.css", "app.js", "sw.js", "manifest.webmanifest"];
+const WEB_FILES = ["index.html", "app.css", "app.js", "sw.js", "manifest.webmanifest", "vercel.json"];
 // Moteur partagé avec l'extension.
 const SHARED_FILES = ["grammalecte-worker.js", "grammar-rules.js", "LICENSE", "PRIVACY.md"];
 const DIRECTORIES = ["icons", "vendor"];
@@ -46,16 +46,30 @@ for (const directory of DIRECTORIES) {
   fs.cpSync(path.join(PROJECT_DIR, directory), path.join(OUT_DIR, directory), { recursive: true });
 }
 
-// L'application Windows, si elle a déjà été construite. Le site fonctionne
-// sans elle, mais le bouton de téléchargement pointerait dans le vide : on
-// prévient plutôt que de livrer un lien mort.
+// L'application Windows. Deux façons de la distribuer :
+//
+// - ZF_DOWNLOAD_URL défini : le bouton pointe vers cette adresse, typiquement
+//   une release GitHub. Le déploiement reste léger et échappe aux limites de
+//   taille des hébergeurs.
+// - sinon : le zip est copié dans le site, pratique pour tester en local.
+const downloadUrl = process.env.ZF_DOWNLOAD_URL;
 const desktopZip = path.join(PROJECT_DIR, "dist", `zero-friction-windows-${version()}.zip`);
-if (fs.existsSync(desktopZip)) {
+
+if (downloadUrl) {
+  const indexPath = path.join(OUT_DIR, "index.html");
+  const html = fs.readFileSync(indexPath, "utf8").replace(
+    /href="zero-friction-windows\.zip" download/u,
+    `href="${downloadUrl}" rel="noopener"`
+  );
+  fs.writeFileSync(indexPath, html);
+  console.log(`Téléchargement externe : ${downloadUrl}`);
+} else if (fs.existsSync(desktopZip)) {
   fs.copyFileSync(desktopZip, path.join(OUT_DIR, "zero-friction-windows.zip"));
   const mo = fs.statSync(desktopZip).size / 1024 / 1024;
-  console.log(`Application Windows incluse : ${mo.toFixed(0)} Mo`);
+  console.log(`Application Windows incluse dans le site : ${mo.toFixed(0)} Mo`);
+  console.log("  (définissez ZF_DOWNLOAD_URL pour pointer vers une release à la place)");
 } else {
-  console.warn("⚠ Application Windows absente : lancez « npm run build:desktop » avant, sinon le bouton de téléchargement sera inactif.");
+  console.warn("⚠ Application Windows absente : lancez « npm run build:desktop », ou définissez ZF_DOWNLOAD_URL.");
 }
 
 // Les icônes déclarées dans le manifeste doivent exister, sinon l'application
