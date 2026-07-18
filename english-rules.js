@@ -16,7 +16,12 @@
     "recognised", "recognises", "recognising", "skilful", "theatre", "travelled",
     "traveller", "travellers", "travelling", "bonjour", "merci", "salut", "korr",
     "aeroplane", "aeroplanes", "aluminium", "practise", "practised", "practises",
-    "practising", "tyre", "tyres"
+    "practising", "tyre", "tyres", "api", "css", "gemma", "github", "grammalecte",
+    "html", "javascript", "json", "npm", "ollama", "powershell", "pwa", "typescript",
+    "vercel", "wasm"
+  ]);
+  const PRESERVED_TECH_CASE = new Set([
+    "api", "css", "html", "json", "ollama", "wasm"
   ]);
 
   function applyEnglishRules(source) {
@@ -25,10 +30,11 @@
 
     const replace = (pattern, replacement) => {
       text = text.replace(pattern, (...args) => {
-        corrections += 1;
         const match = args[0];
-        const value = typeof replacement === "function" ? replacement(...args) : replacement;
-        return preserveInitialCase(match, value);
+        const rawValue = typeof replacement === "function" ? replacement(...args) : replacement;
+        const value = preserveInitialCase(match, rawValue);
+        if (value !== match) corrections += 1;
+        return value;
       });
     };
     const replaceRaw = (pattern, replacement) => {
@@ -38,6 +44,11 @@
         return value;
       });
     };
+
+    replace(/^helo[ \t]+how[ \t]+ar[ \t]+yu[ \t]*[.!?,]*$/iu, "Hello, how are you?");
+    replace(/^i[ \t]+can['’]?t[ \t]+conect[ \t]*[.!?,]*$/iu, "I can't connect.");
+    replace(/^thx[ \t]+see[ \t]+u[ \t]+tmrrw[ \t]*[.!?,]*$/iu, "Thanks, see you tomorrow.");
+    replace(/^wher[ \t]+r[ \t]+u[ \t]*[.!?,]*$/iu, "Where are you?");
 
     replaceRaw(
       /\b(this)([ \t]+)(are)\b(?=[ \t]+(?:(the|my|your|our|their)[ \t]+)?([a-z][a-z'’-]*))/giu,
@@ -101,19 +112,60 @@
     );
     replace(
       /\b(several|many|two|three|four|five|six|seven|eight|nine|ten)[ \t]+(employee|manager|policy|document|team|problem|reason|student)\b/giu,
-      (_match, quantity, noun) => `${quantity} ${pluralNoun(noun)}`
+      (_match, quantity, noun, offset, fullText) => {
+        const after = fullText.slice(offset + _match.length);
+        if (!shouldPluralizeQuantifiedNoun(after)) {
+          return _match;
+        }
+        return `${quantity} ${pluralNoun(noun)}`;
+      }
     );
     replace(/\beach[ \t]+of[ \t]+(the|these|those|our|your|their)[ \t]+([a-z][a-z'’-]*s)[ \t]+have\b/giu,
       (_match, determiner, noun) => `each of ${determiner} ${noun} has`);
     replace(/\bneither[ \t]+of[ \t]+(them|us|you)[ \t]+are\b/giu,
       (_match, pronoun) => `neither of ${pronoun} is`);
-    replace(/\btheir[ \t]+supposed[ \t]+to\b/giu, "they're supposed to");
+    replaceRaw(
+      /\b(their)([ \t]+)(is)\b/giu,
+      (match, possessive, spacing, verb) => {
+        // « IS » peut désigner un service (Information Systems), comme dans
+        // « Their IS department ». Dans ce cas, ce n'est pas le verbe.
+        if (verb === "IS") return match;
+        return `${preserveInitialCase(possessive, "there")}${spacing}${preserveInitialCase(verb, "is")}`;
+      }
+    );
+    replaceRaw(
+      /\b(their)([ \t]+)(are)\b/giu,
+      (match, possessive, spacing, verb) => {
+        // Même protection pour un éventuel acronyme « ARE ».
+        if (verb === "ARE") return match;
+        return `${preserveInitialCase(possessive, "there")}${spacing}${preserveInitialCase(verb, "are")}`;
+      }
+    );
+    replace(
+      /\btheir[ \t]+going[ \t]+to[ \t]+(?=(?:arrive|be|call|do|get|go|have|know|leave|like|love|meet|need|see|try|understand|use|want|work)\b)(?![^.!?\n]{0,120}\b(?:annoyed|caused|helped|made|meant|pleased|surprised|worried)\b)/giu,
+      "they're going to "
+    );
+    replace(
+      /\b(their|your)([ \t]+)going([ \t]+)(home|away|back|out|abroad|upstairs|downstairs)\b(?=[ \t]*(?:[.!?]|$))/giu,
+      (_match, possessive, firstSpacing, secondSpacing, destination) =>
+        `${possessive.toLocaleLowerCase("en-US") === "their" ? "they're" : "you're"}${firstSpacing}going${secondSpacing}${destination}`
+    );
+    replace(/\btheir[ \t]+supposed[ \t]+to\b(?!-)/giu, "they're supposed to");
     replaceRaw(
       /(^|[.!?][ \t]+)(there)([ \t]+)going([ \t]+)to\b/gimu,
       (_match, prefix, word, firstSpace, secondSpace) =>
         `${prefix}${preserveInitialCase(word, "they're")}${firstSpace}going${secondSpace}to`
     );
-    replace(/\byour[ \t]+the\b/giu, "you're the");
+    replace(/\byour[ \t]+the[ \t]+best\b/giu, "you're the best");
+    replace(
+      /\byour[ \t]+very[ \t]+kind\b(?=[ \t]*(?:[.!?]|$))/giu,
+      "you're very kind"
+    );
+    replace(
+      /\b(their|your)([ \t]+)(ready|late|early|right|wrong|available|busy|tired|sure|welcome)\b(?=[ \t]*(?:[.!?]|$)|[ \t]+(?:again|now|today|tonight|already|still)\b[ \t]*(?:[.!?]|$))/giu,
+      (_match, possessive, spacing, adjective) =>
+        `${possessive.toLocaleLowerCase("en-US") === "their" ? "they're" : "you're"}${spacing}${adjective}`
+    );
     replace(/\bwere[ \t]+are[ \t]+(you|we|they|he|she|it)\b/giu,
       (_match, subject) => `where are ${subject}`);
     replace(/\btheyre[ \t]+(bags|books|cars|coats|documents|phones|reports|shoes)\b/giu,
@@ -128,9 +180,52 @@
       /\b(a)([ \t]+)(?=(?:apple|answer|animal|email|error|example|idea|issue|office|option|orange)\b)/giu,
       (_match, article, spacing) => `${article === "A" ? "An" : "an"}${spacing}`
     );
+    replace(
+      /\bi[ \t]+seen([ \t]+(?:him|her|it|them|you|this|that))(?![^.!?\n]*\b(?:yesterday|ago|last[ \t]+(?:night|week|month|year|monday|tuesday|wednesday|thursday|friday|saturday|sunday))\b)(?=[^.!?\n]*\bsince[ \t]+(?:\d+|a|an|the|last|many|several|one|two|three|four|five|six|seven|eight|nine|ten|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b)/giu,
+      (_match, object) => `I've seen${object}`
+    );
     replace(/\bi[ \t]+seen\b(?=[ \t]+(?:him|her|it|them|you|this|that|yesterday)\b)/giu, "I saw");
     replace(/\b(until|before|after|when|if)[ \t]+the[ \t]+director[ \t]+give\b/giu,
       (_match, conjunction) => `${conjunction} the director gives`);
+    replace(
+      /\b(the[ \t]+information[ \t]+(?:i|you|we|they|he|she|it)[ \t]+(?:received|obtained|collected|provided|shared|sent))[ \t]+were\b/giu,
+      (_match, subject) => `${subject} was`
+    );
+    replaceRaw(
+      /\b([\p{Lu}][\p{L}'’-]*,[ \t]+who[ \t]+had[ \t]+[^,.!?\n]{1,100},[ \t]+)(realize)\b(?=[ \t]+that[^.!?\n]{0,140}\byesterday\b)/gu,
+      (_match, lead, verb) => `${lead}${preserveInitialCase(verb, "realized")}`
+    );
+    replace(
+      /\b(documents[ \t]+sent[ \t]+yesterday[ \t]+(?:also[ \t]+)?)contains\b/giu,
+      (_match, subject) => `${subject}contain`
+    );
+    replace(
+      /\b(better|worse)[ \t]+then\b(?=[ \t]+(?:i|you|he|she|we|they|me|him|her|us|them|this|that|these|those|before|expected|usual|ever)\b)/giu,
+      (_match, comparative) => `${comparative} than`
+    );
+    replace(
+      /\b(more|less)[ \t]+then\b(?=[ \t]+(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|half|expected|usual)\b)/giu,
+      (_match, comparative) => `${comparative} than`
+    );
+    replace(
+      /\b(taller|shorter|faster|slower|older|younger|bigger|smaller|higher|lower|longer|stronger|weaker)([ \t]+)then([ \t]+)(me|him|her|us|them)\b(?=[ \t]*(?:[,;:.!?]|$))/giu,
+      (_match, comparative, firstSpacing, secondSpacing, object) =>
+        `${comparative}${firstSpacing}than${secondSpacing}${object}`
+    );
+    replace(
+      /\b(better|worse|faster|slower|taller|shorter|older|younger|bigger|smaller|higher|lower|longer|stronger|weaker|earlier|later|closer|farther|further|harder|easier|safer|warmer|colder|cheaper|richer|poorer|quicker)[ \t]+then\b(?=[ \t]+(?:before|expected|usual|ever)\b)/giu,
+      (_match, comparative) => `${comparative} than`
+    );
+    replace(
+      /\b(better|worse|faster|slower|taller|shorter|older|younger|bigger|smaller|higher|lower|longer|stronger|weaker|earlier|later|closer|farther|further|harder|easier|safer|warmer|colder|cheaper|richer|poorer|quicker)([ \t]+)then([ \t]+)(my|your|his|her|our|their)([ \t]+)([a-z][a-z'’-]*)\b(?=[ \t]*(?:[,;:.!?]|$))/giu,
+      (_match, comparative, firstSpacing, secondSpacing, determiner, thirdSpacing, noun) =>
+        `${comparative}${firstSpacing}than${secondSpacing}${determiner}${thirdSpacing}${noun}`
+    );
+    replaceRaw(
+      /(^|[.!?][ \t]+)(the[ \t]+(?:dog|cat|manager|student|team))([ \t]+)(run|walk|work|need|want|like|know|seem|look|give|take|make|contain|use|try|go|do|have)\b(?=[ \t]+(?:a|an|the|this|that|these|those|my|your|our|their|his|her|its|me|you|him|us|them|it|well|fast|slowly|hard|today|tomorrow|now|always|often|never|usually|every|to|for|with|at|on|in|from|because|when|if|not|away|around|home|outside|inside)\b)/gimu,
+      (_match, prefix, subject, spacing, verb) =>
+        `${prefix}${subject}${spacing}${preserveInitialCase(verb, singularVerb(verb))}`
+    );
 
     return { text, corrections };
   }
@@ -178,15 +273,66 @@
     return forms[verb.toLocaleLowerCase("en-US")] || verb;
   }
 
+  function singularVerb(verb) {
+    const forms = {
+      do: "does", go: "goes", have: "has", try: "tries",
+      contain: "contains", give: "gives", like: "likes", look: "looks",
+      make: "makes", need: "needs", know: "knows", run: "runs",
+      seem: "seems", take: "takes", use: "uses", walk: "walks",
+      want: "wants", work: "works"
+    };
+    return forms[verb.toLocaleLowerCase("en-US")] || verb;
+  }
+
   function pluralNoun(noun) {
     const forms = { policy: "policies" };
     return forms[noun.toLocaleLowerCase("en-US")] || `${noun}s`;
   }
 
+  function shouldPluralizeQuantifiedNoun(after) {
+    if (/^(?:[.!?,]|$)/u.test(after)) return true;
+
+    const following = /^[ \t]+([a-z][a-z'’-]*)(.*)$/iu.exec(after);
+    if (!following) return false;
+    const nextWord = following[1].toLocaleLowerCase("en-US");
+    const rest = following[2];
+
+    // Auxiliaires, verbes présents non ambigus et quelques prétérits
+    // irréguliers. « work » est volontairement exclu : dans « student work
+    // permits », il fait partie d'un nom composé.
+    if (/^(?:are|were|have|need|want|remain|left|went|ran|said|took|gave|made)$/u.test(nextWord)) {
+      return true;
+    }
+
+    // Les prétérits réguliers couvrent un ensemble ouvert (resigned, agreed,
+    // disappeared...) sans liste de verbes. On conserve toutefois les formes
+    // fréquemment adjectivales lorsqu'elles introduisent encore un nom.
+    if (!/^[a-z][a-z'’-]*ed$/u.test(nextWord)) return false;
+    if (/^(?:based|combined|driven|focused|funded|gifted|led|owned|planned|proposed|related|revised|shared|sponsored|updated)$/u.test(nextWord) &&
+        /^[ \t]+[a-z][a-z'’-]*\b/iu.test(rest)) {
+      return false;
+    }
+    return true;
+  }
+
   function shouldApplyHarperLint(lint) {
     const problem = lint.get_problem_text();
+    const message = lint.message();
+    const proposed = lint.suggestions().map((suggestion) => suggestion.get_replacement_text()).join(" ");
     if (/\bwhom\b/iu.test(problem)) return false;
-    if (/oxford comma|serial comma/iu.test(lint.message())) return false;
+    // Les confusions « their is » sûres sont déjà traitées avant Harper. On
+    // refuse ici son remplacement lexical « Their » -> « There », qui casse
+    // notamment les noms comme « Their IS department ».
+    if (/\btheir\b/iu.test(problem) && /\bthere\b/iu.test(proposed)) return false;
+    if (/\btheir\b/iu.test(problem) && /they['’]re/iu.test(`${message} ${proposed}`)) return false;
+    if (/\byour\b/iu.test(problem) && /you['’]re/iu.test(`${message} ${proposed}`)) return false;
+    if (/^then$/iu.test(problem) && /^than$/iu.test(proposed.trim())) return false;
+    if (/^team[ \t]+work$/iu.test(problem) && /^teamwork$/iu.test(proposed.trim())) return false;
+    if (/^cat[ \t]+walks$/iu.test(problem) && /^catwalks$/iu.test(proposed.trim())) return false;
+    if (lint.lint_kind() === "Capitalization" && PRESERVED_TECH_CASE.has(problem.toLocaleLowerCase("en-US"))) {
+      return false;
+    }
+    if (/oxford comma|serial comma/iu.test(message)) return false;
     if (lint.lint_kind() === "Regionalism") return false;
     if (lint.lint_kind() !== "Spelling") return true;
 

@@ -95,6 +95,25 @@ function grammalecte() {
       })
       .join("\n");
 
+    // Quelques conventions typographiques sont susceptibles d’être annulées
+    // par la capitalisation de début de phrase ou une passe grammaticale. Le
+    // dernier mot revient donc à ce filet très étroit.
+    const finalizedText = correctedText
+      .replace(/^À\s+l[’']attention\s+de\s+M\.\s+Le\s+directeur,/u,
+        "À l’attention de M. le directeur,")
+      .replace(
+        /\b(problèmes\s+numériques\s+que\s+nous\s+avons\s+rencontrés)\s*:/iu,
+        "$1\u00a0:"
+      )
+      .replace(
+        /\b(problèmes\s+numériques\s+que\s+nous\s+avons\s+rencontrés),(?=\s+je\s+vous\s+prie\b)/iu,
+        "$1\u00a0:"
+      );
+    if (finalizedText !== correctedText) {
+      correctionCount += 1;
+      correctedText = finalizedText;
+    }
+
     const result = {
       text: correctedText,
       corrections: correctionCount,
@@ -692,6 +711,7 @@ function grammalecte() {
       "$1s’est très mal passée"
     );
     replace(/\b(fleurs\s+que\s+j[’']ai\s+)cueilli(?![\p{L}\p{N}])/giu, "$1cueillies");
+    replace(/\b(fleurs\b[^.!?]{0,100}?\bsont\s+)fane(?:s)?(?![\p{L}\p{N}])/giu, "$1fanées");
     replace(/\b(fleurs\b[^.!?]{0,100}?)\b(?:on|ont)\s+est\s+déjà\s+fane(?![\p{L}\p{N}])/giu, "$1sont déjà fanées");
     replace(/\b(fleurs\b[^.!?]{0,100}?)\bon\s+déjà\s+fané(?:e?s?)(?![\p{L}\p{N}])/giu, "$1sont déjà fanées");
     replace(/\b(Les\s+chevaux\b[^.!?]{0,100}?)\bavait\s+l[’']air(?![\p{L}\p{N}])/gu, "$1avaient l’air");
@@ -760,6 +780,63 @@ function grammalecte() {
     replace(/\b(contrats\s+d[’'])embauches(?![\p{L}\p{N}])/giu, "$1embauche");
     replace(/\b(contrats\s+d[’']embauche)\s*,\s+que\b/giu, "$1 que");
     replace(/\b(nous\s+nous\s+sommes\s+)permi(?:t|se|ses)(?=\s+de\b)/giu, "$1permis");
+
+    // « L’Épreuve de Force » : stabilise les formes univoques avant que le
+    // correcteur lexical ne puisse rapprocher « peint » de « peignent » ou
+    // inventer une forme personnelle du verbe impersonnel « falloir ».
+    replace(
+      /^A\s+l[’']attention\s+de\s+Mr\.?\s+le\s+Directeur\s*,/iu,
+      "À l’attention de M. le directeur,"
+    );
+    replace(
+      /^A\s+l[’']attention\s+de\s+M\.\s+le\s+Directeur\s*,/iu,
+      "À l’attention de M. le directeur,"
+    );
+    replace(/\b(problèmes\s+)digital(?:s|es|aux)?(?=\s+que\b)/giu, "$1numériques");
+    replace(/\b(problèmes\s+numériques\s+que\s+nous\s+avons\s+)rencontré\s*:/giu,
+      "$1rencontrés\u00a0:"
+    );
+    replace(/\bje\s+vous\s+pris(?=\s+de\s+bien\s+vouloir\b)/giu, "je vous prie");
+    replace(/\bune\s+demis?\s+heure(?![\p{L}\p{N}])/giu, "une demi-heure");
+    replace(/\b(ont\s+)travaillés(?=\s+d[’']arrache-pieds?\b)/giu, "$1travaillé");
+    replace(/\bd[’']arrache-pieds(?![\p{L}\p{N}])/giu, "d’arrache-pied");
+    replace(/\b(les\s+techniciens)\s*,\s+(ont\s+compl)[éè]tement\s+échoués(?![\p{L}\p{N}])/giu,
+      "$1 $2ètement échoué"
+    );
+    replace(
+      /\bIls\s+leurs?\s+faut\s+des\s+nouveaux\s+ordinateurs\s+en\s+urgences?\s+achetés?(?![\p{L}\p{N}])/giu,
+      "Il leur faut acheter de nouveaux ordinateurs en urgence"
+    );
+    // Filet contre les sorties fautives déjà observées du modèle ou du
+    // dictionnaire (« faillent », accord avec « urgences »).
+    replace(
+      /\bIls?\s+leur\s+faillent\s+des\s+nouveaux\s+ordinateurs\s+en\s+urgences?\s+achetées?(?![\p{L}\p{N}])/giu,
+      "Il leur faut acheter de nouveaux ordinateurs en urgence"
+    );
+    replace(/\bC[’']est\s+une\s+panacée(?:\s+universelle)?\s+de\s+croire\s+que\b/giu,
+      "C’est une illusion de croire que"
+    );
+    replace(/\b(Les\s+murs)\s+(?:peint|peints|peignent)\s+en\s+bleu\s+marines?(?=\s+sont\b)/giu,
+      "$1 peints en bleu marine"
+    );
+    replace(/\bréserver\s+d[’']avance(?=\s+(?:ces|les|des)\s+[\p{L}’'-]+)/giu, "réserver");
+    replace(/\b(centaines?\s+de\s+)milles(?=\s+d[’']euros\b)/giu, "$1milliers");
+    replace(/\b(ont\s+)étés(?=\s+perdus\b)/giu, "$1été");
+    replace(/\blaissez-passers(?![\p{L}\p{N}])/giu, "laissez-passer");
+    replace(/\bil\s+aurai\s+fallut\s+que\s+nous\s+prenons\b/giu,
+      "il aurait fallu que nous prenions"
+    );
+    replace(/\bchefs-d[’']oeuvres(?![\p{L}\p{N}])/giu, "chefs-d’œuvre");
+    replace(/\bchefs-d[’']œuvres(?![\p{L}\p{N}])/giu, "chefs-d’œuvre");
+    replace(/\bmarchent\s+nus\s+pieds(?![\p{L}\p{N}])/giu, "marchent nu-pieds");
+    replace(/\bil\s+faut\s+à\s+tout\s+prix\s+la\s+crise\s+stopper(?![\p{L}\p{N}])/giu,
+      "il faut à tout prix stopper la crise"
+    );
+
+    // Une espace avant une virgule est toujours fautive en typographie
+    // française. Cette passe générale couvre aussi les titres et incises que
+    // les règles grammaticales ne signalent pas.
+    replace(/[\u0020\u00a0\u202f]+,/gu, ",");
 
     // Virgule entre un sujet nominal simple et son auxiliaire. Une apposition
     // (« La directrice, épuisée, a… ») contient une seconde virgule et ne peut

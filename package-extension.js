@@ -22,6 +22,7 @@ const ZIP_PATH = path.join(DIST_DIR, `korr-${manifest.version}.zip`);
 const FILES = [
   "manifest.json",
   "background.js",
+  "extension-i18n.js",
   "content.js",
   "content.css",
   "popup.html",
@@ -38,7 +39,7 @@ const FILES = [
   "PRIVACY.md",
   "PRIVACY.en.md"
 ];
-const DIRECTORIES = ["icons", "vendor"];
+const DIRECTORIES = ["icons", "vendor", "_locales"];
 
 // On ne nettoie que ce que ce script produit : « dist » héberge aussi le site
 // construit par build-web.js, qu'un effacement global détruirait.

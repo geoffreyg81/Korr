@@ -5,6 +5,7 @@ const cases = [
   ["Ils est parti hier.", "Ils sont partis hier."],
   ["Je sui aler au magasain hier.", "Je suis allé au magasin hier."],
   ["Les voiture rouge roule vite.", "Les voitures rouges roulent vite."],
+  ["Les fleurs que j’ai cueilli sont fane.", "Les fleurs que j’ai cueillies sont fanées."],
   ["Je suis allé aux magasin hier.", "Je suis allé au magasin hier."],
   ["Je suis aller au magasins hier.", "Je suis allé au magasin hier."],
   ["Je suis aller au deux magasins voisins.", "Je suis allé aux deux magasins voisins."],
@@ -138,6 +139,17 @@ const cases = [
   ["La directrice, épuisée, a quitté la réunion.", "La directrice, épuisée, a quitté la réunion."],
   ["Ce travail est fatiguant les participants.", "Ce travail est fatiguant les participants."],
   ["La cantatrice a eue un travail très fatigant.", "La cantatrice a eu un travail très fatigant."],
+  // Épreuve de force : mots composés, invariables, faux-sens, accords à
+  // distance, virgule sujet-verbe et deux syntaxes de Yoda.
+  [
+    "A l'attention de Mr. le Directeur ,\n\nSuite aux problèmes digital que nous avons rencontré: je vous pris de bien vouloir annulés la réunion prévue dans une demis heure. Malgré qu'ils ont travaillés d'arrache-pieds, les techniciens , ont complétement échoués. Ils leurs faut des nouveaux ordinateurs en urgence achetés.\n\nC'est une panacée universelle de croire que le problème va se résoudre de lui-même ! Les murs peint en bleu marines sont tous tachés, et je vous l'ai déjà répété : il faut réserver d'avance ces salles. Des centaines de milles d'euros ont étés perdus. Quelques soit les avis sur les laissez-passers, il aurai fallut que nous prenons des décisions plus tôt.\n\nVeuillez trouvés ci-joint , les chefs-d'oeuvres de nos designers qui, soit dit en passant , marchent nus pieds dans les couloirs ! Il faut à tout prix la crise stopper.",
+    "À l’attention de M. le directeur,\n\nSuite aux problèmes numériques que nous avons rencontrés : je vous prie de bien vouloir annuler la réunion prévue dans une demi-heure. Bien qu’ils aient travaillé d’arrache-pied, les techniciens ont complètement échoué. Il leur faut acheter de nouveaux ordinateurs en urgence.\n\nC’est une illusion de croire que le problème va se résoudre de lui-même ! Les murs peints en bleu marine sont tous tachés, et je vous l’ai déjà répété : il faut réserver ces salles. Des centaines de milliers d’euros ont été perdus. Quels que soient les avis sur les laissez-passer, il aurait fallu que nous prenions des décisions plus tôt.\n\nVeuillez trouver ci-joint les chefs-d’œuvre de nos designers qui, soit dit en passant, marchent nu-pieds dans les couloirs ! Il faut à tout prix stopper la crise."
+  ],
+  // Garde-fous : les emplois littéraux ou déjà corrects restent intacts.
+  ["Cette panacée guérirait tous les maux.", "Cette panacée guérirait tous les maux."],
+  ["Il aura fallu deux heures pour terminer.", "Il aura fallu deux heures pour terminer."],
+  ["Les artistes peignent en bleu marine.", "Les artistes peignent en bleu marine."],
+  ["Cette rénovation coûte cinq cent milles euros.", "Cette rénovation coûte cinq cent mille euros."],
   ["Elles se sont parlées longtemps.", "Elles se sont parlé longtemps."],
   // Le « se » COD garde l’accord ; les formes déjà correctes ne bougent pas.
   ["Elles se sont lavées ce matin.", "Elles se sont lavées ce matin."],

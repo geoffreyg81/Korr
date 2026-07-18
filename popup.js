@@ -1,3 +1,7 @@
+const i18n = globalThis.korrExtensionI18n;
+const t = (key, values) => i18n.t(key, values);
+i18n.apply(document);
+
 const status = document.getElementById("status");
 const backendState = document.getElementById("backend-state");
 const siteEnabledInput = document.getElementById("site-enabled");
@@ -7,11 +11,11 @@ const styleHint = document.getElementById("style-hint");
 const styleInputs = [...document.querySelectorAll('input[name="style"]')];
 const languageInputs = [...document.querySelectorAll('input[name="language"]')];
 
-const STYLE_HINTS = {
-  corriger: "Corrige les fautes sans rien reformuler.",
-  professionnel: "Réécrit dans un ton professionnel et courtois.",
-  amical: "Réécrit dans un ton chaleureux et détendu.",
-  concis: "Raccourcit le texte en gardant l’essentiel."
+const STYLE_HINT_KEYS = {
+  corriger: "styleHintCorrect",
+  professionnel: "styleHintProfessional",
+  amical: "styleHintFriendly",
+  concis: "styleHintConcise"
 };
 
 let currentSite = "";
@@ -40,7 +44,10 @@ function selectLanguage(value) {
 for (const input of languageInputs) {
   input.addEventListener("change", async () => {
     await chrome.storage.local.set({ language: input.value });
-    flashStatus(`Langue : ${input.value === "auto" ? "détection automatique" : input.value === "fr" ? "français" : "anglais"}.`);
+    const languageName = input.value === "auto"
+      ? t("automatic")
+      : input.value === "fr" ? t("french") : t("english");
+    flashStatus(t("languageSaved", { language: languageName }));
   });
 }
 
@@ -60,12 +67,12 @@ for (const input of styleInputs) {
       // Sans backend, seul le moteur embarqué est disponible.
       selectStyle("corriger");
       await chrome.storage.local.set({ style: "corriger" });
-      flashStatus("Ce style demande le mode IA (voir ci-dessous).");
+      flashStatus(t("styleRequiresAi"));
       return;
     }
     await chrome.storage.local.set({ style: input.value });
     reflectStyleAvailability();
-    flashStatus("Style enregistré.");
+    flashStatus(t("styleSaved"));
   });
 }
 
@@ -74,10 +81,10 @@ function reflectStyleAvailability() {
   const style = selectedStyle();
 
   if (!backendAvailable) {
-    styleHint.textContent = "Correction instantanée, hors ligne. Les styles de réécriture demandent le mode IA.";
+    styleHint.textContent = t("offlineStylesHint");
     return;
   }
-  styleHint.textContent = STYLE_HINTS[style] || "";
+  styleHint.textContent = STYLE_HINT_KEYS[style] ? t(STYLE_HINT_KEYS[style]) : "";
 }
 
 async function initializeSiteSetting() {
@@ -92,7 +99,7 @@ async function initializeSiteSetting() {
   }
 
   if (!currentSite) {
-    currentSiteLabel.textContent = "Indisponible sur cette page";
+    currentSiteLabel.textContent = t("unavailablePage");
     siteEnabledInput.disabled = true;
     return;
   }
@@ -112,18 +119,21 @@ siteEnabledInput.addEventListener("change", async () => {
 
   await chrome.storage.local.set({ enabledSites: updatedSites });
   flashStatus(siteEnabledInput.checked
-    ? `Bouton activé sur ${currentSite}.`
-    : `Bouton masqué sur ${currentSite}.`);
+    ? t("siteEnabled", { site: currentSite })
+    : t("siteHidden", { site: currentSite }));
 });
 
 async function checkBackend() {
-  const result = await chrome.runtime.sendMessage({ type: "CHECK_BACKEND" });
+  let result = null;
+  try {
+    result = await chrome.runtime.sendMessage({ type: "CHECK_BACKEND" });
+  } catch {}
   backendAvailable = Boolean(result?.ollama);
 
   backendState.className = `backend-state ${backendAvailable ? "is-online" : "is-local"}`;
   backendState.textContent = backendAvailable
-    ? "Correcteur hors ligne prêt · mode IA disponible"
-    : "Correcteur hors ligne prêt";
+    ? t("backendReadyAi")
+    : t("backendReady");
 
   if (!backendAvailable && selectedStyle() !== "corriger") {
     selectStyle("corriger");

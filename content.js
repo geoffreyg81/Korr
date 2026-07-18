@@ -1,4 +1,6 @@
 (() => {
+  const i18n = globalThis.korrExtensionI18n;
+  const t = (key, values) => i18n.t(key, values);
   const BUTTON_ID = "korr-button";
   const TOAST_ID = "korr-toast";
   const BUTTON_SIZE = 32;
@@ -12,8 +14,8 @@
   const button = document.createElement("button");
   button.id = BUTTON_ID;
   button.type = "button";
-  button.title = "Corriger le texte (Alt+Maj+C)";
-  button.setAttribute("aria-label", "Corriger le texte");
+  button.title = t("correctButtonTitle");
+  button.setAttribute("aria-label", t("correctButtonAria"));
   button.textContent = "\u2713";
   document.documentElement.appendChild(button);
   syncSiteButtonPreference();
@@ -86,20 +88,20 @@
 
     const editable = findEditable(document.activeElement) || activeEditable;
     if (!editable || !document.contains(editable)) {
-      showToast("Clique d'abord dans un champ de texte.", "error");
+      showToast(t("focusField"), "error");
       return;
     }
 
     const snapshot = readEditable(editable);
     if (!snapshot.text.trim()) {
-      showToast("Aucun texte à corriger.", "error");
+      showToast(t("nothingToCorrect"), "error");
       return;
     }
 
     correctionInProgress = true;
     button.classList.add("is-loading");
     button.textContent = "\u2026";
-    showToast("Correction en cours…", "loading");
+    showToast(t("correcting"), "loading");
 
     try {
       const result = await chrome.runtime.sendMessage({
@@ -107,41 +109,46 @@
         text: snapshot.text
       });
 
-      if (!result?.ok) throw new Error(result?.error || "La correction a échoué.");
+      if (!result?.ok) throw new Error(result?.error || t("correctionFailed"));
       const undoCorrection = replaceEditable(editable, snapshot, result.text);
       const styleLabels = {
-        professionnel: "réécrit en style professionnel",
-        amical: "réécrit en style amical",
-        concis: "raccourci à l’essentiel"
+        professionnel: t("stylePastProfessional"),
+        amical: t("stylePastFriendly"),
+        concis: t("stylePastConcise")
       };
-      const correctionCount = Number.isFinite(result.corrections) && result.corrections > 0
-        ? ` · ${result.corrections} correction${result.corrections > 1 ? "s" : ""}`
+      const count = Number.isFinite(result.corrections) ? result.corrections : 0;
+      const correctionCount = count > 0
+        ? ` · ${t(count === 1 ? "correctionOne" : "correctionMany", { count })}`
         : "";
+      const duration = Number.isFinite(result.durationMs) ? ` · ${result.durationMs} ms` : "";
       const successMessage = result.fallback
-        ? result.fallback
+        ? localizeFallback(result.fallback)
         : result.text === snapshot.text
-          ? "Texte déjà correct."
+          ? t("alreadyCorrect")
         : result.engine === "grammalecte" || result.engine === "harper"
-          ? `Texte corrigé${correctionCount}${Number.isFinite(result.durationMs) ? ` · ${result.durationMs} ms` : ""}.`
+          ? t("textCorrected", { count: correctionCount, duration })
         : styleLabels[result.style]
-          ? `Texte ${styleLabels[result.style]} par l’IA.`
-          : "Texte corrigé par l’IA approfondie.";
-      showToast(successMessage, "success", undoCorrection ? {
-        label: "Annuler",
+          ? t("textStyledAi", { style: styleLabels[result.style] })
+          : t("textDeepAi");
+      const toastType = result.fallback && isMixedLanguageFallback(result.fallback)
+        ? "error"
+        : "success";
+      showToast(successMessage, toastType, undoCorrection ? {
+        label: t("undo"),
         run: () => {
           if (!undoCorrection()) {
-            showToast("Impossible d’annuler : le texte a été modifié depuis.", "error");
+            showToast(t("undoFailed"), "error");
             return;
           }
-          showToast("Correction annulée.", "success");
+          showToast(t("correctionUndone"), "success");
         }
       } : null);
     } catch (error) {
       const contextInvalid = /extension context invalid/i.test(error?.message || "");
       showToast(
         contextInvalid
-          ? "Extension mise à jour : recharge cette page puis réessaie."
-          : error.message || "La correction a échoué.",
+          ? t("extensionUpdated")
+          : localizeRuntimeError(error?.message),
         "error"
       );
     } finally {
@@ -199,7 +206,7 @@
 
     if (snapshot.kind === "control") {
       if (element.value !== snapshot.beforeValue) {
-        throw new Error("Le texte a changé pendant la correction. Relance-la pour éviter d’écraser tes modifications.");
+        throw new Error(t("textChanged"));
       }
       element.setRangeText(correctedText, snapshot.start, snapshot.end, "end");
       element.dispatchEvent(new InputEvent("input", {
@@ -226,13 +233,13 @@
 
     const currentText = snapshot.fullElement ? element.innerText : snapshot.range.toString();
     if (currentText !== snapshot.text || element.innerHTML !== snapshot.beforeHtml) {
-      throw new Error("Le texte a changé pendant la correction. Relance-la pour éviter d’écraser tes modifications.");
+      throw new Error(t("textChanged"));
     }
 
     if (correctedText === snapshot.text) return null;
     const edits = computeTextEdits(snapshot.text, correctedText);
     if (!applyRichTextEdits(element, snapshot, edits)) {
-      throw new Error("Cette mise en forme est trop complexe pour une correction sûre. Sélectionne un passage plus court.");
+      throw new Error(t("formatTooComplex"));
     }
 
     element.dispatchEvent(new InputEvent("input", {
@@ -599,6 +606,34 @@
     } else if (activeEditable && document.contains(activeEditable)) {
       positionButton(activeEditable);
     }
+  }
+
+  function localizeFallback(message) {
+    if (isMixedLanguageFallback(message)) return t("fallbackMixed");
+    if (i18n.locale === "fr") return String(message || t("fallbackLocal"));
+    const value = String(message || "");
+    if (/SMS/iu.test(value)) return t("fallbackSms");
+    if (/écartée|éloign|rejected|safety/iu.test(value)) return t("fallbackRejected");
+    return t("fallbackLocal");
+  }
+
+  function isMixedLanguageFallback(message) {
+    return /m[ée]lang|mixed/iu.test(String(message || ""));
+  }
+
+  function localizeRuntimeError(message) {
+    const value = String(message || "");
+    if (i18n.locale === "fr") return value || t("correctionFailed");
+    if (/trop long|too long|maximum.*caract/iu.test(value)) return t("textTooLong");
+    if (/texte a changé|texte a change|text changed|mise en forme|formatting/iu.test(value)) {
+      return /mise en forme|formatting/iu.test(value) ? t("formatTooComplex") : t("textChanged");
+    }
+    if (/moteur|engine|backend|répondu|repondu|respond|receiving end/iu.test(value)) {
+      return t("engineUnavailable");
+    }
+    // Les moteurs et le backend renvoient encore certains détails en français.
+    // Une interface anglaise ne doit jamais afficher ces messages bruts.
+    return t("correctionFailed");
   }
 
   function showToast(message, type, action = null) {

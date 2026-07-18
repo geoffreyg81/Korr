@@ -18,6 +18,18 @@ $projectDir = $PSScriptRoot
 $backendUrl = "http://127.0.0.1:8787"
 $configPath = Join-Path $env:LOCALAPPDATA "Korr\app-config.json"
 
+# L'interface suit la langue d'affichage de Windows. Le français est utilisé
+# sur un Windows français ; l'anglais sert de langue internationale sinon.
+$script:isFrench = [System.Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName -eq "fr"
+function Get-KorrText {
+  param(
+    [Parameter(Mandatory = $true)][string]$Fr,
+    [Parameter(Mandatory = $true)][string]$En
+  )
+  if ($script:isFrench) { return $Fr }
+  return $En
+}
+
 # --- Arrêt d'une instance déjà lancée -------------------------------------
 if ($Stop) {
   $me = $PID
@@ -25,9 +37,9 @@ if ($Stop) {
     Where-Object { $_.ProcessId -ne $me -and $_.CommandLine -match "app-tray\.ps1" -and $_.CommandLine -notmatch "-Stop" }
   if ($others) {
     $others | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
-    Write-Output "Application arretee."
+    Write-Output (Get-KorrText -Fr "Application arrêtée." -En "Application stopped.")
   } else {
-    Write-Output "L'application n'etait pas lancee."
+    Write-Output (Get-KorrText -Fr "L'application n'était pas lancée." -En "The application was not running.")
   }
   exit 0
 }
@@ -81,8 +93,8 @@ function Start-BackendIfDown {
 if ($SelfTest) {
   [void](Start-BackendIfDown)
   $result = Invoke-Backend $SelfTest
-  Write-Output ("engine : " + $result.engine)
-  Write-Output ("texte  : " + $result.text)
+  Write-Output ((Get-KorrText -Fr "moteur : " -En "engine : ") + $result.engine)
+  Write-Output ((Get-KorrText -Fr "texte   : " -En "text   : ") + $result.text)
   exit 0
 }
 
@@ -208,11 +220,15 @@ function Get-ClipboardSnapshot {
   foreach ($format in $formats) {
     try {
       $payload = $source.GetData($format, $autoConvert)
-      if ($null -eq $payload) { throw "Format vide : $format" }
+      if ($null -eq $payload) {
+        throw (Get-KorrText -Fr "Format vide : $format" -En "Empty clipboard format: $format")
+      }
       $materialized = Copy-ClipboardPayload $payload
       $copy.SetData($format, $false, $materialized)
     } catch {
-      throw "Impossible de sauvegarder le format '$format' du presse-papiers : $($_.Exception.Message)"
+      throw (Get-KorrText `
+        -Fr "Impossible de sauvegarder le format '$format' du presse-papiers : $($_.Exception.Message)" `
+        -En "Unable to preserve clipboard format '$format': $($_.Exception.Message)")
     }
   }
 
@@ -286,7 +302,9 @@ $icon = [System.Drawing.Icon]::FromHandle($bitmap.GetHicon())
 
 $notify = New-Object System.Windows.Forms.NotifyIcon
 $notify.Icon = $icon
-$notify.Text = "Korr - Ctrl+Alt+C corrige la sélection"
+$notify.Text = Get-KorrText `
+  -Fr "Korr - Ctrl+Alt+C corrige la sélection" `
+  -En "Korr - Ctrl+Alt+C corrects selected text"
 $notify.Visible = $true
 
 function Show-Balloon($title, $message, $kind) {
@@ -294,6 +312,51 @@ function Show-Balloon($title, $message, $kind) {
   $notify.BalloonTipText = $message
   $notify.BalloonTipIcon = $kind
   $notify.ShowBalloonTip(3500)
+}
+
+function Get-CorrectionSummary($result) {
+  $undo = Get-KorrText -Fr "Ctrl+Z pour annuler." -En "Press Ctrl+Z to undo."
+  $engine = [string]$result.engine
+
+  if ($result.fallback) {
+    if ($script:isFrench) { return [string]$result.fallback }
+    $fallback = [string]$result.fallback
+    if ($fallback -match "SMS") {
+      return "SMS language corrected locally; AI was not needed. $undo"
+    }
+    if ($fallback -match "IA|AI") {
+      return "AI result rejected for safety; local correction used. $undo"
+    }
+    return "Local correction used. $undo"
+  }
+
+  switch ($engine) {
+    "grammalecte" {
+      return Get-KorrText `
+        -Fr "Corrigé localement avec Grammalecte · $undo" `
+        -En "Corrected locally with Grammalecte · $undo"
+    }
+    "harper" {
+      return Get-KorrText `
+        -Fr "Corrigé localement avec Harper · $undo" `
+        -En "Corrected locally with Harper · $undo"
+    }
+    "ollama+grammalecte" {
+      return Get-KorrText `
+        -Fr "Réécrit par l'IA locale, puis vérifié avec Grammalecte · $undo" `
+        -En "Rewritten by local AI, then checked with Grammalecte · $undo"
+    }
+    "ollama+harper" {
+      return Get-KorrText `
+        -Fr "Réécrit par l'IA locale, puis vérifié avec Harper · $undo" `
+        -En "Rewritten by local AI, then checked with Harper · $undo"
+    }
+    default {
+      return Get-KorrText `
+        -Fr "Texte corrigé · $undo" `
+        -En "Text corrected · $undo"
+    }
+  }
 }
 
 # --- Le cœur : copier la sélection, corriger, recoller ----------------------
@@ -322,7 +385,10 @@ function Invoke-CorrectionCore {
   # son éventuelle représentation texte.
   $clipboardSnapshot = $null
   try { $clipboardSnapshot = Get-ClipboardSnapshot } catch {
-    Show-Balloon "Presse-papiers occupé" "Impossible de le sauvegarder sans risque. Réessaie dans un instant." "Warning"
+    Show-Balloon `
+      (Get-KorrText -Fr "Presse-papiers occupé" -En "Clipboard busy") `
+      (Get-KorrText -Fr "Impossible de le sauvegarder sans risque. Réessayez dans un instant." -En "Korr could not preserve it safely. Please try again in a moment.") `
+      "Warning"
     return
   }
 
@@ -341,18 +407,27 @@ function Invoke-CorrectionCore {
   } catch {
     if ($copySequence -lt 0) { $copySequence = [long](Get-ClipboardSequence) }
     [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $copySequence)
-    Show-Balloon "Copie impossible" "La sélection n'a pas pu être lue. Réessaie dans un instant." "Warning"
+    Show-Balloon `
+      (Get-KorrText -Fr "Copie impossible" -En "Unable to copy") `
+      (Get-KorrText -Fr "La sélection n'a pas pu être lue. Réessayez dans un instant." -En "Korr could not read the selection. Please try again in a moment.") `
+      "Warning"
     return
   }
 
   if (-not $selection -or -not $selection.Trim()) {
     [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $copySequence)
-    Show-Balloon "Rien à corriger" "Sélectionne d'abord du texte, puis Ctrl+Alt+C." "Warning"
+    Show-Balloon `
+      (Get-KorrText -Fr "Rien à corriger" -En "Nothing to correct") `
+      (Get-KorrText -Fr "Sélectionnez d'abord du texte, puis appuyez sur Ctrl+Alt+C." -En "Select some text first, then press Ctrl+Alt+C.") `
+      "Warning"
     return
   }
 
   if ($script:config.mode -eq "deep") {
-    Show-Balloon "Correction IA en cours…" "Le modèle local travaille, quelques secondes." "Info"
+    Show-Balloon `
+      (Get-KorrText -Fr "Correction IA en cours…" -En "AI correction in progress…") `
+      (Get-KorrText -Fr "Le modèle local travaille pendant quelques secondes." -En "The local model is working. This may take a few seconds.") `
+      "Info"
   }
 
   $result = $null
@@ -366,13 +441,28 @@ function Invoke-CorrectionCore {
 
   if (-not $result -or -not $result.text) {
     [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $copySequence)
-    Show-Balloon "Backend inaccessible" "Lance « npm start » dans le dossier du projet." "Error"
+    Show-Balloon `
+      (Get-KorrText -Fr "Moteur local inaccessible" -En "Local engine unavailable") `
+      (Get-KorrText -Fr "Korr n'a pas pu démarrer son moteur. Fermez Korr, puis relancez-le depuis le menu Démarrer." -En "Korr could not start its local engine. Close Korr, then launch it again from the Start menu.") `
+      "Error"
+    return
+  }
+
+  if ($result.engine -eq "mixed") {
+    [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $copySequence)
+    Show-Balloon `
+      (Get-KorrText -Fr "Texte bilingue détecté" -En "Mixed-language text detected") `
+      (Get-KorrText -Fr "Sélectionnez séparément la partie française ou anglaise, puis relancez Korr." -En "Select only the French or English section, then run Korr again.") `
+      "Warning"
     return
   }
 
   if ($result.text -eq $selection) {
     [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $copySequence)
-    Show-Balloon "Déjà correct" "Aucune faute détectée." "Info"
+    Show-Balloon `
+      (Get-KorrText -Fr "Déjà correct" -En "Already correct") `
+      (Get-KorrText -Fr "Aucune faute détectée." -En "No error detected.") `
+      "Info"
     return
   }
 
@@ -380,12 +470,18 @@ function Invoke-CorrectionCore {
   # nouvelle copie effectuée entre-temps et on ne colle pas dans une autre
   # fenêtre si l'utilisateur a changé d'application.
   if ([long](Get-ClipboardSequence) -ne $copySequence) {
-    Show-Balloon "Correction annulée" "Le presse-papiers a été modifié pendant la correction." "Warning"
+    Show-Balloon `
+      (Get-KorrText -Fr "Correction annulée" -En "Correction cancelled") `
+      (Get-KorrText -Fr "Le presse-papiers a été modifié pendant la correction." -En "The clipboard changed while Korr was correcting the text.") `
+      "Warning"
     return
   }
   if ($targetWindow -ne [IntPtr]::Zero -and [KorrClipboardNative]::GetForegroundWindow() -ne $targetWindow) {
     [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $copySequence)
-    Show-Balloon "Correction annulée" "Reviens dans le champ d'origine avant de relancer la correction." "Warning"
+    Show-Balloon `
+      (Get-KorrText -Fr "Correction annulée" -En "Correction cancelled") `
+      (Get-KorrText -Fr "Revenez dans le champ d'origine avant de relancer la correction." -En "Return to the original text field before trying again.") `
+      "Warning"
     return
   }
 
@@ -401,7 +497,10 @@ function Invoke-CorrectionCore {
     # coller dans une fenêtre activée pendant la mise à jour du presse-papiers.
     if ($targetWindow -ne [IntPtr]::Zero -and [KorrClipboardNative]::GetForegroundWindow() -ne $targetWindow) {
       [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $pasteSequence)
-      Show-Balloon "Correction annulée" "La fenêtre active a changé avant le collage." "Warning"
+      Show-Balloon `
+        (Get-KorrText -Fr "Correction annulée" -En "Correction cancelled") `
+        (Get-KorrText -Fr "La fenêtre active a changé avant le collage." -En "The active window changed before Korr could paste the correction.") `
+        "Warning"
       return
     }
 
@@ -413,29 +512,30 @@ function Invoke-CorrectionCore {
   } catch {
     $restoreSequence = if ($pasteSequence -ge 0) { $pasteSequence } else { $copySequence }
     [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $restoreSequence)
-    Show-Balloon "Collage impossible" "Le texte corrigé n'a pas pu être collé." "Error"
+    Show-Balloon `
+      (Get-KorrText -Fr "Collage impossible" -En "Unable to paste") `
+      (Get-KorrText -Fr "Le texte corrigé n'a pas pu être collé." -En "Korr could not paste the corrected text.") `
+      "Error"
     return
   }
 
-  $summary = if ($result.fallback) { [string]$result.fallback }
-    elseif ($result.engine -eq "grammalecte") { "Corrigé instantanément · Ctrl+Z pour annuler." }
-    else { "Réécrit par l'IA · Ctrl+Z pour annuler." }
-  Show-Balloon "Texte corrigé" $summary "Info"
+  $summary = Get-CorrectionSummary $result
+  Show-Balloon (Get-KorrText -Fr "Texte corrigé" -En "Text corrected") $summary "Info"
 }
 
 # --- Menu de la zone de notification ----------------------------------------
 $menu = New-Object System.Windows.Forms.ContextMenuStrip
 
-$correctItem = $menu.Items.Add("Corriger la sélection`tCtrl+Alt+C")
+$correctItem = $menu.Items.Add((Get-KorrText -Fr "Corriger la sélection`tCtrl+Alt+C" -En "Correct selected text`tCtrl+Alt+C"))
 $correctItem.add_Click({ Invoke-Correction $null })
 [void]$menu.Items.Add("-")
 
-$shortcutsHeader = $menu.Items.Add("Raccourcis IA directs :")
+$shortcutsHeader = $menu.Items.Add((Get-KorrText -Fr "Raccourcis IA directs :" -En "Direct AI shortcuts:"))
 $shortcutsHeader.Enabled = $false
 foreach ($shortcut in @(
-  @{ Label = "  Style pro`tCtrl+Alt+P";   Mode = "deep"; Style = "professionnel" },
-  @{ Label = "  Amical`tCtrl+Alt+A";      Mode = "deep"; Style = "amical" },
-  @{ Label = "  Raccourcir`tCtrl+Alt+R";  Mode = "deep"; Style = "concis" }
+  @{ Label = (Get-KorrText -Fr "  Style pro`tCtrl+Alt+P" -En "  Professional`tCtrl+Alt+P"); Mode = "deep"; Style = "professionnel" },
+  @{ Label = (Get-KorrText -Fr "  Amical`tCtrl+Alt+A" -En "  Friendly`tCtrl+Alt+A");       Mode = "deep"; Style = "amical" },
+  @{ Label = (Get-KorrText -Fr "  Raccourcir`tCtrl+Alt+R" -En "  Shorten`tCtrl+Alt+R");    Mode = "deep"; Style = "concis" }
 )) {
   $item = $menu.Items.Add($shortcut.Label)
   $item.Tag = $shortcut
@@ -445,15 +545,15 @@ foreach ($shortcut in @(
   })
 }
 [void]$menu.Items.Add("-")
-$defaultHeader = $menu.Items.Add("Mode par défaut (Ctrl+Alt+C) :")
+$defaultHeader = $menu.Items.Add((Get-KorrText -Fr "Mode par défaut (Ctrl+Alt+C) :" -En "Default mode (Ctrl+Alt+C):"))
 $defaultHeader.Enabled = $false
 
 $modeChoices = @(
-  @{ Label = "Instantané (rapide)"; Mode = "instant"; Style = "corriger" },
-  @{ Label = "IA - Corriger";       Mode = "deep";    Style = "corriger" },
-  @{ Label = "IA - Style pro";      Mode = "deep";    Style = "professionnel" },
-  @{ Label = "IA - Style amical";   Mode = "deep";    Style = "amical" },
-  @{ Label = "IA - Concis";         Mode = "deep";    Style = "concis" }
+  @{ Label = (Get-KorrText -Fr "Instantané (rapide)" -En "Instant (fast)");          Mode = "instant"; Style = "corriger" },
+  @{ Label = (Get-KorrText -Fr "IA - Corriger" -En "AI - Correct");                 Mode = "deep";    Style = "corriger" },
+  @{ Label = (Get-KorrText -Fr "IA - Style pro" -En "AI - Professional");           Mode = "deep";    Style = "professionnel" },
+  @{ Label = (Get-KorrText -Fr "IA - Style amical" -En "AI - Friendly");            Mode = "deep";    Style = "amical" },
+  @{ Label = (Get-KorrText -Fr "IA - Concis" -En "AI - Concise");                   Mode = "deep";    Style = "concis" }
 )
 $modeItems = @()
 foreach ($choice in $modeChoices) {
@@ -465,7 +565,7 @@ foreach ($choice in $modeChoices) {
     $script:config = @{ mode = $picked.Mode; style = $picked.Style }
     Save-Config $script:config
     foreach ($other in $script:modeItems) { $other.Checked = ($other -eq $sender) }
-    Show-Balloon "Mode changé" $picked.Label "Info"
+    Show-Balloon (Get-KorrText -Fr "Mode changé" -En "Mode changed") $picked.Label "Info"
   })
   $modeItems += $item
 }
@@ -477,7 +577,7 @@ foreach ($item in $modeItems) {
 if (-not ($modeItems | Where-Object { $_.Checked })) { $modeItems[0].Checked = $true }
 
 [void]$menu.Items.Add("-")
-$quitItem = $menu.Items.Add("Quitter")
+$quitItem = $menu.Items.Add((Get-KorrText -Fr "Quitter" -En "Quit"))
 $quitItem.add_Click({
   $notify.Visible = $false
   [System.Windows.Forms.Application]::Exit()
@@ -502,7 +602,12 @@ foreach ($binding in @(
   }
 }
 if ($failed.Count) {
-  Show-Balloon "Raccourci indisponible" (($failed -join ", ") + " est deja pris par une autre application.") "Warning"
+  $shortcutMessage = if ($failed.Count -eq 1) {
+    Get-KorrText -Fr (($failed -join ", ") + " est déjà utilisé par une autre application.") -En (($failed -join ", ") + " is already used by another application.")
+  } else {
+    Get-KorrText -Fr (($failed -join ", ") + " sont déjà utilisés par une autre application.") -En (($failed -join ", ") + " are already used by another application.")
+  }
+  Show-Balloon (Get-KorrText -Fr "Raccourci indisponible" -En "Shortcut unavailable") $shortcutMessage "Warning"
 }
 
 # Le WM_HOTKEY arrive dans la fenêtre C# ; un minuteur sur le fil d'interface
@@ -519,7 +624,10 @@ $timer.add_Tick({
 $timer.Start()
 
 [void](Start-BackendIfDown)
-Show-Balloon "Korr actif" "Ctrl+Alt+C corrige · P pro · A amical · R raccourcit." "Info"
+Show-Balloon `
+  (Get-KorrText -Fr "Korr actif" -En "Korr is ready") `
+  (Get-KorrText -Fr "Ctrl+Alt+C corrige · P pro · A amical · R raccourcit." -En "Ctrl+Alt+C corrects · P professional · A friendly · R shortens.") `
+  "Info"
 
 [System.Windows.Forms.Application]::Run()
 

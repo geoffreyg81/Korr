@@ -16,6 +16,7 @@ const installButton = document.getElementById("install");
 const installHint = document.getElementById("install-hint");
 const i18n = globalThis.korrI18n;
 const t = (key, values) => i18n.t(key, values);
+const PWA_REFRESH_DRAFT = "korr-pwa-refresh-draft";
 
 const FRENCH_SAMPLE = `Salut, je ne peux pas venir à la réunion demain, désolé pour le retard.
 
@@ -27,6 +28,7 @@ let summaryTranslation = null;
 const WORKER_TIMEOUT_MS = 60_000;
 
 importSharedText();
+restoreRefreshDraft();
 
 function setState(key, values = {}, className = "") {
   stateTranslation = { key, values, className };
@@ -88,7 +90,6 @@ function createWorkerClient(url, options, onFatal) {
 
 let askFrench = null;
 let askEnglish = null;
-let ready = false;
 let englishReady = false;
 
 function englishClient() {
@@ -105,7 +106,6 @@ function frenchClient() {
   if (!askFrench) {
     askFrench = createWorkerClient("grammalecte-worker.js", undefined, () => {
       askFrench = null;
-      ready = false;
     });
   }
   return askFrench;
@@ -113,14 +113,15 @@ function frenchClient() {
 
 (async () => {
   await prepareOfflineRuntime();
+  // L'interface devient utilisable avant la chauffe du français. Ainsi, une
+  // panne isolée de Grammalecte ne bloque jamais une correction anglaise.
+  correctButton.disabled = false;
   const started = performance.now();
   const response = await frenchClient()("PING");
   if (!response.ok) {
     setState("loadError", { error: response.error || t("engineUnavailable") }, "is-error");
     return;
   }
-  ready = true;
-  correctButton.disabled = false;
   setState("readyMs", { ms: Math.round(performance.now() - started) }, "is-ready");
 })();
 
@@ -136,8 +137,6 @@ async function runCorrection() {
     input.focus();
     return;
   }
-  if (!ready) return;
-
   correctButton.disabled = true;
   correctButton.textContent = t("correcting");
 
@@ -251,19 +250,45 @@ function importSharedText() {
 
 async function prepareOfflineRuntime() {
   if (!("serviceWorker" in navigator)) return;
-  try {
-    await navigator.serviceWorker.register("sw.js");
-    await Promise.race([
-      navigator.serviceWorker.ready,
-      new Promise((resolve) => setTimeout(resolve, 8_000))
-    ]);
-    if (!navigator.serviceWorker.controller) {
-      await Promise.race([
-        new Promise((resolve) => navigator.serviceWorker.addEventListener("controllerchange", resolve, { once: true })),
-        new Promise((resolve) => setTimeout(resolve, 2_000))
-      ]);
+  let hadController = Boolean(navigator.serviceWorker.controller);
+  let refreshing = false;
+  const refreshForNewWorker = () => {
+    // La première installation ne recharge pas la page. Pour une mise à jour,
+    // le nouveau worker doit recharger une fois les scripts déjà chargés par
+    // l'ancien worker. Le garde empêche toute boucle de rechargement.
+    if (!hadController) {
+      hadController = true;
+      return;
     }
+    if (refreshing) return;
+    refreshing = true;
+    preserveRefreshDraft();
+    window.location.reload();
+  };
+  navigator.serviceWorker.addEventListener("controllerchange", refreshForNewWorker);
+  try {
+    const registration = await navigator.serviceWorker.register("sw.js", { updateViaCache: "none" });
+    registration.waiting?.postMessage({ type: "SKIP_WAITING" });
   } catch {
+    navigator.serviceWorker.removeEventListener("controllerchange", refreshForNewWorker);
     // Le correcteur reste utilisable en ligne même si le cache PWA échoue.
+  }
+}
+
+function preserveRefreshDraft() {
+  try {
+    if (input.value) sessionStorage.setItem(PWA_REFRESH_DRAFT, input.value);
+  } catch {
+    // Le stockage peut être désactivé sans empêcher la mise à jour.
+  }
+}
+
+function restoreRefreshDraft() {
+  try {
+    const draft = sessionStorage.getItem(PWA_REFRESH_DRAFT);
+    sessionStorage.removeItem(PWA_REFRESH_DRAFT);
+    if (!input.value && draft) input.value = draft;
+  } catch {
+    // Rien à restaurer lorsque le stockage est désactivé.
   }
 }

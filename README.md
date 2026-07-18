@@ -9,6 +9,10 @@ rien d'autre à lancer. Une application de bureau facultative étend la
 correction à toutes les applications Windows, et un backend facultatif ajoute
 des styles de réécriture par IA.
 
+Le site, l'extension et l'application Windows adaptent leur interface au
+français ou à l'anglais. En mode Auto, Korr détecte localement la langue du
+texte et protège les passages qui mélangent les deux langues.
+
 ## Correction instantanée (par défaut)
 
 Moteurs exécutés dans l'extension elle-même : **Grammalecte 2.3.0** et règles
@@ -101,6 +105,9 @@ npm run app
 
 Une icône ✓ violette apparaît dans la zone de notification. Ensuite, dans
 n’importe quelle application :
+
+Korr détecte automatiquement le français et l'anglais : Ctrl+Alt+C utilise
+Grammalecte ou Harper sans demander de réglage préalable.
 
 1. Sélectionne du texte.
 2. Appuie sur un raccourci.

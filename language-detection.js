@@ -44,9 +44,30 @@
   ]);
 
   const ENGLISH_CONTRACTION = /\b(?:aren['’]t|can['’]t|couldn['’]t|didn['’]t|doesn['’]t|don['’]t|hasn['’]t|haven['’]t|isn['’]t|let['’]s|shouldn['’]t|wasn['’]t|weren['’]t|won['’]t|wouldn['’]t|i['’]m|i['’]ve|we['’]re|we['’]ve|they['’]re|you['’]re)\b/giu;
+  const ENGLISH_SHORT_MESSAGES = Object.freeze([
+    /^(?:yes|yep|yeah)$/u,
+    /^(?:best|kind)[ \t]+regards$/u,
+    /^happy[ \t]+birthday$/u,
+    /^well[ \t]+done$/u,
+    /^good[ \t]+luck$/u,
+    /^(?:sorry|welcome|cheers|bye|congratulations)$/u,
+    /^(?:good[ \t]+night|happy[ \t]+new[ \t]+year|see[ \t]+ya|no[ \t]+problem|sounds[ \t]+good|talk[ \t]+soon|take[ \t]+care)$/u,
+    /^h(?:ello|elo)[ \t]+how[ \t]+(?:are|ar|r)[ \t]+(?:you|yu|u)$/u,
+    /^i[ \t]+(?:can['’]?t|cannot)[ \t]+(?:connect|conect)$/u,
+    /^(?:thanks|thx)[ \t]+see[ \t]+(?:you|u)[ \t]+(?:tomorrow|tmrw|tmrrw)$/u,
+    /^need[ \t]+(?:help|hlp)$/u,
+    /^(?:where|wher)[ \t]+(?:are|r)[ \t]+(?:you|u)$/u
+  ]);
 
   function detectLanguage(text) {
     const normalized = String(text || "").toLocaleLowerCase();
+    const compact = normalized
+      .trim()
+      .replace(/[.!?,;:]+$/u, "")
+      .trim()
+      .replace(/[ \t]+/gu, " ");
+    if (ENGLISH_SHORT_MESSAGES.some((pattern) => pattern.test(compact))) return "en";
+
     const words = normalized.match(/[a-zà-öø-ÿ]+/gu) || [];
     const hasFrenchDiacritics = /[àâçéèêëîïôùûüÿœæ]/u.test(normalized);
     let french = hasFrenchDiacritics ? 2 : 0;

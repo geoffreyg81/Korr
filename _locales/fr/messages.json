@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "Korr - correcteur français et anglais"
+  },
+  "extensionDescription": {
+    "message": "Corrige le français et l'anglais dans n'importe quel champ de saisie. Gratuit et hors ligne."
+  },
+  "actionTitle": {
+    "message": "Korr - Corriger le texte"
+  },
+  "commandDescription": {
+    "message": "Corriger le texte actif"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "Korr - French and English grammar checker"
+  },
+  "extensionDescription": {
+    "message": "Correct French and English in any text field. Free and offline."
+  },
+  "actionTitle": {
+    "message": "Korr - Correct text"
+  },
+  "commandDescription": {
+    "message": "Correct the active text"
+  }
+}
