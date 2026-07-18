@@ -1,7 +1,7 @@
 // Chargeur Node de Grammalecte.
 //
-// Il monte Grammalecte dans un contexte « vm », y injecte grammar-rules.js —
-// le même fichier de règles que l'extension charge dans son Worker — puis
+// Il monte Grammalecte dans un contexte « vm », y injecte grammar-rules.js -
+// le même fichier de règles que l'extension charge dans son Worker - puis
 // expose l'API du moteur. Toute la logique de correction vit dans
 // grammar-rules.js ; ce fichier ne s'occupe que du chargement.
 

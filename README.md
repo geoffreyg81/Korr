@@ -1,7 +1,7 @@
-# Korr — correcteur français local
+# Korr - correcteur français local
 
 Extension Edge/Chrome qui corrige le français directement dans les champs de
-saisie. Gratuite, sans clé API, sans abonnement, sans compte — et **hors
+saisie. Gratuite, sans clé API, sans abonnement, sans compte - et **hors
 ligne** : le texte ne quitte jamais votre ordinateur.
 
 L'extension embarque son propre moteur : elle s'installe et fonctionne, sans
@@ -66,7 +66,7 @@ npm stop
 ```
 
 La commande retrouve le backend par le port qu’il écoute, et fonctionne donc
-même quand il a été lancé sans fenêtre par le démarrage automatique — le cas où
+même quand il a été lancé sans fenêtre par le démarrage automatique - le cas où
 `Ctrl+C` n’est d’aucun secours. `npm run restart` enchaîne l’arrêt et le
 démarrage, ce qu’il faut faire après chaque modification du backend.
 
@@ -86,7 +86,7 @@ problème : la seconde instance l’indique et s’arrête aussitôt.
 ## Application de bureau : corriger partout
 
 L’extension couvre le navigateur ; l’application de bureau couvre **tout le
-reste** — Word, Discord, Bloc-notes, n’importe quel champ de n’importe quel
+reste** - Word, Discord, Bloc-notes, n’importe quel champ de n’importe quel
 logiciel Windows. 100 % PowerShell natif : rien à installer.
 
 ```powershell
@@ -165,8 +165,8 @@ instantanée n’en dépend jamais.
 
 ### Coût réel du mode approfondi
 
-Ollama n’accélère que les GPU NVIDIA, AMD et Apple. Partout ailleurs — dont les
-PC ARM Snapdragon X, où ni le GPU Adreno ni le NPU ne sont utilisés — le modèle
+Ollama n’accélère que les GPU NVIDIA, AMD et Apple. Partout ailleurs - dont les
+PC ARM Snapdragon X, où ni le GPU Adreno ni le NPU ne sont utilisés - le modèle
 tourne **à 100 % sur le processeur** (`ollama ps` affiche `100% CPU`). Tous les
 cœurs saturent pendant la génération, la machine chauffe puis se bride
 d’elle-même : sur un Snapdragon X, la vitesse mesurée tombe de 27 à 19 tokens/s
@@ -187,7 +187,7 @@ $env:OLLAMA_THREADS = "6"; npm start
 
 Passer à `gemma3:1b` ne résout rien : trois fois plus rapide, il ne corrige que
 ce que le mode instantané traite déjà en quelques millisecondes, et échoue sur
-le réordonnancement — la seule raison d’appeler un modèle.
+le réordonnancement - la seule raison d’appeler un modèle.
 
 ## Architecture
 

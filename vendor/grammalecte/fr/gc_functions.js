@@ -1655,7 +1655,7 @@ function undoLigature (c) {
 const _dNormalizedCharsForInclusiveWriting = new Map([
     ['(', '·'],  [')', '·'],
     ['.', '·'],  ['·', '·'],  ['•', '·'],
-    ['–', '·'],  ['—', '·'],
+    ['–', '·'],  ['-', '·'],
     ['/', '·']
 ]);
 
@@ -1825,7 +1825,7 @@ var gc_functions = {
         return normalizeInclusiveWriting(m[0]);
     },
     _c_eepi_écriture_épicène_singulier_3: function (sSentence, sSentence0, m, dTokenPos, sCountry, bCondMemo) {
-        return option("eepi") && re.search("^[uU][nN][-–—.•⋅/][eE]$", m[0]);
+        return option("eepi") && re.search("^[uU][nN][-–-.•⋅/][eE]$", m[0]);
     },
     _c_eepi_écriture_épicène_singulier_4: function (sSentence, sSentence0, m, dTokenPos, sCountry, bCondMemo) {
         return ! bCondMemo && option("eepi") && ! re.search("(?i)·[ntl]?e$", m[2]);
@@ -3049,7 +3049,7 @@ var gc_functions = {
         return g_space(lToken[nTokenOffset+1], lToken[nTokenOffset+1+1], 0, 0) && ! lToken[nTokenOffset+1]["sValue"].gl_isUpperCase() || g_value(lToken[nTokenOffset+1], "|à|");
     },
     _g_cond_ocr_7: function (lToken, nTokenOffset, nLastToken, sCountry, bCondMemo, dTags, sSentence, sSentence0) {
-        return ! g_value(lToken[nTokenOffset], "|<start>|—|–|");
+        return ! g_value(lToken[nTokenOffset], "|<start>|-|–|");
     },
     _g_sugg_ocr_2: function (lToken, nTokenOffset, nLastToken) {
         return lToken[nTokenOffset+1]["sValue"].replace(/a/g, "â").replace(/A/g, "Â");

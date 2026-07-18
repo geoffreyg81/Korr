@@ -466,8 +466,8 @@
     button.classList.add("is-visible");
   }
 
-  // Recense les contrôles interactifs voisins du champ — bouton d’envoi, micro,
-  // sélecteur de modèle des barres modernes (Gemini, ChatGPT…) — pour que la
+  // Recense les contrôles interactifs voisins du champ - bouton d’envoi, micro,
+  // sélecteur de modèle des barres modernes (Gemini, ChatGPT…) - pour que la
   // flèche ne se pose pas dessus.
   function findObstacles(element, fieldRect) {
     const root = searchRootFor(element);

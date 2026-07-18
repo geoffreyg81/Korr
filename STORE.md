@@ -1,4 +1,4 @@
-# Textes de publication — Korr
+# Textes de publication - Korr
 
 Contenus prêts à coller dans les formulaires des boutiques et sur Product Hunt.
 
@@ -7,7 +7,7 @@ Contenus prêts à coller dans les formulaires des boutiques et sur Product Hunt
 ## Nom
 
 ```
-Korr — correcteur français
+Korr - correcteur français
 ```
 
 ## Description courte (132 caractères max)
@@ -126,8 +126,8 @@ Offline French grammar checker for any text field
 ## Description
 
 ```
-Korr fixes French grammar wherever you type — Gmail, Slack, Notion,
-anywhere — without sending a single character to the cloud.
+Korr fixes French grammar wherever you type - Gmail, Slack, Notion,
+anywhere - without sending a single character to the cloud.
 
 The whole correction engine ships inside the extension. No account, no server,
 no tracking, no limits, no subscription. It works on a plane.
@@ -137,7 +137,7 @@ agreement with a preceding direct object, pronominal verbs, subjunctive after
 "bien que", the "si j'aurais" trap, et/est and ou/où homophones, and the
 non-breaking space French typography requires before ! ? : ;
 
-It also expands SMS shorthand — about 180 abbreviations.
+It also expands SMS shorthand - about 180 abbreviations.
 
 Corrections take milliseconds. When a fix is uncertain, it does nothing rather
 than degrade your text.
@@ -155,7 +155,7 @@ J'ai construit Korr parce que les correcteurs existants envoient tous
 votre texte sur leurs serveurs, exigent un compte, et limitent l'usage gratuit.
 
 Le pari : tout faire tourner en local. Le moteur (Grammalecte, libre) est
-embarqué dans l'extension — aucune requête réseau, vérifiable puisque le code
+embarqué dans l'extension - aucune requête réseau, vérifiable puisque le code
 est public.
 
 Le plus dur n'a pas été de corriger, mais de savoir NE PAS corriger. Un

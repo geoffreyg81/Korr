@@ -1,4 +1,4 @@
-﻿# Korr — application de bureau.
+﻿# Korr - application de bureau.
 # Corrige la sélection dans N'IMPORTE QUELLE application Windows :
 # sélectionne du texte, appuie sur Ctrl+Alt+C, le texte corrigé est recollé.
 #
@@ -286,7 +286,7 @@ $icon = [System.Drawing.Icon]::FromHandle($bitmap.GetHicon())
 
 $notify = New-Object System.Windows.Forms.NotifyIcon
 $notify.Icon = $icon
-$notify.Text = "Korr — Ctrl+Alt+C corrige la sélection"
+$notify.Text = "Korr - Ctrl+Alt+C corrige la sélection"
 $notify.Visible = $true
 
 function Show-Balloon($title, $message, $kind) {
@@ -450,10 +450,10 @@ $defaultHeader.Enabled = $false
 
 $modeChoices = @(
   @{ Label = "Instantané (rapide)"; Mode = "instant"; Style = "corriger" },
-  @{ Label = "IA — Corriger";       Mode = "deep";    Style = "corriger" },
-  @{ Label = "IA — Style pro";      Mode = "deep";    Style = "professionnel" },
-  @{ Label = "IA — Style amical";   Mode = "deep";    Style = "amical" },
-  @{ Label = "IA — Concis";         Mode = "deep";    Style = "concis" }
+  @{ Label = "IA - Corriger";       Mode = "deep";    Style = "corriger" },
+  @{ Label = "IA - Style pro";      Mode = "deep";    Style = "professionnel" },
+  @{ Label = "IA - Style amical";   Mode = "deep";    Style = "amical" },
+  @{ Label = "IA - Concis";         Mode = "deep";    Style = "concis" }
 )
 $modeItems = @()
 foreach ($choice in $modeChoices) {

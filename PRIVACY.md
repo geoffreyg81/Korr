@@ -1,4 +1,4 @@
-# Politique de confidentialité — Korr
+# Politique de confidentialité - Korr
 
 _Dernière mise à jour : 18 juillet 2026_
 

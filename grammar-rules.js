@@ -1,8 +1,8 @@
-// Règles de correction de Korr — partagées par le backend Node et
+// Règles de correction de Korr - partagées par le backend Node et
 // l'extension de navigateur.
 //
 // Ce fichier est un script classique, sans import ni export : il s'exécute dans
-// une portée où Grammalecte est déjà chargé — le contexte « vm » côté Node,
+// une portée où Grammalecte est déjà chargé - le contexte « vm » côté Node,
 // la portée globale du Worker côté navigateur. Les deux environnements y
 // trouvent donc « gc_engine » comme variable globale.
 //
@@ -505,7 +505,7 @@ function grammalecte() {
     );
 
     // Homophones « ou » / « où » : une phrase ne commence pas par la conjonction
-    // « ou » suivie d’une inversion — c’est l’adverbe de lieu.
+    // « ou » suivie d’une inversion - c’est l’adverbe de lieu.
     replace(
       /(^|[.!?…]\s+)Ou\s+(?=(?:est-ce\b|[\p{L}]+-(?:il|elle|on|tu|vous|nous|ils|elles)\b))/gu,
       "$1Où "
@@ -548,6 +548,42 @@ function grammalecte() {
     replace(/\b(Les\s+chevaux\b[^.!?]{0,100}?)\bavait\s+l[’']air(?![\p{L}\p{N}])/gu, "$1avaient l’air");
     replace(/\bd[’']a\s+coté(?!\p{L})/giu, "d’à côté");
     replace(/\bOn\s+se\s+voit\s+très\s+bientôt\s+j[’']espère(?![\p{L}\p{N}])/gu, "On se voit très bientôt, j’espère");
+
+    // Locutions et constructions administratives fréquemment confondues.
+    // Elles sont traitées avant Grammalecte afin d’éviter les rapprochements
+    // phonétiques absurdes (« ce mettre » → « ce maître », « étaient » →
+    // « étayé ») observés lorsque le contexte initial reste incohérent.
+    replace(/\bcession(?=\s+de\s+formation\b)/giu, (match) => preserveCase(match, "session"));
+    replace(/\bla\s+plus\s+part(?![\p{L}\p{N}])/giu, "la plupart");
+    replace(/\b(ont\s+décid)(?:é|és|ée|ées)\s+de\s+ce\s+mettre(?![\p{L}\p{N}])/giu, "$1é de se mettre");
+    replace(/\bde\s+ce\s+mettre(?![\p{L}\p{N}])/giu, "de se mettre");
+    replace(/\bn[’']ont\s+pas\s+étaient(?![\p{L}\p{N}])/giu, "n’ont pas été");
+    replace(/\b(des)\s+(très\s+(?:bons?|bonnes?|beaux|belles)\b)/giu, "de $2");
+    replace(/\b(Malgré\s+qu)([’'])/gu, "Bien qu$2");
+
+    // Expressions figées et constructions verbales sans ambiguïté.
+    replace(/\bgrand\s+damne(?![\p{L}\p{N}])/giu, "grand dam");
+    replace(/\bcomme\s+de\s+par\s+hasard(?![\p{L}\p{N}])/giu, "comme par hasard");
+    replace(/\brésoudre\s+le\s+problème\s*:/giu, "résoudre le problème,");
+    replace(
+      /\bnous\s+devrions\s+des\s+consultants\s+externes\s+engagés(?![\p{L}\p{N}])/giu,
+      "nous devrions engager des consultants externes"
+    );
+    replace(/\bVeuillez\s+trouv(?:é|és|ée|ées)\s+ci-joint\s*,\s*/giu, "Veuillez trouver ci-joint ");
+    replace(/\b(tâches?)\s+de\s+sang(?![\p{L}\p{N}])/giu, (match, noun) => preserveCase(noun, /^tâches$/iu.test(noun) ? "taches" : "tache") + " de sang");
+    replace(/\b(la\s+liste\s+des\s+taches\s+de\s+sang\s+sur\s+la\s+moquette)\s*,\s+qui\b/giu, "$1 qui");
+    replace(/\b(taches\b[^.!?]{0,100}?\bn[’']ont\s+pas\s+été\s+)nettoyé(?:s|e|es)?(?![\p{L}\p{N}])/giu, "$1nettoyées");
+
+    // Un insecte pique : « vénéneux » qualifie ce qui est toxique lorsqu’on
+    // l’ingère, tandis qu’un animal qui injecte du venin est « venimeux ».
+    replace(
+      /\bs[’']est\s+coupée?\s+au\s+doigt\s+avec\s+un\s+insecte\s+vénéneux(?![\p{L}\p{N}])/giu,
+      "s’est fait piquer au doigt par un insecte venimeux"
+    );
+    replace(/([«"]\s*)je\s+m[’']en\s+fou(?:s)?(?![\p{L}\p{N}])/giu, "$1Je m’en fous");
+
+    // Une virgule ne sépare pas ce groupe sujet de son verbe.
+    replace(/\b(la\s+plupart\s+des\s+employés)\s*,\s+(ont\b)/giu, "$1 $2");
     replace(/(?:\?\s*){2,}/gu, (match) => match.replace(/\s/gu, ""));
     replace(/(?:!\s*){2,}/gu, (match) => match.replace(/\s/gu, ""));
     replace(

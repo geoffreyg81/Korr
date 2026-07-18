@@ -1,5 +1,5 @@
 // Worker de correction : Grammalecte et les règles de Korr, chargés
-// dans le navigateur — sans backend Node.
+// dans le navigateur - sans backend Node.
 //
 // Grammalecte a été conçu pour tourner ici : « helpers.loadFile » lit ses
 // données par XMLHttpRequest synchrone, ce qui n'est autorisé que dans un

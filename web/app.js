@@ -2,7 +2,7 @@
 //
 // Le moteur est exactement celui de l'extension : grammalecte-worker.js charge
 // Grammalecte puis grammar-rules.js dans un Web Worker. La page ne fait aucune
-// requête vers un serveur d'analyse — il n'y en a pas.
+// requête vers un serveur d'analyse - il n'y en a pas.
 
 "use strict";
 

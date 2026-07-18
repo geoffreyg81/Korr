@@ -96,7 +96,7 @@ writeWindowsFile(path.join(APP_DIR, "Démarrage automatique.vbs"), [
 ]);
 
 writeWindowsFile(path.join(APP_DIR, "LISEZ-MOI.txt"), [
-  "Korr — correcteur de français",
+  "Korr - correcteur de français",
   "======================================",
   "",
   "DÉMARRER",
@@ -107,7 +107,7 @@ writeWindowsFile(path.join(APP_DIR, "LISEZ-MOI.txt"), [
   "  cliquez sur le chevron ^ à gauche de l'horloge, puis faites-la glisser",
   "  sur la barre des tâches pour l'y garder.",
   "",
-  "UTILISER — dans n'importe quelle application",
+  "UTILISER - dans n'importe quelle application",
   "",
   "  1. Sélectionnez du texte (Word, navigateur, messagerie, courriel…).",
   "  2. Appuyez sur Ctrl+Alt+C.",
@@ -144,7 +144,7 @@ writeWindowsFile(path.join(APP_DIR, "LISEZ-MOI.txt"), [
   "LICENCE",
   "",
   "  Logiciel libre sous GNU GPL 3.0 (voir LICENSE).",
-  "  Correcteur Grammalecte 2.3.0 — https://grammalecte.net",
+  "  Correcteur Grammalecte 2.3.0 - https://grammalecte.net",
   "  Runtime Node.js sous licence MIT (voir runtime/LICENCE-NODEJS.txt).",
   ""
 ]);
