@@ -15,6 +15,7 @@ const PROJECT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const VERSION = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, "package.json"), "utf8")).version;
 const OUT_DIR = path.join(PROJECT_DIR, "dist", "desktop");
 const APP_DIR = path.join(OUT_DIR, "Korr");
+const INTERNAL_DIR = path.join(APP_DIR, "Fichiers de Korr - ne pas modifier");
 const ZIP_PATH = path.join(PROJECT_DIR, "dist", `korr-windows-${VERSION}.zip`);
 
 const FILES = [
@@ -29,7 +30,7 @@ const FILES = [
 
 fs.rmSync(OUT_DIR, { recursive: true, force: true });
 fs.rmSync(ZIP_PATH, { force: true });
-fs.mkdirSync(APP_DIR, { recursive: true });
+fs.mkdirSync(INTERNAL_DIR, { recursive: true });
 
 for (const file of FILES) {
   const source = path.join(PROJECT_DIR, file);
@@ -37,20 +38,20 @@ for (const file of FILES) {
     console.error(`Fichier manquant : ${file}`);
     process.exit(1);
   }
-  fs.copyFileSync(source, path.join(APP_DIR, file));
+  fs.copyFileSync(source, path.join(INTERNAL_DIR, file));
 }
 
 // Le moteur : Grammalecte complet est inutile, seul le sous-ensemble embarqué
 // sert. On le range là où grammar-engine.js le cherche.
 fs.cpSync(
   path.join(PROJECT_DIR, "vendor", "grammalecte"),
-  path.join(APP_DIR, ".vendor", "grammalecte-js", "grammalecte"),
+  path.join(INTERNAL_DIR, ".vendor", "grammalecte-js", "grammalecte"),
   { recursive: true }
 );
-fs.cpSync(path.join(PROJECT_DIR, "icons"), path.join(APP_DIR, "icons"), { recursive: true });
+fs.cpSync(path.join(PROJECT_DIR, "icons"), path.join(INTERNAL_DIR, "icons"), { recursive: true });
 
 // Runtime Node, embarqué sous licence MIT.
-const runtimeDir = path.join(APP_DIR, "runtime");
+const runtimeDir = path.join(INTERNAL_DIR, "runtime");
 fs.mkdirSync(runtimeDir);
 fs.copyFileSync(process.execPath, path.join(runtimeDir, "node.exe"));
 fs.writeFileSync(
@@ -64,17 +65,18 @@ fs.writeFileSync(
   "latin1"
 );
 
-writeWindowsFile(path.join(APP_DIR, "Korr.vbs"), [
-  "' Lance Korr sans fenêtre.",
+writeWindowsFile(path.join(APP_DIR, "1 - DÉMARRER KORR.vbs"), [
+  "' Lance Korr sans fenêtre. Ne pas déplacer ce fichier hors du dossier Korr.",
   "Set fso = CreateObject(\"Scripting.FileSystemObject\")",
-  "appDir = fso.GetParentFolderName(WScript.ScriptFullName)",
+  "rootDir = fso.GetParentFolderName(WScript.ScriptFullName)",
+  "appDir = fso.BuildPath(rootDir, \"Fichiers de Korr - ne pas modifier\")",
   "Set shell = CreateObject(\"WScript.Shell\")",
   "shell.CurrentDirectory = appDir",
   "shell.Run \"powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"\"\" & appDir & \"\\app-tray.ps1\"\"\", 0, False",
   ""
 ]);
 
-writeWindowsFile(path.join(APP_DIR, "Démarrage automatique.vbs"), [
+writeWindowsFile(path.join(APP_DIR, "2 - LANCER KORR AVEC WINDOWS.vbs"), [
   "' Ajoute (ou retire) Korr au démarrage de Windows.",
   "Set fso = CreateObject(\"Scripting.FileSystemObject\")",
   "Set shell = CreateObject(\"WScript.Shell\")",
@@ -86,7 +88,7 @@ writeWindowsFile(path.join(APP_DIR, "Démarrage automatique.vbs"), [
   "  MsgBox \"Korr ne démarrera plus automatiquement.\", 64, \"Korr\"",
   "Else",
   "  Set link = shell.CreateShortcut(linkPath)",
-  "  link.TargetPath = appDir & \"\\Korr.vbs\"",
+  "  link.TargetPath = appDir & \"\\1 - DÉMARRER KORR.vbs\"",
   "  link.WorkingDirectory = appDir",
   "  link.Description = \"Correcteur de français Korr\"",
   "  link.Save",
@@ -95,13 +97,14 @@ writeWindowsFile(path.join(APP_DIR, "Démarrage automatique.vbs"), [
   ""
 ]);
 
-writeWindowsFile(path.join(APP_DIR, "LISEZ-MOI.txt"), [
-  "Korr - correcteur de français",
+writeWindowsFile(path.join(APP_DIR, "À LIRE EN PREMIER.txt"), [
+  "KORR - DÉMARRAGE RAPIDE",
   "======================================",
   "",
-  "DÉMARRER",
+  "1. DÉMARRER KORR",
   "",
-  "  Double-cliquez sur « Korr.vbs ».",
+  "  Double-cliquez sur « 1 - DÉMARRER KORR ».",
+  "  Il n'y a rien à installer et aucune fenêtre ne reste ouverte.",
   "",
   "  Une icône violette apparaît près de l'horloge. Si vous ne la voyez pas,",
   "  cliquez sur le chevron ^ à gauche de l'horloge, puis faites-la glisser",
@@ -109,7 +112,7 @@ writeWindowsFile(path.join(APP_DIR, "LISEZ-MOI.txt"), [
   "",
   "UTILISER - dans n'importe quelle application",
   "",
-  "  1. Sélectionnez du texte (Word, navigateur, messagerie, courriel…).",
+  "  1. Sélectionnez du texte (Word, navigateur, messagerie, courriel...).",
   "  2. Appuyez sur Ctrl+Alt+C.",
   "  3. Le texte corrigé remplace la sélection. Ctrl+Z pour annuler.",
   "",
@@ -120,10 +123,15 @@ writeWindowsFile(path.join(APP_DIR, "LISEZ-MOI.txt"), [
   "  * Ces trois styles demandent Ollama, à installer séparément. La",
   "    correction avec Ctrl+Alt+C fonctionne sans rien d'autre.",
   "",
-  "DÉMARRAGE AUTOMATIQUE",
+  "2. LANCER AUTOMATIQUEMENT AVEC WINDOWS (FACULTATIF)",
   "",
-  "  Double-cliquez sur « Démarrage automatique.vbs » pour que le correcteur",
-  "  se lance avec Windows. Un second double-clic le retire.",
+  "  Double-cliquez sur « 2 - LANCER KORR AVEC WINDOWS ».",
+  "  Un second double-clic désactive le démarrage automatique.",
+  "",
+  "À NE PAS MODIFIER",
+  "",
+  "  Le dossier « Fichiers de Korr - ne pas modifier » contient le moteur.",
+  "  Vous pouvez l'ignorer, mais ne le supprimez pas et ne le déplacez pas.",
   "",
   "QUITTER",
   "",
@@ -145,7 +153,7 @@ writeWindowsFile(path.join(APP_DIR, "LISEZ-MOI.txt"), [
   "",
   "  Logiciel libre sous GNU GPL 3.0 (voir LICENSE).",
   "  Correcteur Grammalecte 2.3.0 - https://grammalecte.net",
-  "  Runtime Node.js sous licence MIT (voir runtime/LICENCE-NODEJS.txt).",
+  "  Runtime Node.js sous licence MIT (dans le dossier technique).",
   ""
 ]);
 
