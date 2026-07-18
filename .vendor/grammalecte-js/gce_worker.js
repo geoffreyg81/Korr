@@ -18,9 +18,9 @@
     When JavaScript become a modern language, “deobjectify” the modules…
 
     ATM, import/export are not available by default:
-    - Chrome 60 – behind the Experimental Web Platform flag in chrome:flags.
-    - Firefox 54 – behind the dom.moduleScripts.enabled setting in about:config.
-    - Edge 15 – behind the Experimental JavaScript Features setting in about:flags.
+    — Chrome 60 – behind the Experimental Web Platform flag in chrome:flags.
+    — Firefox 54 – behind the dom.moduleScripts.enabled setting in about:config.
+    — Edge 15 – behind the Experimental JavaScript Features setting in about:flags.
 
     https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import
     https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/export

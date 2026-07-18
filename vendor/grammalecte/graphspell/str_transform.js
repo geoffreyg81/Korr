@@ -346,7 +346,7 @@ var str_transform = {
         let fDLX = this.distanceDamerauLevenshteinX(s1, s2);
         let nS4 = this.distanceSift4(s1, s2);
         let fJW = this.distanceJaroWinkler(s1, s2);
-        console.log(`DL: ${nDL} DLX: ${fDLX} - S4: ${nS4} - JW: ${fJW}`);
+        console.log(`DL: ${nDL} DLX: ${fDLX} — S4: ${nS4} — JW: ${fJW}`);
     },
 
     // Suffix only

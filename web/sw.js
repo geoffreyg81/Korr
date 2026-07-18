@@ -6,7 +6,9 @@
 
 "use strict";
 
-const VERSION = "korr-v1";
+// Remplacé par build-web.js avec une empreinte du contenu publié. Le cache est
+// ainsi renouvelé automatiquement dès qu'un fichier du site change.
+const VERSION = "korr-__BUILD_ID__";
 
 // L'enveloppe de l'application : mise en cache dès l'installation.
 const SHELL = [

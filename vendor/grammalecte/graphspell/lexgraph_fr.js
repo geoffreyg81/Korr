@@ -485,7 +485,7 @@ var lexgraph_fr = {
             ['{', "accolade ouvrante"],
             ['}', "accolade fermante"],
             ['-', "tiret"],
-            ['-', "tiret cadratin"],
+            ['—', "tiret cadratin"],
             ['–', "tiret demi-cadratin"],
             ['«', "guillemet ouvrant (chevrons)"],
             ['»', "guillemet fermant (chevrons)"],

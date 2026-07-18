@@ -9,7 +9,7 @@
 
 var text = {
 
-    _zEndOfSentence: new RegExp ('[.?!…]+[»”’)]?[   ]+[»”’]?(?=[«"“‘–-   ]*[A-ZÀÂÉÈÊÎÔÇ])|[:;][   ]+', "g"),
+    _zEndOfSentence: new RegExp ('[.?!…]+[»”’)]?[   ]+[»”’]?(?=[«"“‘–—   ]*[A-ZÀÂÉÈÊÎÔÇ])|[:;][   ]+', "g"),
 
     getSentenceBoundaries: function* (sText) {
         // generator: returns start and end of sentences found in <sText>

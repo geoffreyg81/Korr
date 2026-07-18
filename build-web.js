@@ -8,6 +8,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const PROJECT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -33,6 +34,17 @@ for (const file of WEB_FILES) {
     process.exit(1);
   }
   fs.copyFileSync(source, path.join(OUT_DIR, file));
+}
+
+// Le contenu éditorial du site utilise uniquement le tiret simple. Ce contrôle
+// empêche une ancienne formulation avec un tiret cadratin ou demi-cadratin de
+// revenir silencieusement lors d'une prochaine modification.
+for (const file of WEB_FILES.filter((name) => /\.(?:html|css|js|webmanifest)$/u.test(name))) {
+  const output = path.join(OUT_DIR, file);
+  if (/[—–]/u.test(fs.readFileSync(output, "utf8"))) {
+    console.error(`Tiret long interdit dans le contenu web : web/${file}`);
+    process.exit(1);
+  }
 }
 for (const file of SHARED_FILES) {
   const source = path.join(PROJECT_DIR, file);
@@ -72,6 +84,23 @@ if (downloadUrl) {
   console.warn("⚠ Application Windows absente : lancez « npm run build:desktop », ou définissez ZF_DOWNLOAD_URL.");
 }
 
+// Empreinte déterministe de l'enveloppe publiée. Le service worker change dès
+// que le site ou le moteur partagé change, puis supprime l'ancien cache durant
+// son activation. Les visiteurs ne restent donc plus bloqués sur une ancienne
+// version après un déploiement.
+const buildHash = createHash("sha256");
+for (const file of [...WEB_FILES, ...SHARED_FILES]) {
+  buildHash.update(fs.readFileSync(path.join(OUT_DIR, file)));
+}
+const buildId = buildHash.digest("hex").slice(0, 12);
+const serviceWorkerPath = path.join(OUT_DIR, "sw.js");
+const serviceWorker = fs.readFileSync(serviceWorkerPath, "utf8");
+if (!serviceWorker.includes("__BUILD_ID__")) {
+  console.error("Jeton de version du service worker absent : __BUILD_ID__");
+  process.exit(1);
+}
+fs.writeFileSync(serviceWorkerPath, serviceWorker.replace("__BUILD_ID__", buildId));
+
 // Les icônes déclarées dans le manifeste doivent exister, sinon l'application
 // n'est pas installable et le navigateur reste silencieux sur la cause.
 const manifest = JSON.parse(fs.readFileSync(path.join(OUT_DIR, "manifest.webmanifest"), "utf8"));
@@ -86,6 +115,7 @@ const totalBytes = directorySize(OUT_DIR);
 console.log(`Site prêt : ${path.relative(PROJECT_DIR, OUT_DIR)}`);
 console.log(`Poids brut : ${(totalBytes / 1024 / 1024).toFixed(1)} Mo (~2 Mo transférés, gzip)`);
 console.log(`Icônes vérifiées : ${manifest.icons.length}`);
+console.log(`Cache web : korr-${buildId}`);
 
 function directorySize(directory) {
   let total = 0;

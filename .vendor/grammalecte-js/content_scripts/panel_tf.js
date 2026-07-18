@@ -137,8 +137,8 @@ class GrammalecteTextFormatter extends GrammalectePanel {
     // Hyphens
     _createRadioBoxHyphens (sIdEmDash, sIdEnDash, bDefaultEmDash) {
         let xLine = oGrammalecte.createNode("div", {className: "grammalecte_tf_blockopt grammalecte_tf_indent"});
-        xLine.appendChild(this._createOption(sIdEmDash, bDefaultEmDash, "cadratin (-)", sIdEnDash));
-        xLine.appendChild(this._createOption(sIdEnDash, !bDefaultEmDash, "demi-cadratin (-)", sIdEmDash));
+        xLine.appendChild(this._createOption(sIdEmDash, bDefaultEmDash, "cadratin (—)", sIdEnDash));
+        xLine.appendChild(this._createOption(sIdEnDash, !bDefaultEmDash, "demi-cadratin (—)", sIdEmDash));
         return xLine;
     }
 
