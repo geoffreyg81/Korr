@@ -36,6 +36,11 @@ Avec une fraction ou un collectif (la moitié de, la majorité de, l’ensemble 
 Remets les mots dans l’ordre naturel du français, sujet puis verbe puis complément : un complément ou une locution placés avant le verbe qu’ils complètent doivent repasser derrière lui.
 Ne remplace jamais un mot déjà correct par une graphie voisine et ne reformule pas le vocabulaire au-delà des anglicismes manifestes.
 Réponds uniquement avec le texte corrigé, sans explication ni guillemets.`,
+    promptEn: `You are an automatic proofreader. Fix spelling, grammar, verb forms, punctuation and word order only.
+The writer is likely a French speaker: hunt down literal translations and false friends (assist to -> attend, take a decision -> make a decision, society -> company, are agree -> agree, demand a delay -> ask for more time) and rewrite them the way a native business-English writer would.
+Uncountable nouns (information, software, feedback, equipment, advice) never take a plural or a stray apostrophe.
+Keep the meaning, tone and paragraph breaks exactly as received. Never replace a correct word with a near-synonym and never add content.
+Answer with the corrected text only, no explanations, no quotation marks.`,
     minRatio: 0.7,
     maxRatio: 1.3,
     minRetention: 0.72,
@@ -243,6 +248,12 @@ async function handleCorrection(request, response) {
   // est donc soumis séparément — la correction est une tâche locale, aucun
   // paragraphe n'a besoin des autres. Seule la réécriture libre (style
   // « concis ») garde le texte entier, car elle fusionne des paragraphes.
+  // Un texte anglais reçoit ses propres instructions : la chasse aux calques
+  // du francophone n'a pas de sens dans un prompt rédigé pour le français.
+  const activeStyle = language === "en" && style.promptEn
+    ? { ...style, prompt: style.promptEn }
+    : style;
+
   let correctedText;
   if (style.sameParagraphs) {
     const chunks = splitIntoLlmChunks(preparedText);
@@ -252,7 +263,7 @@ async function handleCorrection(request, response) {
         correctedChunks.push(chunk);
         continue;
       }
-      const generated = await generateWithOllama(model, style, chunk);
+      const generated = await generateWithOllama(model, activeStyle, chunk);
       if (generated.fatal) return sendJson(response, generated.status, { error: generated.error });
       // Un paragraphe rejeté (réponse invraisemblable ou vide) retombe sur sa
       // version déterministe : le reste du texte garde le bénéfice du modèle.
@@ -264,7 +275,7 @@ async function handleCorrection(request, response) {
     }
     correctedText = correctedChunks.join("");
   } else {
-    const generated = await generateWithOllama(model, style, preparedText);
+    const generated = await generateWithOllama(model, activeStyle, preparedText);
     if (generated.fatal) return sendJson(response, generated.status, { error: generated.error });
     correctedText = generated.text;
     if (!correctedText) {

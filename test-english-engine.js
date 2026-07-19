@@ -240,6 +240,24 @@ const cases = [
   // « everyday » adjectif contre « every day » adverbe.
   ["I go to the gym everyday.", "I go to the gym every day."],
   ["Everyday life is hard.", "Everyday life is hard."],
+  // Indénombrables : ni pluriel ni apostrophe parasite.
+  ["We bought the new software's.", "We bought the new software."],
+  ["They have send ed their feedback's.", "They have sent their feedback."],
+  ["The equipments are broken.", "The equipment is broken."],
+  ["The software's interface is great.", "The software's interface is great."],
+  ["There are much problems here.", "There are many problems here."],
+  // Calques du francophone.
+  ["I am writing you to confirm.", "I am writing to you to confirm."],
+  ["I will assist to the meeting tomorrow.", "I will attend the meeting tomorrow."],
+  ["We need to take a decision quickly.", "We need to make a decision quickly."],
+  ["They took the decision yesterday.", "They made the decision yesterday."],
+  ["Even if they are agree with us, fine.", "Even if they agree with us, fine."],
+  ["They demand a delay to read it.", "They ask for more time to read it."],
+  ["I look forward to see you.", "I look forward to seeing you."],
+  ["I look forward to seeing you.", "I look forward to seeing you."],
+  // Passé daté : prétérit obligatoire avec un repère temporel révolu.
+  ["I have sent the report yesterday to the team.", "I sent the report yesterday to the team."],
+  ["I have sent the report to the team.", "I have sent the report to the team."],
   [
     "Although the managers has announced that the new policies would comes into effect on Monday, several employee have complained that they was not informed in time. The informations they recieved were contradictory, and each of the teams have asked whether their supposed to continue using the old procedures or wait until the director give them clearer instructions. Maria, who had took the initiative to contact the director, realize that the documents sent yesterday also contains several errors, which have caused even more confusion among the team.",
     "Although the managers have announced that the new policies would come into effect on Monday, several employees have complained that they were not informed in time. The information they received was contradictory, and each of the teams has asked whether they're supposed to continue using the old procedures or wait until the director gives them clearer instructions. Maria, who had taken the initiative to contact the director, realized that the documents sent yesterday also contain several errors, which have caused even more confusion among the team."

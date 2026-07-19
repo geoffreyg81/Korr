@@ -340,6 +340,78 @@
     replace(/\birregardless\b/giu, "regardless");
     replace(/\bfor[ \t]+all[ \t]+intensive[ \t]+purposes\b/giu, "for all intents and purposes");
 
+    // ------------------------------------------------------------------
+    // Indénombrables : ni pluriel ni apostrophe parasite.
+    // ------------------------------------------------------------------
+
+    // « the new software's. » : l'apostrophe n'est un génitif que devant un
+    // nom ; devant une ponctuation ou une conjonction, c'est un pluriel fautif.
+    replace(
+      new RegExp(
+        String.raw`\b(${UNCOUNTABLE_NOUNS.join("|")})[’']s(?=[ \t]*(?:[.,;:!?]|$|and\b|or\b|but\b))`,
+        "gimu"
+      ),
+      (_match, noun) => noun
+    );
+    // Pluriel direct sur un indénombrable : « equipments » → « equipment ».
+    replace(
+      new RegExp(String.raw`\b(${UNCOUNTABLE_NOUNS.join("|")})s\b`, "giu"),
+      (_match, noun) => noun
+    );
+    // Un indénombrable est singulier : son verbe aussi.
+    replace(
+      new RegExp(String.raw`\b(${UNCOUNTABLE_NOUNS.join("|")})[ \t]+(are|were|have)\b(?![ \t]+been\b)`, "giu"),
+      (_match, noun, verb) =>
+        `${noun} ${verb.toLocaleLowerCase("en-US") === "are" ? "is" : verb.toLocaleLowerCase("en-US") === "were" ? "was" : "has"}`
+    );
+
+    // « much » quantifie l'indénombrable ; devant un pluriel, c'est « many ».
+    replace(/\bmuch[ \t]+([a-z][a-z'’-]*s)\b/giu, (_match, noun) => `many ${noun}`);
+
+    // ------------------------------------------------------------------
+    // Calques du francophone (faux amis et constructions traduites mot à mot).
+    // ------------------------------------------------------------------
+
+    replace(/\b(writing)[ \t]+you[ \t]+to\b/giu, (_match, verb) => `${verb} to you to`);
+    // « assister à » se dit « attend » ; « assist » signifie « aider ».
+    replace(
+      /\b(assist|assists|assisted|assisting)[ \t]+to[ \t]+(?=(?:the|a|an|this|that|our|your|their|tomorrow)[ \t]|(?:meetings?|conferences?|events?|sessions?|presentations?|trainings?|workshops?|classes)\b)/giu,
+      (_match, verb) => `${FRENCH_CALQUE_VERBS.get(verb.toLocaleLowerCase("en-US")) || "attend"} `
+    );
+    // « prendre une décision » se calque en « take » ; l'anglais dit « make ».
+    replace(
+      /\b(take|takes|took|taken|taking)([ \t]+(?:a|an|the|some|this|that|final|quick|important|big|major)[ \t]+|[ \t]+)(decisions?)\b/giu,
+      (_match, verb, middle, noun) =>
+        `${TAKE_TO_MAKE.get(verb.toLocaleLowerCase("en-US")) || "make"}${middle}${noun}`
+    );
+    // « société » au sens d'entreprise se dit « company ».
+    replace(/\b(the[ \t]+)societ(y|ies)\b(?=[ \t]+(?:we|they|i|you)[ \t]+(?:are[ \t]+|have[ \t]+been[ \t]+)?work)/giu,
+      (_match, article, ending) => `${article}compan${ending === "y" ? "y" : "ies"}`);
+    // « ils sont d'accord » : « agree » est un verbe, jamais un attribut.
+    replace(/\b(i|you|we|they|he|she|it)[ \t]+(?:am|are|is|was|were)[ \t]+agree\b/giu,
+      (_match, subject) => `${subject} agree`);
+    // « demander un délai » : « demand » est un ordre, « delay » un retard.
+    replace(/\b(demand|demands|demanded)[ \t]+a[ \t]+delay\b/giu,
+      (_match, verb) => `${verb === "demanded" ? "asked" : verb === "demands" ? "asks" : "ask"} for more time`);
+    // « look forward to » se construit avec le gérondif.
+    replace(
+      new RegExp(
+        String.raw`\b(look|looks|looked|looking)([ \t]+forward[ \t]+to[ \t]+)(${[...GERUND_FORMS.keys()].join("|")})\b`,
+        "giu"
+      ),
+      (_match, look, middle, verb) => `${look}${middle}${GERUND_FORMS.get(verb.toLocaleLowerCase("en-US"))}`
+    );
+
+    // « send ed » recollé, et participe irrégulier de « send ».
+    replace(/\b(has|have|had)[ \t]+send(?:[ \t]+ed|ed)?\b/giu, (_match, auxiliary) => `${auxiliary} sent`);
+    replace(/\bsended\b/giu, "sent");
+
+    // Passé daté : « I have sent the report yesterday » → prétérit.
+    replace(
+      /\b(i|you|we|they|he|she|it)[ \t]+(?:has|have)[ \t]+(sent|received|finished|signed|called|visited|checked|submitted|shared|updated|published|delivered|paid|made|told|sold|built|spent)\b(?=[^.!?\n]*\b(?:yesterday|ago|last[ \t]+(?:night|week|month|year))\b)/giu,
+      (_match, subject, verb) => `${subject} ${verb}`
+    );
+
     // « number of » pour un dénombrable ; « amount of » vaut pour l'indénombrable.
     replace(/\bamount[ \t]+of[ \t]+(people|employees|students|users|items|errors|mistakes|documents|problems|options)\b/giu,
       (_match, noun) => `number of ${noun}`);
@@ -354,6 +426,30 @@
 
     return { text, corrections };
   }
+
+  // Indénombrables anglais : jamais de pluriel. « information » est traité par
+  // des règles dédiées plus haut ; « news » est un singulier en -s à part.
+  const UNCOUNTABLE_NOUNS = [
+    "software", "feedback", "equipment", "advice", "furniture", "luggage",
+    "baggage", "homework", "knowledge", "progress", "research", "evidence",
+    "money", "traffic", "weather", "vocabulary"
+  ];
+
+  const FRENCH_CALQUE_VERBS = new Map(Object.entries({
+    assist: "attend", assists: "attends", assisted: "attended", assisting: "attending"
+  }));
+
+  const TAKE_TO_MAKE = new Map(Object.entries({
+    take: "make", takes: "makes", took: "made", taken: "made", taking: "making"
+  }));
+
+  const GERUND_FORMS = new Map(Object.entries({
+    see: "seeing", hear: "hearing", meet: "meeting", work: "working",
+    discuss: "discussing", receive: "receiving", speak: "speaking",
+    talk: "talking", learn: "learning", join: "joining", start: "starting",
+    collaborate: "collaborating", have: "having", get: "getting", go: "going",
+    do: "doing", read: "reading", visit: "visiting", welcome: "welcoming"
+  }));
 
   // Prétérits irréguliers dont l'infinitif diffère : après do-support ou
   // « to », la forme de base est la seule possible. Les verbes dont prétérit
