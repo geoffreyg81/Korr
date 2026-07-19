@@ -257,6 +257,32 @@ const cases = [
   ["Nous devrions des consultants externes embaucher.", "Nous devrions embaucher des consultants externes."],
   ["Nous devons les dossiers archiver.", "Nous devons archiver les dossiers."],
   ["Il faut les dossiers archivés.", "Il faut les dossiers archivés."],
+  // Le participe passé avec « avoir » ne s’accorde qu’avec un COD antéposé :
+  // un déterminant « les » n’en est pas un, un pronom accolé au verbe si.
+  ["La moitié des équipes ont décidés de se réunir.", "La moitié des équipes ont décidé de se réunir."],
+  ["Les décisions que la direction a prises sont mauvaises.", "Les décisions que la direction a prises sont mauvaises."],
+  ["Elle nous a vus hier.", "Elle nous a vus hier."],
+  ["Je les ai rencontrées à Paris.", "Je les ai rencontrées à Paris."],
+  // Le pronom « en » neutralise l’accord.
+  ["Des erreurs, nous en avons faites beaucoup.", "Des erreurs, nous en avons fait beaucoup."],
+  // Adjectifs strictement invariables.
+  ["Des équipements supers et bons marchés sont arrivés.", "Des équipements super et bon marché sont arrivés."],
+  // « tout » adverbe : invariable, sauf devant une consonne ou un h aspiré.
+  ["Elles étaient tout honteuses.", "Elles étaient toutes honteuses."],
+  ["Elles étaient tout heureuses.", "Elles étaient tout heureuses."],
+  // Locutions figées et pléonasmes.
+  ["Nous avons eu à faire à des fournisseurs.", "Nous avons eu affaire à des fournisseurs."],
+  ["Je vais répéter de nouveau la consigne.", "Je vais répéter la consigne."],
+  ["Ces règles sont basées sur des rumeurs.", "Ces règles sont fondées sur des rumeurs."],
+  ["C’est exactement de ça dont on parlait.", "C’est exactement ce dont on parlait."],
+  // Complément circonstanciel intercalé et complément rejeté après l’infinitif.
+  ["Ce processus doit être de fond en comble revu.", "Ce processus doit être revu de fond en comble."],
+  ["Nous ne pourrons pas ce palier franchir.", "Nous ne pourrons pas franchir ce palier."],
+  // Verbe conjugué employé comme adjectif après un adverbe d’intensité.
+  ["Des fournisseurs si exigent nous épuisent.", "Des fournisseurs si exigeants nous épuisent."],
+  ["Il est très content.", "Il est très content."],
+  // Accent perdu sur un nom que le dictionnaire connaît comme forme verbale.
+  ["La moitie du dossier manque.", "La moitié du dossier manque."],
   // Avec « si » au présent, le futur est correct.
   ["Si tu viens, je serai là.", "Si tu viens, je serai là."],
   ["Si tu as le temps, nous irons au cinéma.", "Si tu as le temps, nous irons au cinéma."],

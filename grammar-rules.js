@@ -888,12 +888,132 @@ function grammalecte() {
     // d’origine) : « nous devrions des consultants embaucher ». L’infinitif est
     // ramené devant son complément.
     replace(
-      /\b(devons|devrions|devrait|devraient|devrais|pouvons|pourrions|allons|voulons|voudrions|faut|faudrait)\s+((?:des|les|un|une|le|la|l[’'])\s*[^.,;:!?…\n]{2,40}?)\s+([\p{L}]+er)(?=\s*[.,;:!?…]|\s*$)/giu,
+      new RegExp(
+        // L’alternance doit être groupée : sans le « (?: … ) », la négation
+        // facultative ne porterait que sur le dernier verbe de la liste.
+        String.raw`\b((?:${MODAL_VERBS.join("|")})(?:\s+(?:pas|jamais|plus|rien|guère))?)\s+` +
+        String.raw`((?:des|les|un|une|le|la|l[’']|ce|cet|cette|ces|mon|ma|mes|son|sa|ses|notre|nos|votre|vos|leur|leurs)\s*[^.,;:!?…\n]{2,40}?)` +
+        String.raw`\s+([\p{L}]+(?:er|ir|re|oir))(?=\s*[.,;:!?…]|\s*$)`,
+        "giu"
+      ),
       (match, verb, object, infinitive) => {
         if (!isInfinitive(infinitive)) return match;
         // Un participe passé ou un adjectif dans le groupe complément signale
         // une tout autre construction (« il faut les dossiers archivés »).
         return `${verb} ${infinitive} ${object}`;
+      }
+    );
+
+    // Adjectifs strictement invariables : les formes accordées ci-dessous
+    // n’existent pas en français, la substitution est donc sans contexte.
+    replace(INVARIABLE_ADJECTIVE_PATTERN, (match) =>
+      preserveCase(match, INVARIABLE_ADJECTIVES.get(match.toLocaleLowerCase("fr-FR").replace(/\s+/gu, " ")))
+    );
+
+    // « tout » adverbe est invariable, sauf devant un adjectif féminin
+    // commençant par une consonne ou un h aspiré : « tout heureuses » mais
+    // « toutes honteuses ». Le genre et le nombre viennent du dictionnaire.
+    replace(/\b(tout|toute|tous|toutes)\s+([\p{L}’-]+)(?![\p{L}\p{N}])/giu,
+      (match, quantifier, adjective) => {
+        const features = adverbialTargetFeatures(adjective);
+        if (!features?.feminine) return match;
+
+        const blocked = /^[bcdfgjklmnpqrstvwxz]/iu.test(adjective) ||
+          ASPIRATED_H_WORDS.some((word) => adjective.toLocaleLowerCase("fr-FR").startsWith(word));
+        const expected = blocked ? (features.plural ? "toutes" : "toute") : "tout";
+        if (expected === quantifier.toLocaleLowerCase("fr-FR")) return match;
+        return `${preserveCase(quantifier, expected)} ${adjective}`;
+      }
+    );
+
+    // Le pronom « en » neutralise l’accord du participe passé : le COD n’est
+    // plus placé avant, il est représenté. « Nous en avons faites » → « fait ».
+    replace(
+      /\ben\s+(ai|as|a|avons|avez|ont|avais|avait|avions|aviez|avaient)\s+([\p{L}’-]+(?:ée|ées|és|es|e|s))(?![\p{L}\p{N}])/gu,
+      (match, auxiliary, participle) => {
+        const singular = participleMasculineSingular(participle);
+        if (!singular || singular === participle) return match;
+        return `en ${auxiliary} ${singular}`;
+      }
+    );
+
+    // Le participe passé conjugué avec « avoir » ne s’accorde qu’avec un COD
+    // placé avant lui. Si la proposition n’en contient aucun, l’accord est
+    // fautif quel que soit le sujet : « les équipes ont décidés » → « décidé ».
+    correctedText = correctedText.replace(
+      new RegExp(
+        String.raw`(?<![\p{L}\p{N}])(${HAVING_AUXILIARIES.join("|")})\s+` +
+        String.raw`([\p{L}’-]+(?:ée|ées|és|es|ie|ies|is|ue|ues|us|te|tes))(?![\p{L}\p{N}])`,
+        "gu"
+      ),
+      (match, auxiliary, participle, offset, whole) => {
+        if (hasFrontedObject(whole, offset)) return match;
+        const singular = participleMasculineSingular(participle);
+        if (!singular || singular === participle) return match;
+        corrections += 1;
+        return `${auxiliary} ${singular}`;
+      }
+    );
+
+    // Verbe conjugué employé comme adjectif après un adverbe d’intensité :
+    // « des fournisseurs si exigent » → « si exigeants ». Un verbe conjugué ne
+    // peut pas suivre « si », la lecture adjectivale est donc la seule possible.
+    replace(
+      /\b((?:si|très|trop|peu|aussi|plus|moins|fort|assez|vraiment|particulièrement)\s+)([\p{L}]+)(?![\p{L}\p{N}])/giu,
+      (match, intensifier, word, offset, whole) => {
+        const adjective = verbalAdjectiveOf(word);
+        if (!adjective) return match;
+        // Le nombre vient du nom qualifié, cherché à gauche de l’adverbe.
+        const head = whole.slice(Math.max(0, offset - 40), offset).match(/([\p{L}’-]+)\s+$/u)?.[1] || "";
+        const plural = /s$/u.test(head) && !/^(?:pas|plus|très|est|sont)$/iu.test(head);
+        return `${intensifier}${preserveCase(word, plural ? `${adjective}s` : adjective)}`;
+      }
+    );
+
+    // Accent mangé sur un nom : le correcteur orthographique ne signale rien
+    // quand la graphie sans accent existe par ailleurs comme forme verbale rare
+    // (« moitie », participe de « moitir »). Or un déterminant appelle un nom :
+    // si la variante accentuée en est un et que la graphie reçue n’en est pas
+    // un, l’accent a été perdu.
+    replace(
+      /\b((?:la|le|les|une|un|des|cette|ce|ces|ma|mon|sa|son|notre|votre|leur|leurs)\s+)([\p{L}]{3,})(?![\p{L}\p{N}])/giu,
+      (match, determiner, word) => {
+        const accented = restoreMissingAccent(word);
+        return accented ? `${determiner}${preserveCase(word, accented)}` : match;
+      }
+    );
+
+    // « se » devant un mot qui n’est jamais un verbe est le démonstratif « ce » :
+    // « se palier » → « ce palier ». Le déterminant s’accorde avec le nom.
+    replace(/(?<![\p{L}\p{N}])(se)\s+([\p{L}’-]+)(?![\p{L}\p{N}])/giu, (match, pronoun, word) => {
+      const features = demonstrativeTargetFeatures(word);
+      if (!features) return match;
+      const determiner = features.plural
+        ? "ces"
+        : features.feminine
+          ? "cette"
+          : /^[aeéèêiouyh]/iu.test(word) ? "cet" : "ce";
+      return `${preserveCase(pronoun, determiner)} ${word}`;
+    });
+
+    // Locutions figées, pléonasmes et tournures lourdes. La table est du
+    // vocabulaire : chaque entrée vaut dans tous les contextes.
+    for (const [pattern, replacement] of FIXED_EXPRESSIONS) {
+      replace(pattern, replacement);
+    }
+
+    // Complément circonstanciel intercalé entre l’auxiliaire et le participe :
+    // « doit être de fond en comble revu » → « revu de fond en comble ».
+    replace(
+      /(?<![\p{L}\p{N}])((?:être|été|est|sont|était|étaient|sera|seront|soit|soient)\s+)((?:de|à|en|par|sans|avec)\s+[^.,;:!?…\n]{2,30}?)\s+([\p{L}]+(?:é|ée|és|ées|i|is|ie|ies|u|ue|us|ues|t|te|ts|tes))(?=\s*[.,;:!?…]|\s+(?:et|ou|puis)\b|\s*$)/giu,
+      (match, auxiliary, complement, participle) => {
+        if (!isParticiple(participle)) return match;
+        // Un adverbe de lieu ou de temps garde volontiers sa place ; seules les
+        // locutions figées listées sont déplacées sans risque de contresens.
+        if (!ADVERBIAL_LOCUTIONS.some((locution) => complement.toLocaleLowerCase("fr-FR") === locution)) {
+          return match;
+        }
+        return `${auxiliary}${participle} ${complement}`;
       }
     );
 
@@ -1274,6 +1394,192 @@ function grammalecte() {
       .replace(CAPITALIZED_FUNCTION_PATTERN, (match, lead, noun) =>
         `${lead}${noun.toLocaleLowerCase("fr-FR")}`
       );
+  }
+
+  // Verbes introduisant un infinitif complément, pour le rétablissement de
+  // l’ordre verbe + complément.
+  const MODAL_VERBS = [
+    "devons", "devez", "doit", "doivent", "devrions", "devriez", "devrait",
+    "devraient", "devrais", "pouvons", "pouvez", "peut", "peuvent", "pourrions",
+    "pourrons", "pourrez", "allons", "allez", "va", "vont", "voulons", "voulez",
+    "veut", "veulent", "voudrions", "faut", "faudrait", "faudra", "souhaitons",
+    "comptons", "espérons", "essayons", "cherchons"
+  ];
+
+  // Adjectifs strictement invariables : aucune des formes accordées n’existe.
+  const INVARIABLE_ADJECTIVES = new Map(Object.entries({
+    supers: "super", extras: "extra", ultras: "ultra", maxis: "maxi", minis: "mini",
+    "bons marchés": "bon marché", "bon marchés": "bon marché",
+    "bons marché": "bon marché", "bonnes marchés": "bon marché",
+    "meilleurs marchés": "meilleur marché", "meilleur marchés": "meilleur marché",
+    sexys: "sexy", pops: "pop", rétros: "rétro", chics: "chic",
+    "grands angles": "grand angle", "sur mesures": "sur mesure",
+    "prêts à porter": "prêt-à-porter", standards: "standard"
+  }));
+
+  const INVARIABLE_ADJECTIVE_PATTERN = new RegExp(
+    String.raw`\b(?:${[...INVARIABLE_ADJECTIVES.keys()]
+      .sort((a, b) => b.length - a.length)
+      .map((entry) => entry.replace(/ /gu, String.raw`\s+`))
+      .join("|")})(?![\p{L}\p{N}])`,
+    "giu"
+  );
+
+  // Adjectifs à h aspiré : « tout » s’accorde devant eux comme devant une
+  // consonne, alors qu’il reste invariable devant un h muet (« tout heureuses »).
+  const ASPIRATED_H_WORDS = [
+    "haineu", "hardi", "hargneu", "hasardeu", "hautain", "haut", "hideu",
+    "honteu", "huppé", "hâti", "handicapé", "harassé", "heurté", "hachuré",
+    "hérissé", "hostile"
+  ];
+
+  // Locutions adverbiales figées : leur place naturelle est après le participe.
+  const ADVERBIAL_LOCUTIONS = [
+    "de fond en comble", "de long en large", "à fond", "en profondeur",
+    "de bout en bout", "de A à Z", "par cœur", "en détail", "sans délai",
+    "de près", "à la hâte", "en vain", "à nouveau", "sur-le-champ"
+  ];
+
+  // Locutions figées, pléonasmes et tournures lourdes : du vocabulaire, valable
+  // dans tous les contextes, et non des correctifs liés à une phrase.
+  const FIXED_EXPRESSIONS = [
+    // « avoir affaire à quelqu’un » ne s’écrit pas « avoir à faire à ».
+    // Attention : « \b » ne connaît que les caractères ASCII, même avec le
+    // drapeau « u ». Autour d’un mot accentué, la limite s’écrit en toutes
+    // lettres avec une assertion sur \p{L}.
+    [/\b(eu|avoir|ai|as|a|avons|avez|ont|avais|avait|avaient|aurons)\s+à\s+faire\s+à(?![\p{L}\p{N}])/giu, "$1 affaire à"],
+    // Pléonasmes : le préfixe porte déjà la répétition ou la direction.
+    [/\b(répét\p{L}*|redi\p{L}*|réitér\p{L}*)\s+(?:de\s+nouveau|à\s+nouveau|une\s+nouvelle\s+fois)\b/giu, "$1"],
+    [/\b(monter)\s+en\s+haut\b/giu, "$1"],
+    [/\b(descendre)\s+en\s+bas\b/giu, "$1"],
+    [/\b(sortir)\s+dehors\b/giu, "$1"],
+    [/\b(entrer)\s+dedans\b/giu, "$1"],
+    [/\b(prévoir|prévu|prévue|prévus|prévues)\s+(?:à\s+l[’']avance|d[’']avance)\b/giu, "$1"],
+    [/\b(reporter|reporté|reportée)\s+à\s+plus\s+tard\b/giu, "$1"],
+    [/\bs[’']entraider\s+mutuellement\b/giu, "s’entraider"],
+    [/\bcollaborer\s+ensemble\b/giu, "collaborer"],
+    [/\bau\s+jour\s+d[’']aujourd[’']hui\b/giu, "aujourd’hui"],
+    [/\bvoire\s+même\b/giu, "voire"],
+    [/\bmonopole\s+exclusif\b/giu, "monopole"],
+    // « baser sur » est un calque : une démonstration se fonde sur des faits.
+    [/\bbas(é|ée|és|ées)\s+sur\b/gu, "fond$1 sur"],
+    [/\bse\s+bas(e|ent)\s+sur\b/gu, "se fond$1 sur"],
+    // « dont » contient déjà « de » : le doubler est fautif.
+    [/\bde\s+(?:ça|cela|celà)\s+dont\b/giu, "ce dont"],
+    [/\bde\s+(?:ce|celui|celle)\s+dont\b/giu, "ce dont"],
+    [/\bc[’']est\s+de\s+lui\s+dont\b/giu, "c’est de lui que"]
+  ];
+
+  const HAVING_AUXILIARIES = [
+    "ai", "as", "a", "avons", "avez", "ont",
+    "avais", "avait", "avions", "aviez", "avaient",
+    "aurai", "auras", "aura", "aurons", "aurez", "auront",
+    "aurais", "aurait", "aurions", "auriez", "auraient"
+  ];
+
+  // Un COD antéposé se signale de deux façons seulement : le relatif « que »
+  // quelque part dans la proposition, ou un pronom complément accolé à
+  // l’auxiliaire. La position est décisive : dans « les équipes ont décidé »,
+  // « les » est un déterminant, pas un pronom.
+  const RELATIVE_OBJECT_PATTERN = /(?:^|[^\p{L}\p{N}])qu[e’'](?![\p{L}\p{N}])/iu;
+  const CLITIC_OBJECT_PATTERN =
+    /(?:^|[^\p{L}\p{N}])(?:l[’']|le|la|les|m[’']|me|t[’']|te|en)\s*$/iu;
+
+  function hasFrontedObject(text, auxiliaryOffset) {
+    // La recherche s’arrête à la frontière de proposition : un COD appartenant
+    // à la proposition voisine ne commande aucun accord ici.
+    const clauseStart = Math.max(
+      ...[".", "!", "?", "…", ";", ",", "«", "\n"].map((mark) => text.lastIndexOf(mark, auxiliaryOffset - 1))
+    );
+    const clause = text.slice(clauseStart + 1, auxiliaryOffset);
+    if (RELATIVE_OBJECT_PATTERN.test(clause)) return true;
+    if (CLITIC_OBJECT_PATTERN.test(clause)) return true;
+
+    // « nous » et « vous » sont ambigus : sujet le plus souvent, COD lorsqu’un
+    // autre sujet les précède (« elle nous a vus »).
+    return /(?:^|[^\p{L}\p{N}])(?!et|ou|mais|donc|car)[\p{L}’-]+\s+(?:nous|vous)\s*$/iu.test(clause);
+  }
+
+  // Cherche la variante accentuée d’un mot qui, telle qu’elle est écrite, ne
+  // peut pas être un nom. Une seule substitution est tentée à la fois, et le
+  // résultat n’est retenu que s’il est unique : une hésitation entre deux
+  // candidats vaut mieux qu’une correction arbitraire.
+  function restoreMissingAccent(word) {
+    const lowered = word.toLocaleLowerCase("fr-FR");
+    if (/[éèêàùâîôûç]/u.test(lowered)) return "";
+
+    const morphologies = morphOf(word);
+    if (!morphologies.length) return "";
+    if (morphologies.some((morph) => /:N(?![\p{L}\p{N}])/u.test(morph))) return "";
+
+    const candidates = new Set();
+    for (let index = 0; index < lowered.length; index += 1) {
+      if (lowered[index] !== "e") continue;
+      for (const accent of ["é", "è"]) {
+        const candidate = `${lowered.slice(0, index)}${accent}${lowered.slice(index + 1)}`;
+        if (morphOf(candidate).some((morph) => /:N(?![\p{L}\p{N}])/u.test(morph))) {
+          candidates.add(candidate);
+        }
+      }
+    }
+    return candidates.size === 1 ? [...candidates][0] : "";
+  }
+
+  // Adjectif verbal correspondant à une forme conjuguée : « exigent » →
+  // « exigeant ». Limité aux verbes du premier groupe, dont le participe présent
+  // se dérive sans exception de l’infinitif.
+  function verbalAdjectiveOf(word) {
+    const morphologies = morphOf(word);
+    if (!morphologies.length) return "";
+    // Un mot déjà adjectif ou nom est à sa place après l’adverbe.
+    if (morphologies.some((morph) => /:[NAWM](?![\p{L}\p{N}])/u.test(morph))) return "";
+    if (!morphologies.some((morph) => /:V1/u.test(morph) && /:Ip/u.test(morph))) return "";
+
+    const infinitive = morphologies
+      .map((morph) => morph.match(/^>([\p{L}’-]+)\//u)?.[1] || "")
+      .find((candidate) => /er$/u.test(candidate));
+    if (!infinitive) return "";
+
+    const stem = infinitive.slice(0, -2);
+    // « manger » garde son « e » devant a, « commencer » prend une cédille.
+    const participle = /g$/u.test(stem)
+      ? `${stem}eant`
+      : /c$/u.test(stem)
+        ? `${stem.slice(0, -1)}çant`
+        : `${stem}ant`;
+    return PRESENT_PARTICIPLE_ADJECTIVES.get(participle) || participle;
+  }
+
+  // Un adjectif épithète pur : le mot doit être adjectif au dictionnaire sans
+  // pouvoir être un nom, sinon « toute personne » serait pris pour un adverbe.
+  function adverbialTargetFeatures(word) {
+    const morphologies = morphOf(word);
+    if (!morphologies.length) return null;
+    // Un nom propre ou un pronom n’est jamais l’adjectif d’un « tout » adverbe ;
+    // un mot qui n’est pas adjectif non plus (« toute personne »).
+    if (morphologies.some((morph) => /:(?:M[12]|O)(?![\p{L}\p{N}])/u.test(morph))) return null;
+    if (!morphologies.some((morph) => /:A(?![\p{L}\p{N}])/u.test(morph))) return null;
+    // Les étiquettes de genre et de nombre sont suivies d’un séparateur
+    // quelconque (« :A:f:p;é/* ») : la limite ne peut pas être une liste fermée.
+    return {
+      feminine: morphologies.some((morph) => /:f(?![\p{L}\p{N}])/u.test(morph)),
+      plural: morphologies.some((morph) => /:p(?![\p{L}\p{N}])/u.test(morph))
+    };
+  }
+
+  // Un nom qui ne peut en aucun cas être une forme verbale : « se » devant lui
+  // est nécessairement le démonstratif « ce ».
+  function demonstrativeTargetFeatures(word) {
+    const morphologies = morphOf(word);
+    if (!morphologies.length) return null;
+    if (morphologies.some((morph) => /:V\d/u.test(morph))) return null;
+    if (!morphologies.some((morph) => /:N(?![\p{L}\p{N}])/u.test(morph))) return null;
+    return {
+      feminine: morphologies.every((morph) => !/:m(?![\p{L}\p{N}])/u.test(morph)) &&
+        morphologies.some((morph) => /:f(?![\p{L}\p{N}])/u.test(morph)),
+      plural: morphologies.every((morph) => !/:s(?![\p{L}\p{N}])/u.test(morph)) &&
+        morphologies.some((morph) => /:p(?![\p{L}\p{N}])/u.test(morph))
+    };
   }
 
   // Verbes fréquents dont une virgule ne peut pas les séparer de leur sujet.
