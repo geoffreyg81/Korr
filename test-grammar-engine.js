@@ -361,6 +361,25 @@ const cases = [
   ["Les projets dont nous avons parlés sont finis.", "Les projets dont nous avons parlé sont finis."],
   // Garde-fou : le COD réel de la relative en « dont » garde son accord.
   ["Les villes dont nous avons visité les musées sont belles.", "Les villes dont nous avons visité les musées sont belles."],
+  // Emprunts anglais protégés du correcteur orthographique, traduits
+  // seulement quand le français couvre le sens sans perte.
+  ["Bonjour la team, le cloud est en prod.", "Bonjour la team, le cloud est en prod."],
+  ["C’est un vrai disaster.", "C’est un vrai désastre."],
+  ["On doit les restore en urgence.", "On doit les restaurer en urgence."],
+  ["On va dead ça ce soir.", "On va gérer ça ce soir."],
+  // Accord avec le noyau d’une fraction ou d’un collectif.
+  ["La moitié du cloud a été redémarré ce matin.", "La moitié du cloud a été redémarrée ce matin."],
+  ["La majorité de l’équipe est convaincu.", "La majorité de l’équipe est convaincue."],
+  // Garde-fou : l’accord de proximité au pluriel est légitime et conservé.
+  ["La moitié des employés ont été prévenus.", "La moitié des employés ont été prévenus."],
+  // « dont » invariable : toutes les terminaisons de participe.
+  ["Les requêtes dont vous avez débattus m’affligent.", "Les requêtes dont vous avez débattu m’affligent."],
+  // Inversions poétiques : un style volontaire n’est pas une faute.
+  [
+    "De ce chaos numérique, point je ne m’étonne. Sous le poids des ans, ce vieux système ploie.",
+    "De ce chaos numérique, point je ne m’étonne. Sous le poids des ans, ce vieux système ploie."
+  ],
+  ["Que le Ciel nous garde et que cette erreur, prestement on répare.", "Que le Ciel nous garde et que cette erreur, prestement on répare."],
   // Locutions figées.
   ["Je vous pris de m’envoyer le rapport.", "Je vous prie de m’envoyer le rapport."],
   ["Le rapport arrivera, quoi quel arrivant.", "Le rapport arrivera, quoi qu’il arrive."],

@@ -1156,11 +1156,27 @@ function grammalecte() {
     // le COD du verbe, le participe avec « avoir » reste donc invariable.
     // « dont nous avons parlés » → « parlé ».
     replace(
-      /\b(dont\s+(?:je|j[’']|tu|il|elle|on|nous|vous|ils|elles)\s+(?:n[’']\s*)?(?:ai|as|a|avons|avez|ont|avais|avait|avaient|aurai|aura|aurons|auront|aurais|aurait)\s+(?:pas\s+|jamais\s+|beaucoup\s+|souvent\s+|déjà\s+)?)([\p{L}’-]+(?:és|ée|ées|ie|ies|ue|ues|ite|ites))(?![\p{L}\p{N}])/giu,
+      /\b(dont\s+(?:je|j[’']|tu|il|elle|on|nous|vous|ils|elles)\s+(?:n[’']\s*)?(?:ai|as|a|avons|avez|ont|avais|avait|avaient|aurai|aura|aurons|auront|aurais|aurait)\s+(?:pas\s+|jamais\s+|beaucoup\s+|souvent\s+|déjà\s+)?)([\p{L}’-]+(?:és|ée|ées|ie|ies|is|ue|ues|us|ite|ites|te|tes))(?![\p{L}\p{N}])/giu,
       (match, lead, participle) => {
         const singular = participleMasculineSingular(participle);
         if (!singular || singular === participle) return match;
         return `${lead}${singular}`;
+      }
+    );
+
+    // Accord avec le noyau d'une fraction ou d'un collectif : « la moitié du
+    // cloud a été redémarré » s'accorde avec « moitié », féminin singulier.
+    // Seul un participe au masculin singulier est réécrit : un accord déjà
+    // fait, ou un accord de proximité assumé au pluriel, reste en l'état.
+    replace(
+      /\b(la\s+(?:moitié|majorité|totalité|minorité|plupart)|une\s+(?:partie|moitié|majorité|fraction|portion))\s+(d(?:u|es|e\s+la|e\s+l[’']|e)\s*[\p{L}’-]+\s+)((?:a|avait|aura|aurait)\s+été\s+|(?:est|était|sera|serait)\s+)([\p{L}’-]+(?:é|i|u|t))(?![\p{L}\p{N}])/giu,
+      (match, head, complement, verb, participle) => {
+        if (!isParticiple(participle)) return match;
+        if (INVARIABLE_PARTICIPLES.has(participle.toLocaleLowerCase("fr-FR"))) return match;
+        const feminine = !/^une\s+quart/iu.test(head);
+        const inflected = inflectParticiple(participle, { feminine, plural: false });
+        if (!inflected || inflected === participle) return match;
+        return `${head} ${complement}${verb}${inflected}`;
       }
     );
 
@@ -1335,6 +1351,7 @@ function grammalecte() {
   const SMS_WORD_LEXICON = new Map(Object.entries({
     // Salutations et formules
     slt: "salut", bjr: "bonjour", bsr: "bonsoir", cc: "coucou",
+    omg: "oh mon Dieu", srx: "sérieux",
     stp: "s’il te plaît", svp: "s’il vous plaît", dsl: "désolé",
     mci: "merci", mrc: "merci", biz: "bises", bizz: "bises", jtm: "je t’aime",
     // Pronom + verbe soudés
@@ -1792,6 +1809,14 @@ function grammalecte() {
     [/\bci\s+joint(e?s?)(?![\p{L}\p{N}])/giu, (match, agreement) => `ci-joint${agreement}`],
     [/\b(ci-joints?|ci-jointes?)\s*,\s+(?=(?:le|la|les|l[’']|un|une|des|mes|nos|vos|ce|cet|cette|ces)\s)/giu,
       (match, adjective) => `${adjective} `],
+    // Anglicismes que le français traduit sans perte : le mot anglais n'a ici
+    // aucune valeur technique, contrairement à « backup » ou « log ».
+    [/\b(un\s+vrai|une\s+vraie|quel|c[’']est\s+un)\s+disaster(?![\p{L}\p{N}])/giu,
+      (match, lead) => `${lead} désastre`],
+    [/\b(les|le|la)\s+restore(?![\p{L}\p{N}])/giu, (match, pronoun) => `${pronoun} restaurer`],
+    // Argot : « on va dead/deal ça » signifie « on va gérer ça ».
+    [/\b(on\s+va|tu\s+vas|je\s+vais|ils\s+vont)\s+(?:dead|deal)\s+ça(?![\p{L}\p{N}])/giu,
+      (match, lead) => `${lead} gérer ça`],
     // Locutions adverbiales figées au singulier. « aux urgences » (l'hôpital)
     // n'est pas concerné : seul « en urgences » est impossible.
     [/\ben\s+urgences(?![\p{L}\p{N}])/giu, "en urgence"],
@@ -2241,6 +2266,21 @@ function grammalecte() {
     "mdr", "mdrr", "ptdr", "lol", "xd", "oklm", "tmtc", "wesh", "wsh"
   ]);
 
+  // Anglicismes techniques et familiers installés dans l'usage : le correcteur
+  // orthographique ne doit jamais les « franciser » phonétiquement. Les
+  // traductions souhaitables (disaster → désastre) relèvent des règles de
+  // vocabulaire, pas d'un rapprochement de graphie.
+  const ENGLISH_LOANWORDS = new Set([
+    "team", "cloud", "backup", "backups", "prod", "log", "logs", "crash",
+    "crasher", "restore", "deal", "dead", "disaster", "mail", "mails",
+    "meeting", "meetings", "deadline", "deadlines", "feedback", "feedbacks",
+    "process", "business", "manager", "managers", "planning", "brief",
+    "debrief", "call", "calls", "chat", "room", "serveur", "server",
+    "update", "updates", "reboot", "bug", "bugs", "patch", "release",
+    "workflow", "dashboard", "reporting", "brainstorming", "afterwork",
+    "open", "space", "device", "devices", "driver", "drivers", "setup"
+  ]);
+
   function isSpellingCandidate(original, minLength) {
     const source = original.toLocaleLowerCase("fr-FR");
     if (source.length < minLength) return false;
@@ -2251,6 +2291,10 @@ function grammalecte() {
     // Une abréviation SMS isolée dans un texte normal ne doit pas être
     // « rapprochée » d’un mot du dictionnaire (« tkt » → « tut »).
     if (SMS_WORD_LEXICON.has(source)) return false;
+    // Un emprunt anglais courant est un choix de l'auteur, pas une faute :
+    // le rapprocher d'un mot français produit des absurdités (« team » →
+    // « tram », « dead » → « deal », « Kgs » → « KGy »).
+    if (ENGLISH_LOANWORDS.has(source)) return false;
     // Un mot français ne contient ni chiffre, ni apostrophe, ni trait d’union.
     if (/[\d’'\-]/u.test(source)) return false;
     return true;
