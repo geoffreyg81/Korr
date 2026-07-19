@@ -103,6 +103,29 @@ if (downloadUrl) {
   );
   fs.writeFileSync(indexPath, html);
   console.log(`Téléchargement GitHub Release : ${releaseDownloadUrl}`);
+  // Ce lien est fabriqué à partir du numéro de version : rien ne garantit que
+  // la release correspondante ait été publiée. Sans ce contrôle, une montée de
+  // version livre un bouton de téléchargement mort, en silence.
+  await warnIfDownloadMissing(releaseDownloadUrl);
+}
+
+async function warnIfDownloadMissing(url) {
+  let status;
+  try {
+    const response = await fetch(url, { method: "HEAD", redirect: "follow",
+      signal: AbortSignal.timeout(15_000) });
+    status = response.status;
+  } catch {
+    console.log("  (release non vérifiée : pas de réseau pendant la construction)");
+    return;
+  }
+  if (status === 200) {
+    console.log("  Release vérifiée : le fichier est téléchargeable.");
+    return;
+  }
+  console.warn(`\n  ATTENTION : la release renvoie ${status}. Le bouton de téléchargement du site`);
+  console.warn(`  mènera vers une page introuvable. Publiez-la avant de déployer :`);
+  console.warn(`    gh release create v${version()} "dist/Korr-Setup-${version()}.exe" --repo geoffreyg81/Korr\n`);
 }
 
 // Empreinte déterministe de l'enveloppe publiée. Le service worker change dès
