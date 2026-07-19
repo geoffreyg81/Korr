@@ -192,6 +192,24 @@ const cases = [
   ["Si j’avais su, je n’y serai pas allé.", "Si j’avais su, je n’y serais pas allé."],
   ["Si tu venais, je serai content.", "Si tu venais, je serais content."],
   ["Si j’avais le temps, je ferai le ménage.", "Si j’avais le temps, je ferais le ménage."],
+  // Le conditionnel est fautif dans la subordonnée en « si », y compris avec un
+  // sujet nominal et un verbe du premier groupe hors table d’irréguliers.
+  ["Si le conseil l’accepterait, tout changerait.", "Si le conseil l’acceptait, tout changerait."],
+  ["Si la direction refuserait le budget, nous fermerions.", "Si la direction refusait le budget, nous fermerions."],
+  ["Si le client mangerait ici, on commencerait plus tôt.", "Si le client mangeait ici, on commencerait plus tôt."],
+  // Une virgule ne sépare jamais un sujet nominal de son verbe.
+  ["Une majorité, a décidé de s’opposer.", "Une majorité a décidé de s’opposer."],
+  ["La secrétaire, dont l’ordinateur, a planté, est partie.", "La secrétaire, dont l’ordinateur a planté, est partie."],
+  // Garde-fous : l’apposition et l’incise gardent leurs virgules.
+  ["La directrice, épuisée, a déclaré forfait.", "La directrice, épuisée, a déclaré forfait."],
+  ["Le rapport, a-t-il dit, est prêt.", "Le rapport, a-t-il dit, est prêt."],
+  // Numération : « quatre » invariable, « vingt » et « cent » accordés
+  // seulement multipliés et en fin de nombre.
+  ["Ils ont quatres-vingts-dix jours pour répondre.", "Ils ont quatre-vingt-dix jours pour répondre."],
+  ["Le dossier compte quatre-vingt pages.", "Le dossier compte quatre-vingts pages."],
+  ["Nous avons versé deux cent euros.", "Nous avons versé deux cents euros."],
+  ["Il reste deux cents trois dossiers.", "Il reste deux cent trois dossiers."],
+  ["Vingt et un candidats se sont présentés.", "Vingt et un candidats se sont présentés."],
   // Avec « si » au présent, le futur est correct.
   ["Si tu viens, je serai là.", "Si tu viens, je serai là."],
   ["Si tu as le temps, nous irons au cinéma.", "Si tu as le temps, nous irons au cinéma."],

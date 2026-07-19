@@ -449,7 +449,7 @@ function grammalecte() {
     replace(
       /(^|[.!?…]\s+|,\s+|«\s*)([Ss]i)\s+(j[’']|je|tu|il|elle|on|nous|vous|ils|elles)\s*([\p{L}]+)(?!\p{L})/gu,
       (match, prefix, si, pronoun, verb) => {
-        const imperfect = CONDITIONAL_TO_IMPERFECT.get(verb.toLocaleLowerCase("fr-FR"));
+        const imperfect = conditionalToImperfect(verb);
         if (!imperfect) return match;
 
         // « si je étais » est impossible : le pronom s’élide devant la voyelle.
@@ -458,6 +458,18 @@ function grammalecte() {
           /^[aeéêiouy]/iu.test(imperfect);
         const subject = elides ? "j’" : `${normalizedPronoun} `;
         return `${prefix}${si} ${subject}${imperfect}`;
+      }
+    );
+
+    // Même concordance avec un sujet nominal : « Si le conseil l’accepterait »
+    // → « l’acceptait ». Les pronoms compléments intercalés font partie du
+    // groupe verbal et sont donc conservés tels quels.
+    replace(
+      /(^|[.!?…]\s+|,\s+|«\s*)([Ss]i)\s+((?:l[’']|le|la|les|un|une|ce|cet|cette|mon|ma|ton|ta|son|sa|notre|votre|leur)\s*[\p{L}’'-]+)\s+((?:(?:l[’']|s[’']|n[’']|la|les|lui|leur|nous|vous|se|y|en|ne)\s*)*)([\p{L}]+)(?!\p{L})/gu,
+      (match, prefix, si, subject, clitics, verb) => {
+        const imperfect = conditionalToImperfect(verb);
+        if (!imperfect) return match;
+        return `${prefix}${si} ${subject} ${clitics}${imperfect}`;
       }
     );
 
@@ -833,16 +845,36 @@ function grammalecte() {
       "il faut à tout prix stopper la crise"
     );
 
+    // Nombres écrits en toutes lettres : « quatre » est invariable, « vingt » et
+    // « cent » ne prennent la marque du pluriel qu’en fin de nombre et
+    // multipliés, « mille » ne la prend jamais.
+    correctedText = correctedText.replace(NUMBER_CHAIN_PATTERN, (chain, offset, whole) => {
+      // Employé comme millésime ou comme décennie, le nombre reste invariable :
+      // « les années quatre-vingt », « page quatre-vingt ».
+      const ordinalUse = /\b(?:années?|an|page|pages|numéros?|chapitres?)\s+$/iu
+        .test(whole.slice(Math.max(0, offset - 20), offset));
+      const normalized = normalizeNumberChain(chain, { ordinalUse });
+      if (normalized !== chain) corrections += 1;
+      return normalized;
+    });
+
     // Une espace avant une virgule est toujours fautive en typographie
     // française. Cette passe générale couvre aussi les titres et incises que
     // les règles grammaticales ne signalent pas.
     replace(/[\u0020\u00a0\u202f]+,/gu, ",");
 
-    // Virgule entre un sujet nominal simple et son auxiliaire. Une apposition
-    // (« La directrice, épuisée, a… ») contient une seconde virgule et ne peut
-    // donc pas correspondre à ce motif.
+    // Virgule entre un sujet nominal simple et son verbe. Une apposition
+    // (« La directrice, épuisée, a… ») place un second segment entre virgules :
+    // le verbe ne suit alors pas immédiatement la virgule et le motif ne
+    // s’applique pas. L’incise inversée (« Le rapport, a-t-il dit ») est écartée
+    // par le trait d’union, qui signale un sujet postposé et non un sujet coupé.
     replace(
-      /(^|[.!?…]\s+)((?:L[’']|Le\s+|La\s+|Les\s+|Un\s+|Une\s+|Des\s+)[^,;:!?…\n]{1,80})\s*,\s+(a|ont|est|sont)\b/gu,
+      new RegExp(
+        String.raw`(^|[.!?…]\s+|\n\s*|,\s+|\b(?:dont|que|qu[’']|qui|où|et|mais|car|or|donc|puis|quand|lorsque)\s+)` +
+        String.raw`((?:l[’']|le\s+|la\s+|les\s+|un\s+|une\s+|des\s+|ce\s+|cet\s+|cette\s+|ces\s+|mon\s+|ma\s+|mes\s+|ton\s+|ta\s+|tes\s+|son\s+|sa\s+|ses\s+|notre\s+|nos\s+|votre\s+|vos\s+|leur\s+|leurs\s+)[^,;:!?…\n]{1,60})` +
+        String.raw`\s*,\s+(${SUBJECT_VERB_AFTER_COMMA.join("|")})(?![-\p{L}])`,
+        "giu"
+      ),
       "$1$2 $3"
     );
 
@@ -992,6 +1024,111 @@ function grammalecte() {
     viendrais: "venais", viendrait: "venait", viendrions: "venions", viendriez: "veniez", viendraient: "venaient",
     prendrais: "prenais", prendrait: "prenait", prendraient: "prenaient"
   }));
+
+  // Conditionnel du premier groupe : « accepterait » → « acceptait ». La table
+  // ci-dessus couvre les irréguliers ; ce dérivateur généralise aux verbes en
+  // -er, seule classe dont l’imparfait se déduit sans risque du conditionnel.
+  const CONDITIONAL_ENDINGS = new Map(Object.entries({
+    rais: "ais", rait: "ait", rions: "ions", riez: "iez", raient: "aient"
+  }));
+
+  function conditionalToImperfect(verb) {
+    const lowered = verb.toLocaleLowerCase("fr-FR");
+    const irregular = CONDITIONAL_TO_IMPERFECT.get(lowered);
+    if (irregular) return preserveCase(verb, irregular);
+
+    const match = lowered.match(/^(\p{L}+?)e(rais|rait|rions|riez|raient)$/u);
+    if (!match) return null;
+
+    const [, stem, ending] = match;
+    // Radicaux dont l’imparfait modifie la base (appellerait/appelait,
+    // jetterait/jetait, achèterait/achetait, essaierait/essayait) : le calcul
+    // mécanique produirait une forme fautive, on préfère ne rien toucher.
+    if (/(?:ll|tt|è|é|i|y)$/u.test(stem)) return null;
+    if (stem.length < 2) return null;
+
+    const imperfectEnding = CONDITIONAL_ENDINGS.get(ending);
+    if (!imperfectEnding) return null;
+
+    // « manger » garde son « e » devant a/o, « commencer » prend une cédille.
+    if (/g$/u.test(stem) && /^a/u.test(imperfectEnding)) {
+      return preserveCase(verb, `${stem}e${imperfectEnding}`);
+    }
+    if (/c$/u.test(stem) && /^a/u.test(imperfectEnding)) {
+      return preserveCase(verb, `${stem.slice(0, -1)}ç${imperfectEnding}`);
+    }
+    return preserveCase(verb, `${stem}${imperfectEnding}`);
+  }
+
+  // Verbes fréquents dont une virgule ne peut pas les séparer de leur sujet.
+  const SUBJECT_VERB_AFTER_COMMA = [
+    "a", "ont", "est", "sont", "était", "étaient", "avait", "avaient",
+    "sera", "seront", "aura", "auront", "fut", "furent",
+    "va", "vont", "reste", "restent", "devient", "deviennent",
+    "semble", "semblent", "paraît", "paraissent", "peut", "peuvent",
+    "doit", "doivent", "fait", "font"
+  ];
+
+  // Numération française en toutes lettres.
+  const NUMBER_WORD_FORMS = new Map(Object.entries({
+    un: "un", une: "une", deux: "deux", trois: "trois", quatre: "quatre", quatres: "quatre",
+    cinq: "cinq", six: "six", sept: "sept", huit: "huit", neuf: "neuf", dix: "dix",
+    onze: "onze", douze: "douze", treize: "treize", quatorze: "quatorze", quinze: "quinze",
+    seize: "seize", vingt: "vingt", vingts: "vingt", trente: "trente", quarante: "quarante",
+    cinquante: "cinquante", soixante: "soixante", cent: "cent", cents: "cent",
+    mille: "mille", milles: "mille"
+  }));
+
+  // Un nombre en lettres est une suite de mots-nombres liés par un trait
+  // d’union, une espace ou « et ».
+  const NUMBER_CHAIN_PATTERN = new RegExp(
+    String.raw`(?<![\p{L}\p{N}-])(?:${[...NUMBER_WORD_FORMS.keys()].join("|")})` +
+    String.raw`(?:(?:-|[  ]+et[  ]+|[  ]+)(?:${[...NUMBER_WORD_FORMS.keys()].join("|")}))+(?![\p{L}\p{N}-])`,
+    "giu"
+  );
+
+  function normalizeNumberChain(chain, options = {}) {
+    const tokens = [];
+    const separators = [];
+    const pattern = /([\p{L}]+)((?:-|[  ]+et[  ]+|[  ]+)?)/gu;
+    for (let hit = pattern.exec(chain); hit; hit = pattern.exec(chain)) {
+      if (/^et$/iu.test(hit[1])) {
+        separators[separators.length - 1] = " et ";
+        continue;
+      }
+      tokens.push(hit[1]);
+      separators.push(hit[2]);
+    }
+    if (tokens.length < 2) return chain;
+
+    const normalized = tokens.map((token, index) => {
+      const singular = NUMBER_WORD_FORMS.get(token.toLocaleLowerCase("fr-FR"));
+      if (!singular) return token;
+
+      // « vingt » et « cent » s’accordent seulement multipliés et en fin de
+      // nombre : quatre-vingts, deux cents, mais quatre-vingt-dix, deux cent un.
+      if (!options.ordinalUse &&
+          (singular === "vingt" || singular === "cent") &&
+          index > 0 && index === tokens.length - 1) {
+        const multiplier = NUMBER_WORD_FORMS.get(tokens[index - 1].toLocaleLowerCase("fr-FR"));
+        if (multiplier && multiplier !== "un" && multiplier !== "une" && multiplier !== "cent") {
+          return preserveCase(token, `${singular}s`);
+        }
+      }
+      return preserveCase(token, singular);
+    });
+
+    // Les éléments inférieurs à cent se lient par un trait d’union ; « et »
+    // reste tel quel là où l’usage le maintient (vingt et un).
+    let rebuilt = "";
+    normalized.forEach((word, index) => {
+      rebuilt += word;
+      const separator = separators[index] || "";
+      if (!separator) return;
+      rebuilt += /et/u.test(separator) ? " et " : separator;
+    });
+    return rebuilt;
+  }
 
   // Futur simple et son conditionnel, pour la principale d’une hypothèse en
   // « si » à l’imparfait ou au plus-que-parfait.
