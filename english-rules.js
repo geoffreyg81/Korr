@@ -283,6 +283,127 @@
     replace(/\balot\b/giu, "a lot");
     replace(/\bnowdays\b/giu, "nowadays");
 
+    // ------------------------------------------------------------------
+    // Orthographe : graphies inexistantes, y compris les fautes typiques du
+    // francophone (responsability, exemple, compagny) et les prétérits
+    // sur-régularisés (payed, teached). Aucune clé n'est un mot anglais.
+    // ------------------------------------------------------------------
+    replaceRaw(
+      new RegExp(String.raw`\b(${[...MISSPELLINGS.keys()].join("|")})\b`, "giu"),
+      (match) => { const fixed = MISSPELLINGS.get(match.toLocaleLowerCase("en-US"));
+        return fixed ? preserveInitialCase(match, fixed) : match; }
+    );
+
+    // Mots soudés qui s'écrivent en deux mots.
+    replace(/\baswell\b/giu, "as well");
+    replace(/\binfact\b/giu, "in fact");
+    replace(/\batleast\b/giu, "at least");
+    replace(/\beachother\b/giu, "each other");
+    replace(/\bincase\b/giu, "in case");
+    replace(/\beverytime\b/giu, "every time");
+    replace(/\beventhough\b/giu, "even though");
+    replace(/\binspite[ \t]+of\b/giu, "in spite of");
+    replace(/\bapart[ \t]+of\b/giu, "a part of");
+
+    // ------------------------------------------------------------------
+    // Confusions de mots : seuls les contextes sans lecture légitime.
+    // ------------------------------------------------------------------
+    replace(/\bweather[ \t]+or[ \t]+not\b/giu, "whether or not");
+    replace(/\brather[ \t]+then\b/giu, "rather than");
+    replace(/\bother[ \t]+then\b(?=[ \t]+(?:that|this|the|a|an|those|these|him|her|me|us|them)\b)/giu, "other than");
+    // « who's » = « who is » : devant un nom possédé, c'est « whose ».
+    replace(/\bwho['’]s[ \t]+(?=(?:car|house|book|phone|idea|fault|turn|name|job|responsibility|team|project|report|desk|office|money|decision)s?\b)/giu, "whose ");
+    // « it's » = « it is » : devant un nom possédé, c'est « its ».
+    replace(/\bit['’]s[ \t]+(?=(?:tail|name|own|way|price|value|core|surface|content|size|colou?r|purpose|meaning|feature|result|impact|origin|goal)s?\b)/giu, "its ");
+    // « quiet » (silencieux) écrit pour « quite » devant un adjectif.
+    replace(/\bquiet[ \t]+(?=(?:expensive|good|nice|difficult|hard|easy|sure|different|interesting|important|long|often|new|big|small|happy|impressive|clear|useful|slow|fast)\b)/giu, "quite ");
+    // « too » (aussi) écrit pour « to » devant un verbe.
+    replace(/\btoo[ \t]+(?=(?:go|do|be|see|get|make|take|have|know|say|come|work|help|start|try|use|find|buy|send|meet|call|leave)\b)/giu, "to ");
+    // « affect » nominal n'existe pas dans l'usage courant : après un
+    // déterminant, le nom est « effect ».
+    replace(/\b(an|the|no|any|little|some|significant|negative|positive|major|big)[ \t]+affect\b/giu,
+      (_match, determiner) => `${determiner} effect`);
+
+    // Article : le son initial décide, pas la lettre.
+    replaceRaw(/\b(an)([ \t]+)(?=(?:user|university|union|uniform|unit|unique|useful|european|one)\w*\b)/giu,
+      (_match, article, spacing) => `${preserveInitialCase(article, "a")}${spacing}`);
+    replaceRaw(/\b(a)([ \t]+)(?=(?:hour|honest|honou?r|heir)\b)/giu,
+      (_match, article, spacing) => `${preserveInitialCase(article, "an")}${spacing}`);
+
+    // ------------------------------------------------------------------
+    // Calques du français : prépositions et constructions traduites mot à mot.
+    // ------------------------------------------------------------------
+    replace(/\b(depend(?:s|ed|ing)?)[ \t]+of\b/giu, (_match, verb) => `${verb} on`);
+    replace(/\b(participate(?:s|d)?|participating)[ \t]+to\b/giu, (_match, verb) => `${verb} in`);
+    replace(/\bresponsible[ \t]+of\b/giu, "responsible for");
+    replace(/\binterested[ \t]+by\b/giu, "interested in");
+    replace(/\bdifferent[ \t]+of\b/giu, "different from");
+    replace(/\bcapable[ \t]+to\b/giu, "able to");
+    replace(/\b(discuss(?:es|ed|ing)?)[ \t]+about\b/giu, (_match, verb) => verb);
+    // « répondre à » : « answer » est transitif direct devant ces noms.
+    replace(/\b(answer(?:s|ed|ing)?)[ \t]+to[ \t]+(?=(?:the|this|that|my|your|his|her|our|their)[ \t]+(?:question|email|e-mail|message|letter|request)s?\b)/giu,
+      (_match, verb) => `${verb} `);
+    // « entrer dans » : « enter » est transitif direct ; les locutions figées
+    // (enter into an agreement) gardent leur préposition.
+    replace(/\b(enter(?:s|ed|ing)?)[ \t]+(?:in|into)(?=[ \t]+(?:the|a|an|my|your|his|her|our|their|this|that)[ \t]+(?!(?:agreement|contract|negotiation|partnership|discussion|force|effect|argument)s?\b)[a-z])/giu,
+      (_match, verb) => verb);
+    replace(/\b(listen(?:s|ed|ing)?)[ \t]+(?=(?:music|the[ \t]+radio|this[ \t]+song|that[ \t]+song|him|her|me|us|them)\b)/giu,
+      (_match, verb) => `${verb} to `);
+    replace(/\b(wait(?:s|ed|ing)?)[ \t]+(?=(?:me|him|her|us|them)\b)/giu,
+      (_match, verb) => `${verb} for `);
+    replace(/\b(ask(?:s|ed|ing)?)[ \t]+to[ \t]+(?=(?:me|him|her|us|them|the[ \t]+(?:manager|director|team|client|teacher|boss))\b)/giu,
+      (_match, verb) => `${verb} `);
+    replace(/\b(explain(?:s|ed|ing)?)[ \t]+(me|us|him|her|them)\b(?=[ \t]+(?:the|this|that|how|why|what|your|my|it)\b)/giu,
+      (_match, verb, pronoun) => `${verb} to ${pronoun}`);
+    replaceRaw(/\b(married)[ \t]+with[ \t]+(?=(?:him|her|me|you|us|them|[A-Z][a-z]+\b)(?![ \t]*(?:children|kids)))/gu,
+      (_match, verb) => `${verb} to `);
+    // « depuis trois ans » : une durée s'introduit par « for », pas « since ».
+    replace(/\bsince[ \t]+((?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|several|many|a[ \t]+few)[ \t]+(?:years?|months?|weeks?|days?|hours?|minutes?))\b(?![ \t]+ago\b)/giu,
+      (_match, duration) => `for ${duration}`);
+    // « j'ai 30 ans » : l'âge se dit avec « be », jamais « have ».
+    replaceRaw(/\b(i|he|she|we|they|you)[ \t]+(?:have|has)[ \t]+(\d{1,3})[ \t]+years(?:[ \t]+old)?\b(?![ \t]+(?:of|left|remaining|ahead|behind))/giu,
+      (_match, subject, age) => {
+        const s = subject.toLocaleLowerCase("en-US");
+        const be = s === "i" ? "am" : (s === "he" || s === "she") ? "is" : "are";
+        return `${subject} ${be} ${age} years old`;
+      });
+    // Vocabulaire calqué : ces mots-là n'ont pas ce sens en anglais.
+    replace(/\bplanification\b/giu, "planning");
+    replace(/\b(to|please|can[ \t]+you|could[ \t]+you)[ \t]+precise\b(?=[ \t]+(?:the|this|that|what|which|your|it|me)\b|[ \t]*\?)/giu,
+      (_match, lead) => `${lead} clarify`);
+    replace(/\b(a|the|our|your|their)[ \t]+reunion\b(?=[ \t]+(?:at|tomorrow|today|tonight|with[ \t]+the[ \t]+(?:team|client|clients|manager)|on[ \t]+(?:monday|tuesday|wednesday|thursday|friday))\b)/giu,
+      (_match, determiner) => `${determiner} meeting`);
+    replace(/\b(send|sends|sent|give|gives|gave|share|shared)[ \t]+(me|us|him|her|them)[ \t]+(your|his|her|their|my|our)[ \t]+coordinates\b/giu,
+      (_match, verb, indirect, possessive) => `${verb} ${indirect} ${possessive} contact details`);
+
+    // ------------------------------------------------------------------
+    // Formes verbales impossibles.
+    // ------------------------------------------------------------------
+    replaceRaw(/\b(he|she|it)([ \t]+)(don['’]?t)\b/giu,
+      (_match, subject, spacing, negation) => `${subject}${spacing}${preserveInitialCase(negation, "doesn't")}`);
+    // Un modal se construit sans « to » : « must to go » → « must go ».
+    replace(/\b(can|could|must|should|would|may|might)[ \t]+to[ \t]+(?=[a-z])/giu,
+      (_match, modal) => `${modal} `);
+    replace(/\bfor[ \t]+to[ \t]+(?=[a-z])/giu, "to ");
+    // « let/make » + COD + infinitif sans « to » ; « make it to » (arriver)
+    // est écarté par l'absence de « it » dans la liste.
+    replace(/\b(let|lets|letting|make|makes|made|making)[ \t]+(me|him|her|us|them|you)[ \t]+to[ \t]+(?=[a-z])/giu,
+      (_match, verb, pronoun) => `${verb} ${pronoun} `);
+    // Double comparatif : « more better » → « better ».
+    replace(/\b(?:more|most)[ \t]+(better|worse|faster|slower|bigger|smaller|easier|harder|stronger|weaker|cheaper|older|younger|higher|lower|taller|shorter|longer|quicker|simpler|safer|richer|poorer)\b/giu,
+      (_match, comparative) => comparative);
+    // « more easy » → « easier » quand la suite confirme la comparaison.
+    replaceRaw(
+      new RegExp(String.raw`\b(more)([ \t]+)(${[...SHORT_COMPARATIVES.keys()].join("|")})\b(?=[ \t]+(?:than|to|for|and|now|today)\b|[ \t]*[,.;:!?])`, "giu"),
+      (match, more, spacing, adjective) => {
+        const comparative = SHORT_COMPARATIVES.get(adjective.toLocaleLowerCase("en-US"));
+        return comparative ? preserveInitialCase(more, comparative) : match;
+      }
+    );
+    // « peoples » ne désigne que des peuples : « the peoples of Europe ».
+    replace(/\b(the|these|those|many|some|most|few|several)[ \t]+peoples\b(?![ \t]+of\b)/giu,
+      (_match, determiner) => `${determiner} people`);
+
     // « its » possessif écrit pour « it's » : seuls les contextes où le
     // possessif est impossible sont réécrits.
     replace(/\bits[ \t]+been\b/giu, "it's been");
@@ -354,8 +475,10 @@
       (_match, noun) => noun
     );
     // Pluriel direct sur un indénombrable : « equipments » → « equipment ».
+    // « weather », « traffic » et « money » sont écartés : leur forme en -s est
+    // un verbe conjugué (« the ship weathers the storm ») ou un nom légitime.
     replace(
-      new RegExp(String.raw`\b(${UNCOUNTABLE_NOUNS.join("|")})s\b`, "giu"),
+      new RegExp(String.raw`\b(${UNCOUNTABLE_STRIPPABLE.join("|")})s\b`, "giu"),
       (_match, noun) => noun
     );
     // Un indénombrable est singulier : son verbe aussi.
@@ -434,6 +557,9 @@
     "baggage", "homework", "knowledge", "progress", "research", "evidence",
     "money", "traffic", "weather", "vocabulary"
   ];
+  const UNCOUNTABLE_STRIPPABLE = UNCOUNTABLE_NOUNS.filter(
+    (noun) => !["weather", "traffic", "money"].includes(noun)
+  );
 
   const FRENCH_CALQUE_VERBS = new Map(Object.entries({
     assist: "attend", assists: "attends", assisted: "attended", assisting: "attending"
@@ -449,6 +575,50 @@
     talk: "talking", learn: "learning", join: "joining", start: "starting",
     collaborate: "collaborating", have: "having", get: "getting", go: "going",
     do: "doing", read: "reading", visit: "visiting", welcome: "welcoming"
+  }));
+
+  // Graphies qui n'existent pas en anglais. Trois familles : coquilles
+  // classiques, orthographes calquées du français (responsabilité, exemple,
+  // compagnie), et prétérits sur-régularisés (payed, teached). « putted »
+  // (golf), « costed » (gestion) et « seed » sont volontairement absents :
+  // ces formes ont un emploi légitime.
+  const MISSPELLINGS = new Map(Object.entries({
+    beleive: "believe", belive: "believe", freind: "friend", acheive: "achieve",
+    calender: "calendar", collegue: "colleague", colleage: "colleague",
+    commitee: "committee", comittee: "committee", embarass: "embarrass",
+    existance: "existence", occassion: "occasion", posession: "possession",
+    recomend: "recommend", succesful: "successful", successfull: "successful",
+    neccessary: "necessary", necesary: "necessary", buisness: "business",
+    definitly: "definitely", grammer: "grammar", intrest: "interest",
+    knowlege: "knowledge", lenght: "length", strenght: "strength",
+    libary: "library", maintainance: "maintenance", maintenence: "maintenance",
+    usefull: "useful", gratefull: "grateful", beggining: "beginning",
+    begining: "beginning", comming: "coming", runing: "running",
+    writting: "writing", proffesional: "professional", profesional: "professional",
+    responsability: "responsibility", appartment: "apartment", exemple: "example",
+    langage: "language", futur: "future", compagny: "company",
+    developement: "development", developpement: "development", developpment: "development",
+    personel: "personnel", exercice: "exercise", adresse: "address",
+    payed: "paid", choosed: "chose", buyed: "bought", teached: "taught",
+    catched: "caught", thinked: "thought", feeled: "felt", keeped: "kept",
+    leaved: "left", meeted: "met", finded: "found", telled: "told",
+    selled: "sold", builded: "built", spended: "spent", losed: "lost",
+    winned: "won", bringed: "brought", speaked: "spoke", breaked: "broke",
+    stealed: "stole", growed: "grew", knowed: "knew", throwed: "threw",
+    flyed: "flew", drawed: "drew", weared: "wore", standed: "stood",
+    understanded: "understood", goed: "went", comed: "came", becomed: "became",
+    drived: "drove", rided: "rode", writed: "wrote", eated: "ate",
+    falled: "fell", gived: "gave", taked: "took", maked: "made", sayed: "said"
+  }));
+
+  // Adjectifs courts : le comparatif se forme en -er, jamais avec « more ».
+  const SHORT_COMPARATIVES = new Map(Object.entries({
+    easy: "easier", happy: "happier", big: "bigger", fast: "faster",
+    cheap: "cheaper", tall: "taller", small: "smaller", old: "older",
+    young: "younger", strong: "stronger", hard: "harder", simple: "simpler",
+    quick: "quicker", safe: "safer", slow: "slower", high: "higher",
+    low: "lower", long: "longer", short: "shorter", rich: "richer",
+    poor: "poorer", late: "later", early: "earlier", close: "closer"
   }));
 
   // Prétérits irréguliers dont l'infinitif diffère : après do-support ou
@@ -468,7 +638,21 @@
     lost: "lose", met: "meet", paid: "pay", sat: "sit", stood: "stand",
     found: "find", heard: "hear", held: "hold", won: "win", sent: "send",
     spent: "spend", built: "build", meant: "mean", understood: "understand",
-    got: "get"
+    got: "get",
+    // Prétérits réguliers fréquents : après do-support, la forme en -ed est
+    // tout aussi impossible. « used » est écarté (« to used cars » est un
+    // adjectif), comme tout mot dont la forme en -ed a un emploi non verbal.
+    worked: "work", wanted: "want", needed: "need", helped: "help",
+    called: "call", asked: "ask", started: "start", stopped: "stop",
+    played: "play", moved: "move", lived: "live", believed: "believe",
+    remembered: "remember", tried: "try", liked: "like", loved: "love",
+    hated: "hate", waited: "wait", watched: "watch", opened: "open",
+    finished: "finish", happened: "happen", changed: "change",
+    followed: "follow", planned: "plan", talked: "talk", walked: "walk",
+    looked: "look", seemed: "seem", stayed: "stay", expected: "expect",
+    received: "receive", decided: "decide", agreed: "agree",
+    studied: "study", replied: "reply", answered: "answer",
+    explained: "explain", arrived: "arrive", visited: "visit"
   }));
 
   // Prétérits irréguliers dont la forme diffère du participe passé. Les verbes
