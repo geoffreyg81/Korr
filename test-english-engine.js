@@ -201,6 +201,31 @@ const cases = [
   ["The document sent yesterday also contains one error.", "The document sent yesterday also contains one error."],
   ["The documents sent yesterday also contains several errors.", "The documents sent yesterday also contain several errors."],
   ["The documents sent yesterday also contain several errors.", "The documents sent yesterday also contain several errors."],
+  // Virgule entre un sujet simple et son verbe ; l'apposition est épargnée.
+  ["The team, has decided to postpone the launch.", "The team has decided to postpone the launch."],
+  ["My manager, was very clear about it.", "My manager was very clear about it."],
+  ["The director, exhausted, has decided to rest.", "The director, exhausted, has decided to rest."],
+  ["Yesterday, we saw the results.", "Yesterday, we saw the results."],
+  // « of » écrit pour « have » après un modal.
+  ["I should of known better.", "I should have known better."],
+  ["They must of forgot the meeting.", "They must have forgotten the meeting."],
+  // Prétérit irrégulier employé pour le participe passé.
+  ["We have went to the office.", "We have gone to the office."],
+  ["She has wrote the report.", "She has written the report."],
+  ["He had took the files and they have chose a new vendor.", "He had taken the files and they have chosen a new vendor."],
+  // Grands nombres invariables multipliés, pluriel légitime sinon.
+  ["It cost two hundreds dollars and three thousands euros.", "It cost two hundred dollars and three thousand euros."],
+  ["Hundreds of people came.", "Hundreds of people came."],
+  ["Tens of thousands of users signed up.", "Tens of thousands of users signed up."],
+  // Pléonasmes et expressions figées.
+  ["Please revert back to me and repeat again the steps.", "Please revert to me and repeat the steps."],
+  ["I could care less about it.", "I couldn't care less about it."],
+  ["Thanks alot for your help.", "Thanks a lot for your help."],
+  // « its » possessif contre « it's » : seuls les contextes sans lecture
+  // possessive sont réécrits.
+  ["Its been a long day and its still raining.", "It's been a long day and it's still raining."],
+  ["Its main advantage is speed.", "Its main advantage is speed."],
+  ["The dog wagged its tail.", "The dog wagged its tail."],
   [
     "Although the managers has announced that the new policies would comes into effect on Monday, several employee have complained that they was not informed in time. The informations they recieved were contradictory, and each of the teams have asked whether their supposed to continue using the old procedures or wait until the director give them clearer instructions. Maria, who had took the initiative to contact the director, realize that the documents sent yesterday also contains several errors, which have caused even more confusion among the team.",
     "Although the managers have announced that the new policies would come into effect on Monday, several employees have complained that they were not informed in time. The information they received was contradictory, and each of the teams has asked whether they're supposed to continue using the old procedures or wait until the director gives them clearer instructions. Maria, who had taken the initiative to contact the director, realized that the documents sent yesterday also contain several errors, which have caused even more confusion among the team."

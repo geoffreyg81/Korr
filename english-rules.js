@@ -227,8 +227,92 @@
         `${prefix}${subject}${spacing}${preserveInitialCase(verb, singularVerb(verb))}`
     );
 
+    // ------------------------------------------------------------------
+    // Règles globales, miroir des systèmes du moteur français : chacune vaut
+    // pour toute la langue, pas pour une phrase de démonstration.
+    // ------------------------------------------------------------------
+
+    // Virgule entre un groupe sujet simple et son verbe. Une apposition
+    // (« The director, exhausted, has… ») intercale un second segment : le
+    // verbe ne suit pas la virgule et le motif ne s'applique pas.
+    replaceRaw(
+      /(^|[.!?][ \t]+|\n[ \t]*)((?:The|A|An|My|Your|Our|Their|His|Her|Its|This|That|These|Those)[ \t]+[^,;:!?\n]{1,60}?)[ \t]*,[ \t]+(is|are|was|were|has|have|had|will|would|can|could|must|should|does|did|seems|seemed|remains|became|becomes)\b(?![-'’])/gmu,
+      (_match, prefix, subject, verb) => `${prefix}${subject} ${verb}`
+    );
+
+    // « of » écrit pour « have » après un modal : « should of known ».
+    replace(/\b(should|would|could|must|might|may)[ \t]+of\b(?=[ \t]+[a-z])/giu,
+      (_match, modal) => `${modal} have`);
+
+    // Prétérit irrégulier employé pour le participe passé après have/has/had.
+    replaceRaw(
+      new RegExp(
+        String.raw`\b(has|have|had|having)([ \t]+(?:not[ \t]+|never[ \t]+|already[ \t]+|just[ \t]+|also[ \t]+)?)` +
+        String.raw`(${[...PRETERITE_TO_PARTICIPLE.keys()].join("|")})\b`,
+        "giu"
+      ),
+      (match, auxiliary, spacing, preterite) => {
+        const participle = PRETERITE_TO_PARTICIPLE.get(preterite.toLocaleLowerCase("en-US"));
+        if (!participle) return match;
+        return `${auxiliary}${spacing}${preserveInitialCase(preterite, participle)}`;
+      }
+    );
+
+    // « hundred », « thousand », « million » et « billion » restent invariables
+    // multipliés par un nombre : « two hundreds dollars » → « two hundred ».
+    // Sans multiplicateur (« hundreds of people »), le pluriel est correct.
+    replace(
+      /\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|a[ \t]+few|several|\d+)[ \t]+(hundreds|thousands|millions|billions)\b(?![ \t]+of\b)/giu,
+      (_match, quantity, scale) => `${quantity} ${scale.slice(0, -1)}`
+    );
+
+    // Pléonasmes et locutions figées : du vocabulaire, valable partout.
+    // Le helper « replace » n'interprète pas « $1 » : les captures repassent
+    // par des fonctions.
+    replace(/\b(revert|reverted|reverting|return|returned|returning)[ \t]+back\b/giu,
+      (_match, verb) => verb);
+    replace(/\b(repeat|repeated|repeating|repeats)[ \t]+(?:again|once[ \t]+more)\b/giu,
+      (_match, verb) => verb);
+    replace(/\b(combine|combined|combining|merge|merged|merging)[ \t]+together\b/giu,
+      (_match, verb) => verb);
+    replace(/\b(plan|planned|planning|plans)[ \t]+ahead[ \t]+of[ \t]+time\b/giu,
+      (_match, verb) => verb);
+    replace(/\bpast[ \t]+history\b/giu, "history");
+    replace(/\bunexpected[ \t]+surprise(s?)\b/giu, (_match, plural) => `surprise${plural}`);
+    replace(/\bcould[ \t]+care[ \t]+less\b/giu, "couldn't care less");
+    replace(/\balot\b/giu, "a lot");
+    replace(/\bnowdays\b/giu, "nowadays");
+
+    // « its » possessif écrit pour « it's » : seuls les contextes où le
+    // possessif est impossible sont réécrits.
+    replace(/\bits[ \t]+been\b/giu, "it's been");
+    replace(/\bits[ \t]+(not|too|really|quite|still|already)[ \t]+([a-z][a-z'’-]*)\b/giu,
+      (match, adverb, word) => {
+        // « its still core business » : un nom derrière l'adverbe garde le
+        // possessif ; seul un adjectif prédicatif net est réécrit.
+        if (!/^(good|bad|great|fine|nice|cold|hot|warm|late|early|easy|hard|difficult|possible|impossible|important|urgent|ready|done|over|broken|working|raining|snowing|true|false|wrong|right|clear|obvious|open|closed|free|busy|full|empty)$/iu.test(word)) {
+          return match;
+        }
+        return `it's ${adverb} ${word}`;
+      });
+
     return { text, corrections };
   }
+
+  // Prétérits irréguliers dont la forme diffère du participe passé. Les verbes
+  // dont les deux formes coïncident (bought, made…) n'ont rien à corriger.
+  const PRETERITE_TO_PARTICIPLE = new Map(Object.entries({
+    went: "gone", came: "come", did: "done", saw: "seen", ate: "eaten",
+    wrote: "written", took: "taken", broke: "broken", chose: "chosen",
+    drank: "drunk", began: "begun", ran: "run", spoke: "spoken",
+    drove: "driven", rode: "ridden", gave: "given", knew: "known",
+    grew: "grown", threw: "thrown", flew: "flown", wore: "worn",
+    tore: "torn", forgot: "forgotten", froze: "frozen", woke: "woken",
+    rose: "risen", fell: "fallen", swam: "swum", sang: "sung",
+    rang: "rung", stole: "stolen", hid: "hidden", bit: "bitten",
+    mistook: "mistaken", undertook: "undertaken",
+    arose: "arisen", awoke: "awoken", swore: "sworn", shook: "shaken"
+  }));
 
   function preserveInitialCase(source, replacement) {
     const letters = source.match(/\p{L}/gu) || [];
