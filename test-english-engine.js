@@ -240,6 +240,37 @@ const cases = [
   // « everyday » adjectif contre « every day » adverbe.
   ["I go to the gym everyday.", "I go to the gym every day."],
   ["Everyday life is hard.", "Everyday life is hard."],
+  // Apostrophe de pluriel : un génitif est suivi de la chose possédée.
+  ["We reviewed the ticket's and the invoice's.", "We reviewed the tickets and the invoices."],
+  ["The box's are ready.", "The boxes are ready."],
+  ["The company's new policy is clear.", "The company's new policy is clear."],
+  ["The manager's report, which is late, arrived.", "The manager's report, which is late, arrived."],
+  ["It's fine.", "It's fine."],
+  ["Who's coming?", "Who's coming?"],
+  // Subjonctif mandatif après un adjectif ou un verbe de volonté.
+  ["It is crucial that everyone downloads the update.", "It is crucial that everyone download the update."],
+  ["It is essential that he arrives on time.", "It is essential that he arrive on time."],
+  ["I recommend that she goes early.", "I recommend that she go early."],
+  ["We require that the client signs the form.", "We require that the client sign the form."],
+  ["It is important that it is done today.", "It is important that it be done today."],
+  // Garde-fous : ces sujets portent déjà la forme de base.
+  ["It is crucial that we download the update.", "It is crucial that we download the update."],
+  ["It is important that they arrive early.", "It is important that they arrive early."],
+  ["He said that everyone downloads it.", "He said that everyone downloads it."],
+  // Accord du relatif avec son antécédent.
+  ["The devs who is working are here.", "The devs who are working are here."],
+  ["The developers who has finished can leave.", "The developers who have finished can leave."],
+  ["The boss who is here agrees.", "The boss who is here agrees."],
+  ["The business who is growing hired.", "The business who is growing hired."],
+  // Attribut d'un sujet pluriel.
+  ["Even if they are business partner, we agree.", "Even if they are business partners, we agree."],
+  ["They are partner material.", "They are partner material."],
+  // « join » ne signifie pas contacter ; « actual » ne signifie pas « en cours ».
+  ["I tried to join the support yesterday.", "I tried to reach the support yesterday."],
+  ["I will join the meeting.", "I will join the meeting."],
+  ["Update before the actual version expires.", "Update before the current version expires."],
+  ["The actual price is higher than announced.", "The actual price is higher than announced."],
+  ["At the actual moment we cannot.", "At the moment we cannot."],
   // La forme en -s d'un indénombrable peut être un verbe ou un nom légitime.
   ["The ship weathers the storm.", "The ship weathers the storm."],
   ["The moneys were allocated.", "The moneys were allocated."],

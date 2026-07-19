@@ -284,6 +284,89 @@
     replace(/\bnowdays\b/giu, "nowadays");
 
     // ------------------------------------------------------------------
+    // Apostrophe de pluriel (« greengrocer's apostrophe ») : « policy's » pour
+    // « policies ». Un génitif est toujours suivi de la chose possédée ; devant
+    // une ponctuation, une conjonction ou un verbe pluriel, il n'y a rien à
+    // posséder et la marque est donc un pluriel mal orthographié.
+    // ------------------------------------------------------------------
+    replaceRaw(
+      /\b([a-z][a-z-]{2,})['’]s\b(?=[ \t]*(?:[.,;:!?)]|$)|[ \t]+(?:and|or|but|are|were|have|which|that|too|also)\b)/gimu,
+      (match, noun) => {
+        const lower = noun.toLocaleLowerCase("en-US");
+        // Contractions de « is », « has » et « us » : ce ne sont pas des noms.
+        if (CONTRACTION_SUBJECTS.has(lower)) return match;
+        // Un indénombrable est déjà traité plus haut, sans passer au pluriel.
+        if (UNCOUNTABLE_NOUNS.includes(lower)) return match;
+        return preserveInitialCase(noun, pluralNoun(lower));
+      }
+    );
+
+    // ------------------------------------------------------------------
+    // Subjonctif mandatif : après un verbe ou un adjectif de volonté, la
+    // subordonnée en « that » prend la forme de base, sans marque de personne.
+    // « it is crucial that everyone downloads » → « download ».
+    // ------------------------------------------------------------------
+    replaceRaw(
+      new RegExp(
+        String.raw`\b(${SUBJUNCTIVE_TRIGGERS.join("|")})([ \t]+that[ \t]+)` +
+        // Le second mot du sujet est facultatif et paresseux : sans cela, le
+        // groupe avalerait le verbe (« everyone downloads » pris pour sujet).
+        String.raw`((?:the[ \t]+|each[ \t]+|every[ \t]+)?[a-z]+(?:[ \t]+[a-z]+)??)([ \t]+)([a-z]+)\b`,
+        "gimu"
+      ),
+      (match, trigger, thatPart, subject, spacing, verb) => {
+        // Le sujet ne doit pas être un pluriel ni « I / you / we / they » :
+        // leur forme est déjà celle du subjonctif, il n'y a rien à corriger.
+        if (/^(?:i|you|we|they)$/iu.test(subject.trim())) return match;
+        const base = subjunctiveBase(verb);
+        if (!base || base === verb.toLocaleLowerCase("en-US")) return match;
+        // « that the team members meet » : un sujet pluriel porte déjà la
+        // forme de base, le verbe sans -s serait alors un contresens.
+        if (/[^s]s$/u.test(subject.trim()) && !/(?:ss|us|is)$/u.test(subject.trim())) return match;
+        return `${trigger}${thatPart}${subject}${spacing}${preserveInitialCase(verb, base)}`;
+      }
+    );
+
+    // ------------------------------------------------------------------
+    // Accord d'un relatif : « the devs who is working » → « who are ».
+    // Le nom immédiatement à gauche de « who » fixe le nombre.
+    // ------------------------------------------------------------------
+    replaceRaw(
+      /\b([a-z]+s)([ \t]+who[ \t]+)(is|was|has|does)\b/gimu,
+      (match, antecedent, middle, verb) => {
+        const lower = antecedent.toLocaleLowerCase("en-US");
+        if (SINGULAR_S_NOUNS.has(lower)) return match;
+        const plural = { is: "are", was: "were", has: "have", does: "do" }[verb.toLocaleLowerCase("en-US")];
+        return `${antecedent}${middle}${preserveInitialCase(verb, plural)}`;
+      }
+    );
+
+    // Attribut d'un sujet pluriel : « they are business partner » → « partners ».
+    // Le nom doit terminer la proposition, sinon il qualifie ce qui suit
+    // (« they are business partner material »).
+    replaceRaw(
+      new RegExp(
+        String.raw`\b(they|we|you)([ \t]+(?:are|were)[ \t]+)((?:[a-z]+[ \t]+){0,2})` +
+        String.raw`(${COUNTABLE_ROLES.join("|")})\b(?=[ \t]*(?:[.,;:!?]|$)|[ \t]+(?:and|or|but|who|which|in|at|on|for|with|from|since)\b)`,
+        "gimu"
+      ),
+      (match, subject, verbPart, modifiers, noun) =>
+        `${subject}${verbPart}${modifiers}${preserveInitialCase(noun, pluralNoun(noun.toLocaleLowerCase("en-US")))}`
+    );
+
+    // « joindre quelqu'un » : « join » signifie rejoindre, pas contacter.
+    replace(/\b(join(?:s|ed|ing)?)[ \t]+(?=(?:the[ \t]+)?(?:support|customer[ \t]+service|helpdesk|help[ \t]+desk|hotline)\b)/giu,
+      (_match, verb) => `${verb.replace(/^join/iu, (m) => m === "Join" ? "Reach" : "reach")
+        .replace(/^reachs$/iu, "reaches")} `);
+
+    // « actual » signifie « réel », jamais « en cours ». Devant ces noms-là,
+    // la lecture « réel » supposerait un contraste avec une version fictive :
+    // c'est le calque de « actuel » qui est en cause.
+    replace(/\b(the|our|your|this)[ \t]+actual[ \t]+(?=(?:version|release|build|sprint|roadmap|planning|agenda|schedule)\b)/giu,
+      (_match, determiner) => `${determiner} current `);
+    replace(/\bat[ \t]+the[ \t]+actual[ \t]+(?:moment|time)\b/giu, "at the moment");
+
+    // ------------------------------------------------------------------
     // Orthographe : graphies inexistantes, y compris les fautes typiques du
     // francophone (responsability, exemple, compagny) et les prétérits
     // sur-régularisés (payed, teached). Aucune clé n'est un mot anglais.
@@ -577,6 +660,42 @@
     do: "doing", read: "reading", visit: "visiting", welcome: "welcoming"
   }));
 
+  // Mots dont la forme en « 's » est une contraction de « is », « has » ou
+  // « us », et non un nom au génitif.
+  const CONTRACTION_SUBJECTS = new Set([
+    "it", "that", "this", "there", "here", "he", "she", "who", "what", "where",
+    "when", "why", "how", "let", "one", "everyone", "someone", "anyone",
+    "nobody", "everybody", "somebody", "anybody", "everything", "something",
+    "nothing", "anything", "all", "which"
+  ]);
+
+  // Noms singuliers terminés par -s : leur relative reste au singulier.
+  const SINGULAR_S_NOUNS = new Set([
+    "boss", "class", "business", "process", "analysis", "basis", "status",
+    "campus", "focus", "bonus", "virus", "series", "species", "news",
+    "address", "success", "access", "press", "progress", "loss", "glass",
+    "kiss", "mess", "guess", "witness", "illness", "crisis", "thesis"
+  ]);
+
+  // Noms de rôle dénombrables : un sujet pluriel appelle un attribut pluriel.
+  const COUNTABLE_ROLES = [
+    "partner", "client", "customer", "member", "colleague", "developer",
+    "engineer", "manager", "student", "friend", "expert", "professional",
+    "user", "employee", "supplier", "vendor", "contractor", "consultant",
+    "beginner", "specialist", "candidate", "subscriber", "teacher", "doctor"
+  ];
+
+  // Verbes et adjectifs qui commandent le subjonctif dans la subordonnée.
+  const SUBJUNCTIVE_TRIGGERS = [
+    "crucial", "essential", "important", "vital", "necessary", "imperative",
+    "advisable", "critical", "urgent", "mandatory", "preferable",
+    "recommend", "recommends", "recommended", "suggest", "suggests", "suggested",
+    "insist", "insists", "insisted", "demand", "demands", "demanded",
+    "require", "requires", "required", "propose", "proposes", "proposed",
+    "request", "requests", "requested", "urge", "urges", "urged",
+    "ask", "asks", "asked"
+  ];
+
   // Graphies qui n'existent pas en anglais. Trois familles : coquilles
   // classiques, orthographes calquées du français (responsabilité, exemple,
   // compagnie), et prétérits sur-régularisés (payed, teached). « putted »
@@ -724,9 +843,27 @@
     return forms[verb.toLocaleLowerCase("en-US")] || verb;
   }
 
+  // Pluriel régulier : -y précédé d'une consonne donne -ies, les sifflantes
+  // prennent -es. Les pluriels irréguliers ne passent pas par ici : les règles
+  // qui l'appellent ne visent que des noms réguliers.
   function pluralNoun(noun) {
-    const forms = { policy: "policies" };
-    return forms[noun.toLocaleLowerCase("en-US")] || `${noun}s`;
+    const lower = noun.toLocaleLowerCase("en-US");
+    if (/[^aeiou]y$/u.test(lower)) return `${noun.slice(0, -1)}ies`;
+    if (/(?:s|x|z|ch|sh)$/u.test(lower)) return `${noun}es`;
+    return `${noun}s`;
+  }
+
+  // Forme de base d'un verbe à la 3e personne, pour le subjonctif mandatif.
+  function subjunctiveBase(verb) {
+    const lower = verb.toLocaleLowerCase("en-US");
+    if (lower === "is") return "be";
+    if (lower === "has") return "have";
+    if (lower === "does") return "do";
+    if (lower === "goes") return "go";
+    if (/(?:sses|shes|ches|xes|zes)$/u.test(lower)) return lower.slice(0, -2);
+    if (/[^aeiou]ies$/u.test(lower)) return `${lower.slice(0, -3)}y`;
+    if (lower.endsWith("s") && !lower.endsWith("ss")) return lower.slice(0, -1);
+    return "";
   }
 
   function shouldPluralizeQuantifiedNoun(after) {
@@ -759,6 +896,14 @@
     const problem = lint.get_problem_text();
     const message = lint.message();
     const proposed = lint.suggestions().map((suggestion) => suggestion.get_replacement_text()).join(" ");
+    // « Who's » → « who's » : Harper propose sa graphie canonique en
+    // minuscules et efface la majuscule de début de phrase. Un remplacement
+    // qui ne fait que décapitaliser le mot n'apporte rien et casse la phrase.
+    // Le sens inverse (« i » → « I », « monday » → « Monday ») reste appliqué.
+    if (proposed && proposed.toLocaleLowerCase("en-US") === problem.toLocaleLowerCase("en-US") &&
+        /^\p{Lu}/u.test(problem) && /^\p{Ll}/u.test(proposed)) {
+      return false;
+    }
     if (/\bwhom\b/iu.test(problem)) return false;
     // Les confusions « their is » sûres sont déjà traitées avant Harper. On
     // refuse ici son remplacement lexical « Their » -> « There », qui casse

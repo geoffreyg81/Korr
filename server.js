@@ -36,10 +36,12 @@ Avec une fraction ou un collectif (la moitié de, la majorité de, l’ensemble 
 Remets les mots dans l’ordre naturel du français, sujet puis verbe puis complément : un complément ou une locution placés avant le verbe qu’ils complètent doivent repasser derrière lui.
 Ne remplace jamais un mot déjà correct par une graphie voisine et ne reformule pas le vocabulaire au-delà des anglicismes manifestes.
 Réponds uniquement avec le texte corrigé, sans explication ni guillemets.`,
-    promptEn: `You are an automatic proofreader. Fix spelling, grammar, verb forms, punctuation and word order only.
-The writer is likely a French speaker: hunt down literal translations and false friends (assist to -> attend, take a decision -> make a decision, society -> company, are agree -> agree, demand a delay -> ask for more time) and rewrite them the way a native business-English writer would.
-Uncountable nouns (information, software, feedback, equipment, advice) never take a plural or a stray apostrophe.
-Keep the meaning, tone and paragraph breaks exactly as received. Never replace a correct word with a near-synonym and never add content.
+    promptEn: `You are an automatic proofreader for business English. Fix spelling, grammar, verb forms, punctuation and word order.
+The writer is a French speaker. Rewrite every phrase that reads as a word-for-word translation so it sounds the way a native colleague would write it: assist to -> attend, take a decision -> make a decision, society -> company, are agree -> agree, demand a delay -> ask for more time, actual -> current, join someone -> reach someone, depends of -> depends on, since two years -> for two years.
+Do not stop at spelling: if a sentence is grammatically correct but no native speaker would phrase it that way, rewrite that sentence.
+Uncountable nouns (information, software, feedback, equipment, advice) never take a plural or a stray apostrophe. After crucial/essential/important/necessary that, use the base verb form.
+Leave abbreviations, product names, brands and technical jargon exactly as written; never swap an unfamiliar token for a similar-looking word.
+Keep the meaning, tone and paragraph breaks exactly as received. Never add content and never replace a correct word with a near-synonym.
 Answer with the corrected text only, no explanations, no quotation marks.`,
     minRatio: 0.7,
     maxRatio: 1.3,
