@@ -213,7 +213,7 @@ const cases = [
   // « ce sont plu » : démonstratif mis pour le réfléchi, participe invariable.
   [
     "Les collaborateurs que nous avons convaincus de rester, ce sont plut immédiatement.",
-    "Les collaborateurs que nous avons convaincus de rester, se sont plu immédiatement."
+    "Les collaborateurs que nous avons convaincus de rester se sont plu immédiatement."
   ],
   ["Ils se sont plut ici.", "Ils se sont plu ici."],
   ["Ce sont des amis fidèles.", "Ce sont des amis fidèles."],
@@ -326,6 +326,30 @@ const cases = [
   ["J’envoie le rapport demain.", "J’envoie le rapport demain."],
   ["Comme même les experts hésitent, restons prudents.", "Comme même les experts hésitent, restons prudents."],
   ["Il faut voir même les détails.", "Il faut voir même les détails."],
+  // Unités et quantités décimales.
+  ["La charge atteint 50 Kgs sur 3 Kms.", "La charge atteint 50 kg sur 3 km."],
+  ["Une température de 1,5 degrés a été mesurée.", "Une température de 1,5 degré a été mesurée."],
+  ["Il a couru 1,5 fois plus vite.", "Il a couru 1,5 fois plus vite."],
+  ["Une hausse de 2,5 degrés est prévue.", "Une hausse de 2,5 degrés est prévue."],
+  // « faire » causatif et verbes de perception : infinitif obligatoire.
+  ["Les données que nous avons faites extraites du serveur sont là.", "Les données que nous avons fait extraire du serveur sont là."],
+  ["La machine que j’ai vu fonctionnée hier est prête.", "La machine que j’ai vue fonctionner hier est prête."],
+  ["Nous avons fait remonter les requêtes.", "Nous avons fait remonter les requêtes."],
+  ["Il a fait faillite.", "Il a fait faillite."],
+  // Accord du participe avec l’antécédent pluriel d’une relative.
+  [
+    "Les échantillons que le bras robotique a manipulé se sont révélés défectueux.",
+    "Les échantillons que le bras robotique a manipulés se sont révélés défectueux."
+  ],
+  // Accord distant : le sujet pluriel commande le verbe après la relative.
+  ["Les données que nous avons reçues indique une erreur.", "Les données que nous avons reçues indiquent une erreur."],
+  // Attributifs sans « être », pléonasme, mise à jour, ci-joint.
+  ["Ce qui s’avère être une anomalie.", "Ce qui s’avère une anomalie."],
+  ["Ils se sont révélés être défectueux.", "Ils se sont révélés défectueux."],
+  ["Il faut optimiser au maximum les rendements.", "Il faut optimiser les rendements."],
+  ["Les protocoles ont été mis à jours.", "Les protocoles ont été mis à jour."],
+  ["Veuillez trouver ci joint, les graphiques.", "Veuillez trouver ci-joint les graphiques."],
+  ["Pour optimiser les rendements : il faudra investir.", "Pour optimiser les rendements, il faudra investir."],
   // Locutions figées.
   ["Je vous pris de m’envoyer le rapport.", "Je vous prie de m’envoyer le rapport."],
   ["Le rapport arrivera, quoi quel arrivant.", "Le rapport arrivera, quoi qu’il arrive."],

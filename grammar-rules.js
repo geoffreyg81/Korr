@@ -1041,6 +1041,105 @@ function grammalecte() {
       }
     );
 
+    // Unités de mesure : invariables et en minuscules. Normalisées avant le
+    // correcteur orthographique, qui sinon rapproche « Kgs » d'unités
+    // savantes du dictionnaire (« KGy », le kilogray).
+    replace(/\b(\d+(?:[.,]\d+)?)\s*(?:kgs?|KGS?|Kgs?)(?![\p{L}\p{N}])/gu, "$1 kg");
+    replace(/\b(\d+(?:[.,]\d+)?)\s*(?:kms?|KMS?|Kms?)(?![\p{L}\p{N}])/gu, "$1 km");
+
+    // En français, le pluriel commence à 2 : une quantité décimale inférieure
+    // (« 1,5 degrés ») garde le nom au singulier. Seul un pluriel sans
+    // ambiguïté est dépouillé, ce qui épargne les invariables (« 1,5 fois »).
+    replace(/\b([01],\d+)\s+([\p{L}]+s)(?![\p{L}\p{N}])/gu, (match, quantity, noun) => {
+      const morphologies = morphOf(noun);
+      // « :i » marque un invariable (« fois ») : son « s » fait partie du mot.
+      const unambiguousPlural = morphologies.length &&
+        morphologies.every((morph) => !/:[si](?![\p{L}\p{N}])/u.test(morph)) &&
+        morphologies.some((morph) => /:N(?![\p{L}\p{N}])/u.test(morph) && /:p(?![\p{L}\p{N}])/u.test(morph));
+      if (!unambiguousPlural) return match;
+      const singular = noun.slice(0, -1);
+      if (!morphOf(singular).some((morph) => /:N(?![\p{L}\p{N}])/u.test(morph))) return match;
+      return `${quantity} ${singular}`;
+    });
+
+    // « faire » causatif : le verbe qui suit est à l'infinitif, jamais au
+    // participe, et « fait » reste invariable. « nous avons faites extraites »
+    // → « nous avons fait extraire ». L'infinitif est le lemme du dictionnaire.
+    replace(
+      /\b(ai|as|a|avons|avez|ont|avais|avait|avaient|aura|auront|aurait)\s+fait(?:e|s|es)?\s+([\p{L}]+(?:é|ée|és|ées|ie|ies|ite|ites|ue|ues))(?![\p{L}\p{N}])/giu,
+      (match, auxiliary, participle) => {
+        const infinitive = infinitiveOfParticiple(participle);
+        if (!infinitive) return match;
+        return `${auxiliary} fait ${infinitive}`;
+      }
+    );
+
+    // Verbes de perception : même construction, l'action perçue est à
+    // l'infinitif. « que j'ai vu fonctionnée » → « vu fonctionner ».
+    replace(
+      /\b(ai|as|a|avons|avez|ont|avais|avait|avaient)\s+(vu|vue|vus|vues|entendu|entendue|entendus|entendues|regardé|regardée|regardés|regardées|senti|sentie|sentis|senties|laissé|laissée|laissés|laissées)\s+([\p{L}]+(?:é|ée|és|ées|ez|ie|ies|ite|ites|ue|ues))(?![\p{L}\p{N}])/giu,
+      (match, auxiliary, perception, participle) => {
+        const infinitive = infinitiveOfParticiple(participle);
+        if (!infinitive) return match;
+        return `${auxiliary} ${perception} ${infinitive}`;
+      }
+    );
+    // Même construction avec un verbe conjugué au présent (« vu fonctionne »),
+    // impossible derrière un verbe de perception. Seul un mot exclusivement
+    // verbal est réécrit : « j'ai vu rouge » ou « vu juste » restent intacts.
+    replace(
+      /\b(ai|as|a|avons|avez|ont|avais|avait|avaient)\s+(vu|vue|vus|vues|entendu|entendue|entendus|entendues)\s+([\p{L}]+)(?![\p{L}\p{N}])/giu,
+      (match, auxiliary, perception, word) => {
+        const morphologies = morphOf(word);
+        if (!morphologies.length) return match;
+        const onlyConjugated = morphologies.every((morph) => /:V\d/u.test(morph)) &&
+          morphologies.every((morph) => !/:[NAQY](?![\p{L}\p{N}])/u.test(morph)) &&
+          morphologies.some((morph) => /:Ip/u.test(morph));
+        if (!onlyConjugated) return match;
+        const lemma = morphologies[0].match(/^>([\p{L}’-]+)\//u)?.[1] || "";
+        if (!/(?:er|ir|re|oir)$/u.test(lemma)) return match;
+        return `${auxiliary} ${perception} ${lemma}`;
+      }
+    );
+
+    // Accord du verbe de perception avec son antécédent : il s'accorde quand
+    // l'antécédent fait l'action de l'infinitif, ce que la construction
+    // « que + avoir + vu + infinitif » garantit. Le genre vient du dictionnaire.
+    replace(
+      /\b([\p{L}’-]+)(s?)\s+(que\s+j[’']ai|que\s+tu\s+as|qu[’']il\s+a|qu[’']elle\s+a|que\s+nous\s+avons|que\s+vous\s+avez|qu[’']ils\s+ont|qu[’']elles\s+ont)\s+(vu|entendu|regardé|senti)(e?s?)\s+(?=[\p{L}]+(?:er|ir|re|oir)(?![\p{L}\p{N}]))/giu,
+      (match, noun, nounPlural, relative, perception, agreement) => {
+        const features = nounFeatures(noun + nounPlural);
+        if (!features) return match;
+        const expected = `${features.feminine ? `${perception}e` : perception}${features.plural ? "s" : ""}`;
+        if (expected === perception + agreement) return match;
+        return `${noun}${nounPlural} ${relative} ${expected} `;
+      }
+    );
+
+    // Accord du participe avec l'antécédent pluriel d'une relative en « que » :
+    // le COD est placé avant l'auxiliaire avoir, l'accord est obligatoire.
+    // « les échantillons que le bras a manipulé » → « manipulés ».
+    replace(
+      /(?<![\p{L}\p{N}’-])([\p{L}’-]+(?:s|x))\s+(qu[e’']\s*[^,.;:!?\n]{0,40}?(?<![\p{L}\p{N}])(?:a|ont|avait|avaient|aura|auront)\s+)([\p{L}]+(?:é|i|u))(?=\s*[,.;:!?…]|\s+(?:se\s|s[’']|est|sont|ont|a)\b)/gu,
+      (match, antecedent, relative, participle) => {
+        if (!isParticiple(participle)) return match;
+        if (INVARIABLE_PARTICIPLES.has(participle.toLocaleLowerCase("fr-FR"))) return match;
+        const features = nounFeatures(antecedent);
+        if (!features?.plural) return match;
+        const inflected = inflectParticiple(participle, features);
+        if (!inflected || inflected === participle) return match;
+        return `${antecedent} ${relative}${inflected}`;
+      }
+    );
+
+    // Accord distant : un sujet pluriel séparé de son verbe par une relative
+    // sans virgule commande le pluriel. La liste ferme les verbes visés pour
+    // ne jamais toucher un verbe qui appartiendrait à la relative.
+    replace(
+      /\b((?:les|des|ces|mes|nos|vos|leurs)\s+[\p{L}’-]+s\s+qu[e’']\s*[^,.;:!?\n]{0,60}?)\s+(indique|montre|révèle|confirme|suggère|semble|reste|présente)(?![\p{L}\p{N}])/giu,
+      (match, subject, verb) => `${subject} ${verb}nt`
+    );
+
     // Accent mangé sur un nom : le correcteur orthographique ne signale rien
     // quand la graphie sans accent existe par ailleurs comme forme verbale rare
     // (« moitie », participe de « moitir »). Or un déterminant appelle un nom :
@@ -1118,11 +1217,20 @@ function grammalecte() {
         String.raw`\s*,\s+(${SUBJECT_VERB_AFTER_COMMA.join("|")})(?![-\p{L}])`,
         "giu"
       ),
-      (match, prefix, subject, verb) => {
-        // Un vrai groupe sujet ne contient pas de verbe conjugué : « dont
-        // l'ordinateur a planté, est partie » est une relative complète dont la
-        // virgule est légitime.
-        if ((subject.match(/[\p{L}’-]+/gu) || []).some(isConjugatedVerbForm)) return match;
+      (match, prefix, subject, verb, offset, whole) => {
+        // Une relative appositive (« La secrétaire, dont l'ordinateur a
+        // planté, est partie ») s'ouvre par une virgule avant son pronom : sa
+        // virgule fermante est légitime. La relative restrictive (« la machine
+        // que j'ai vue fonctionner, est prête ») n'en a pas, et sa virgule
+        // avant le verbe est fautive.
+        const embeddedClause = (subject.match(/[\p{L}’-]+/gu) || []).some(isConjugatedVerbForm);
+        const relativePrefix = /^(?:dont|que|qu[’']|qui|où)\s/iu.test(prefix);
+        // Le groupe est une proposition complète : sa virgule fermante est
+        // légitime si la relative est appositive (ouverte par une virgule).
+        if (embeddedClause && relativePrefix && /,\s*$/u.test(whole.slice(0, offset))) return match;
+        // Proposition complète sans pronom relatif dans le groupe : ce n'est
+        // pas un sujet, on ne touche pas à la virgule.
+        if (embeddedClause && !relativePrefix && !/\b(?:que|qu[’']|qui|dont|où)\s/iu.test(subject)) return match;
         return `${prefix}${subject} ${verb}`;
       }
     );
@@ -1644,6 +1752,22 @@ function grammalecte() {
     // groupe (« comme même les experts »), il peut être légitime et ne bouge pas.
     [/\bcomme\s+même(?=\s*[,.;:!?…]|\s*$)/giu, "quand même"],
     [/,\s*voir\s+même(?=\s+[\p{L}])/giu, ", voire"],
+    // « à jour » est invariable dans « mettre à jour ».
+    [/\b(mis|mise|mises|remis|remise|remises|mettre|met|mettent|mettra|mettront)\s+à\s+jours(?![\p{L}\p{N}])/giu,
+      (match, participle) => `${participle} à jour`],
+    // « s'avérer » et « se révéler » sont déjà attributifs : « être » est de trop.
+    [/\b(s[’']avère(?:nt)?|s[’']avérait|s[’']est\s+avérée?s?|se\s+sont\s+avérée?s?|se\s+révèlent?|s[’']est\s+révélée?s?|se\s+sont\s+révélée?s?)\s+être(?=\s+[\p{L}])/giu,
+      (match, verb) => verb],
+    // Optimiser contient déjà l'idée du maximum.
+    [/\b(optimis[\p{L}]*)\s+au\s+maximum(?![\p{L}\p{N}])/giu, (match, verb) => verb],
+    // « Pour + infinitif » introduit la principale par une virgule, pas par
+    // deux-points.
+    [/\b(Pour\s+[^.!?:;\n]{3,60}?)\s*:\s*(?=(?:il|elle|on|nous|vous|ils|elles|je|tu)\s)/gu, "$1, "],
+    // « ci-joint » prend un trait d'union, et ne s'isole pas par une virgule
+    // de ce qu'il annonce.
+    [/\bci\s+joint(e?s?)(?![\p{L}\p{N}])/giu, (match, agreement) => `ci-joint${agreement}`],
+    [/\b(ci-joints?|ci-jointes?)\s*,\s+(?=(?:le|la|les|l[’']|un|une|des|mes|nos|vos|ce|cet|cette|ces)\s)/giu,
+      (match, adjective) => `${adjective} `],
     // « quelque soit » : « quel que » s’accorde avec le nom qui suit.
     // L’alternance des déterminants va du plus long au plus court, sinon
     // « les » serait lu « le » + un nom commençant par « s ».
@@ -1689,6 +1813,18 @@ function grammalecte() {
 
   function isAdverb(word) {
     return morphOf(word).some((morph) => /:W(?![\p{L}\p{N}])/u.test(morph));
+  }
+
+  // L'infinitif d'un participe passé, lu dans le lemme du dictionnaire.
+  // Renvoie une chaîne vide si le mot n'est pas un participe (un nom en
+  // « -ite » comme « faillite » ne doit pas devenir un verbe).
+  function infinitiveOfParticiple(word) {
+    const morphologies = morphOf(word);
+    const participle = morphologies.find((morph) => /:Q(?![\p{L}\p{N}])/u.test(morph));
+    if (!participle) return "";
+    if (morphologies.some((morph) => /:(?:M[12]|O)(?![\p{L}\p{N}])/u.test(morph))) return "";
+    const lemma = participle.match(/^>([\p{L}’-]+)\//u)?.[1] || "";
+    return /(?:er|ir|re|oir)$/u.test(lemma) ? lemma : "";
   }
 
   const HAVING_AUXILIARIES = [
@@ -1804,12 +1940,18 @@ function grammalecte() {
   }
 
   // Verbes fréquents dont une virgule ne peut pas les séparer de leur sujet.
+  // Les entrées sont des fragments d'expression régulière : les pronominaux
+  // s'écrivent avec leur pronom.
   const SUBJECT_VERB_AFTER_COMMA = [
     "a", "ont", "est", "sont", "était", "étaient", "avait", "avaient",
     "sera", "seront", "aura", "auront", "fut", "furent",
     "va", "vont", "reste", "restent", "devient", "deviennent",
     "semble", "semblent", "paraît", "paraissent", "peut", "peuvent",
-    "doit", "doivent", "fait", "font"
+    "doit", "doivent", "fait", "font",
+    "indique", "indiquent", "montre", "montrent", "révèle", "révèlent",
+    "confirme", "confirment", "suggère", "suggèrent",
+    "s[’']est", "se\\s+sont", "s[’']était", "s[’']étaient",
+    "s[’']avère", "s[’']avèrent"
   ];
 
   // Numération française en toutes lettres.
