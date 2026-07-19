@@ -1140,6 +1140,30 @@ function grammalecte() {
       (match, subject, verb) => `${subject} ${verb}nt`
     );
 
+    // Un adverbe en « -ment » ne prend jamais de « s ». Seule une graphie qui
+    // n'existe pas au dictionnaire est dépouillée : « documents », « moments »
+    // et tous les noms en « -ments » sont des mots valides et restent intacts.
+    replace(/(?<![\p{L}\p{N}’-])([\p{L}]+ment)s(?![\p{L}\p{N}])/giu, (match, base, offset, whole) => {
+      if (!morphOf(base).some((morph) => /:W(?![\p{L}\p{N}])/u.test(morph))) return match;
+      if (!morphOf(match).length) return base;
+      // La graphie en « s » existe aussi comme nom (« les complètements ») :
+      // seul un participe ou un adjectif derrière tranche pour l'adverbe.
+      const next = whole.slice(offset + match.length).trimStart().match(/^[\p{L}’-]+/u)?.[0] || "";
+      return next && isParticipleOrAdjective(next) ? base : match;
+    });
+
+    // « dont » est complément indirect (« de qui, de quoi ») : il n'est jamais
+    // le COD du verbe, le participe avec « avoir » reste donc invariable.
+    // « dont nous avons parlés » → « parlé ».
+    replace(
+      /\b(dont\s+(?:je|j[’']|tu|il|elle|on|nous|vous|ils|elles)\s+(?:n[’']\s*)?(?:ai|as|a|avons|avez|ont|avais|avait|avaient|aurai|aura|aurons|auront|aurais|aurait)\s+(?:pas\s+|jamais\s+|beaucoup\s+|souvent\s+|déjà\s+)?)([\p{L}’-]+(?:és|ée|ées|ie|ies|ue|ues|ite|ites))(?![\p{L}\p{N}])/giu,
+      (match, lead, participle) => {
+        const singular = participleMasculineSingular(participle);
+        if (!singular || singular === participle) return match;
+        return `${lead}${singular}`;
+      }
+    );
+
     // Accent mangé sur un nom : le correcteur orthographique ne signale rien
     // quand la graphie sans accent existe par ailleurs comme forme verbale rare
     // (« moitie », participe de « moitir »). Or un déterminant appelle un nom :
@@ -1768,6 +1792,15 @@ function grammalecte() {
     [/\bci\s+joint(e?s?)(?![\p{L}\p{N}])/giu, (match, agreement) => `ci-joint${agreement}`],
     [/\b(ci-joints?|ci-jointes?)\s*,\s+(?=(?:le|la|les|l[’']|un|une|des|mes|nos|vos|ce|cet|cette|ces)\s)/giu,
       (match, adjective) => `${adjective} `],
+    // Locutions adverbiales figées au singulier. « aux urgences » (l'hôpital)
+    // n'est pas concerné : seul « en urgences » est impossible.
+    [/\ben\s+urgences(?![\p{L}\p{N}])/giu, "en urgence"],
+    [/\bjours?\s+et\s+nuits?(?![\p{L}\p{N}])/giu,
+      (match) => preserveCase(match, "jour et nuit")],
+    [/\bnuits?\s+et\s+jours?(?![\p{L}\p{N}])/giu,
+      (match) => preserveCase(match, "nuit et jour")],
+    [/\bsans\s+cesses(?![\p{L}\p{N}])/giu, "sans cesse"],
+    [/\bà\s+tous\s+prix(?![\p{L}\p{N}])/giu, "à tout prix"],
     // « quelque soit » : « quel que » s’accorde avec le nom qui suit.
     // L’alternance des déterminants va du plus long au plus court, sinon
     // « les » serait lu « le » + un nom commençant par « s ».

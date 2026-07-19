@@ -350,6 +350,17 @@ const cases = [
   ["Les protocoles ont été mis à jours.", "Les protocoles ont été mis à jour."],
   ["Veuillez trouver ci joint, les graphiques.", "Veuillez trouver ci-joint les graphiques."],
   ["Pour optimiser les rendements : il faudra investir.", "Pour optimiser les rendements, il faudra investir."],
+  // Locutions adverbiales figées au singulier.
+  ["Il faut agir en urgences, jours et nuits, sans cesses.", "Il faut agir en urgence, jour et nuit, sans cesse."],
+  ["Elle est aux urgences.", "Elle est aux urgences."],
+  // Un adverbe en -ment ne prend jamais de « s » ; les noms en -ments restent.
+  ["Ils ont complètements échoué.", "Ils ont complètement échoué."],
+  ["Ils travaillent constamments.", "Ils travaillent constamment."],
+  ["Les documents et les moments comptent.", "Les documents et les moments comptent."],
+  // « dont » n'est jamais COD : participe invariable avec avoir.
+  ["Les projets dont nous avons parlés sont finis.", "Les projets dont nous avons parlé sont finis."],
+  // Garde-fou : le COD réel de la relative en « dont » garde son accord.
+  ["Les villes dont nous avons visité les musées sont belles.", "Les villes dont nous avons visité les musées sont belles."],
   // Locutions figées.
   ["Je vous pris de m’envoyer le rapport.", "Je vous prie de m’envoyer le rapport."],
   ["Le rapport arrivera, quoi quel arrivant.", "Le rapport arrivera, quoi qu’il arrive."],

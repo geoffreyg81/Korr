@@ -31,6 +31,8 @@ const STYLES = {
 Préserve sens, ton, langue et mise en forme. Ne donne jamais de variantes. Si le genre est inconnu, utilise le masculin non marqué.
 Conserve exactement les retours à la ligne et le découpage en paragraphes du texte reçu.
 Relis chaque accord sujet-verbe et participe-COD, les verbes impersonnels, les adjectifs verbaux et toute virgule entre un sujet et son verbe.
+Pour voir, entendre, regarder ou sentir suivis d’un infinitif : accorde le participe seulement si le COD placé avant fait lui-même l’action de l’infinitif.
+Avec une fraction ou un collectif (la moitié de, la majorité de, l’ensemble de), accorde le verbe avec le noyau (la moitié a), pas avec le complément.
 Remets les mots dans l’ordre naturel du français, sujet puis verbe puis complément : un complément ou une locution placés avant le verbe qu’ils complètent doivent repasser derrière lui.
 Ne remplace jamais un mot déjà correct par une graphie voisine et ne reformule pas le vocabulaire au-delà des anglicismes manifestes.
 Réponds uniquement avec le texte corrigé, sans explication ni guillemets.`,
