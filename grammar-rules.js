@@ -98,9 +98,11 @@ function grammalecte() {
     // Quelques conventions typographiques sont susceptibles d’être annulées
     // par la capitalisation de début de phrase ou une passe grammaticale. Le
     // dernier mot revient donc à ce filet très étroit.
-    const finalizedText = correctedText
-      .replace(/^À\s+l[’']attention\s+de\s+M\.\s+Le\s+directeur,/u,
-        "À l’attention de M. le directeur,")
+    // Deux conventions purement typographiques s’appliquent en dernier, sur le
+    // texte définitif : elles doivent survivre aussi bien à la passe
+    // grammaticale qu’à une réécriture par un modèle en amont, qui l’une comme
+    // l’autre ré-accordent volontiers une couleur composée.
+    const finalizedText = normalizeFunctionTitles(normalizeColorExpressions(correctedText))
       .replace(
         /\b(problèmes\s+numériques\s+que\s+nous\s+avons\s+rencontrés)\s*:/iu,
         "$1\u00a0:"
@@ -711,11 +713,6 @@ function grammalecte() {
       }
     );
 
-    // Les adjectifs de couleur issus de noms restent invariables.
-    replace(
-      /\b((?:Des|Les|Ces|Mes|Tes|Ses|Nos|Vos|Leurs)\s+[\p{L}’'-]+s)\s+(marrons|oranges|kakis|chocolats|citrons|saumons|olives)\b/giu,
-      (match, nounGroup, color) => `${nounGroup} ${color.slice(0, -1)}`
-    );
 
     // Accords à distance dans des constructions fréquentes.
     replace(
@@ -796,14 +793,8 @@ function grammalecte() {
     // « L’Épreuve de Force » : stabilise les formes univoques avant que le
     // correcteur lexical ne puisse rapprocher « peint » de « peignent » ou
     // inventer une forme personnelle du verbe impersonnel « falloir ».
-    replace(
-      /^A\s+l[’']attention\s+de\s+Mr\.?\s+le\s+Directeur\s*,/iu,
-      "À l’attention de M. le directeur,"
-    );
-    replace(
-      /^A\s+l[’']attention\s+de\s+M\.\s+le\s+Directeur\s*,/iu,
-      "À l’attention de M. le directeur,"
-    );
+    // « Mr » est l’abréviation anglaise ; la française est « M. ».
+    replace(/\bMr\.?(?=\s+\p{L})/gu, "M.");
     replace(/\b(problèmes\s+)digital(?:s|es|aux)?(?=\s+que\b)/giu, "$1numériques");
     replace(/\b(problèmes\s+numériques\s+que\s+nous\s+avons\s+)rencontré\s*:/giu,
       "$1rencontrés\u00a0:"
@@ -847,12 +838,11 @@ function grammalecte() {
 
     // Un adjectif de couleur qualifié par un second adjectif forme un groupe
     // invariable : « des murs rose pâle », « des plantes vert clair ».
-    replace(COMPOSED_COLOR_PATTERN, (match, head, color, modifier) =>
-      `${head} ${preserveCase(color, baseColorForm(color))} ${preserveCase(modifier, baseColorModifier(modifier))}`
-    );
-    replace(COMPOSED_COLOR_AFTER_EN_PATTERN, (match, preposition, color, modifier) =>
-      `${preposition}${preserveCase(color, baseColorForm(color))} ${preserveCase(modifier, baseColorModifier(modifier))}`
-    );
+    correctedText = correctedText.replace(COLOR_EXPRESSION_PATTERN, (...args) => {
+      const normalized = normalizeColorMatch(args);
+      if (normalized !== args[0]) corrections += 1;
+      return normalized;
+    });
 
     // « ce sont plu » : le démonstratif est mis pour le pronom réfléchi, et le
     // participe de « plaire » est invariable. Aucune de ces graphies n’est
@@ -1141,44 +1131,149 @@ function grammalecte() {
     convergeant: "convergent", émergeant: "émergent", négligeants: "négligents"
   }));
 
-  // Couleurs et qualifiants formant un groupe invariable. Les clés sont les
-  // formes de base ; les terminaisons d’accord sont ajoutées par le motif.
-  const COLOR_BASES = [
+  // ---------------------------------------------------------------------
+  // Invariabilité des couleurs (règle globale)
+  //
+  // Deux cas, et deux seulement, rendent un adjectif de couleur invariable :
+  //   1. la couleur est qualifiée par un second terme (bleu clair, rose pâle,
+  //      bleu marine, vert d’eau, gris-bleu) ;
+  //   2. la couleur est un nom employé comme couleur (marron, orange, kaki).
+  // Le reste s’accorde normalement et n’est jamais touché.
+  // ---------------------------------------------------------------------
+
+  // Adjectifs de couleur, à leur forme de base (masculin singulier).
+  const COLOR_ADJECTIVES = [
     "blanc", "noir", "rouge", "vert", "bleu", "jaune", "gris", "brun", "rose",
-    "mauve", "violet", "beige", "orange", "pourpre", "roux", "fauve", "bistre"
+    "mauve", "violet", "beige", "pourpre", "roux", "fauve", "bistre", "blond",
+    "châtain", "vermeil", "incarnat", "écarlate"
   ];
-  const COLOR_MODIFIERS = [
+
+  // Noms employés comme couleurs : invariables même seuls.
+  const COLOR_NOUNS = [
+    "marron", "orange", "kaki", "chocolat", "citron", "saumon", "olive",
+    "turquoise", "émeraude", "crème", "argent", "or", "bronze", "cerise",
+    "framboise", "moutarde", "noisette", "paille", "prune", "ocre", "ivoire",
+    "lavande", "abricot", "brique", "cuivre", "corail", "indigo", "azur",
+    "grenat", "acajou", "ébène", "sable", "safran", "pastel", "caramel"
+  ];
+
+  // Termes qui qualifient une couleur et forment avec elle un groupe soudé.
+  const COLOR_QUALIFIERS = [
     "clair", "foncé", "pâle", "sombre", "vif", "soutenu", "profond", "délavé",
-    "électrique", "marine", "ciel", "olive", "canard", "pétrole", "bouteille"
+    "électrique", "fluo", "métallisé", "nacré", "irisé", "tendre", "intense",
+    "marine", "ciel", "canard", "pétrole", "bouteille", "nuit", "roi", "pomme",
+    "amande", "anis", "poussin", "saumon", "sapin", "menthe", "lavande",
+    ...COLOR_NOUNS
   ];
-  // Suffixes d’accord possibles, y compris les féminins irréguliers
-  // (blanc/blanche, violet/violette, vif/vive, roux/rousse).
-  const AGREEMENT_SUFFIX = String.raw`(?:e?s?|he?s?|te?s?|ve?s?|sse?s?)`;
-  const COLOR_GROUP = String.raw`(?:${COLOR_BASES.join("|")})${AGREEMENT_SUFFIX}`;
-  const MODIFIER_GROUP = String.raw`(?:${COLOR_MODIFIERS.join("|")})${AGREEMENT_SUFFIX}`;
 
-  // Après un nom au pluriel : « des plantes vertes claires ». Le nom occupe la
-  // première capture, ce qui empêche « les roses pâles » (nom + adjectif) de
-  // correspondre : il y manque le troisième terme.
-  const COMPOSED_COLOR_PATTERN = new RegExp(
-    String.raw`\b((?!(?:les|des|ces|mes|tes|ses|nos|vos|leurs|aux|plusieurs|quelques|nous|vous|ils|elles)\b)[\p{L}’'-]+s)` +
-    String.raw`\s+(${COLOR_GROUP})\s+(${MODIFIER_GROUP})(?![\p{L}\p{N}-])`,
+  // Terminaisons d’accord, féminins irréguliers compris (blanche, violette,
+  // vive, rousse, longue). Le radical suffit donc à reconnaître toute forme.
+  const AGREEMENT_SUFFIX = String.raw`(?:e?s?|he?s?|te?s?|ve?s?|sse?s?|ne?s?)`;
+  const anyOf = (words) => `(?:${words.slice().sort((a, b) => b.length - a.length).join("|")})`;
+
+  const COLOR_TERM = String.raw`${anyOf([...COLOR_ADJECTIVES, ...COLOR_NOUNS])}${AGREEMENT_SUFFIX}`;
+  // Une couleur peut aussi en qualifier une autre, mais seulement soudée par un
+  // trait d’union (« gris-bleu ») : sans lui, « roses rouges » resterait un nom
+  // suivi de son adjectif.
+  const QUALIFIER_TERM =
+    String.raw`${anyOf([...COLOR_QUALIFIERS, ...COLOR_ADJECTIVES])}${AGREEMENT_SUFFIX}`;
+
+  // Contextes où un mot de couleur est bien un adjectif de couleur, et non le
+  // nom du fruit ou de la fleur : après un nom, après « en » / « de » (peint en
+  // rose pâle), ou après un verbe d’état. Un déterminant devant le premier
+  // terme signale au contraire un nom (« les roses pâles du jardin »), et le
+  // motif l’exclut explicitement.
+  const COLOR_HEAD = String.raw`(?:(?:en|de|d[’'])\s+|` +
+    String.raw`(?!(?:${anyOf(["les", "des", "ces", "mes", "tes", "ses", "nos", "vos", "leurs", "aux", "plusieurs", "quelques", "de", "du", "la", "le", "un", "une"])})\s)` +
+    String.raw`[\p{L}’'-]+\s+)`;
+
+  // Groupe de couleur : soit couleur + qualifiant (éventuellement lié par un
+  // trait d’union ou « d’ »), soit un nom-couleur employé seul.
+  const COLOR_EXPRESSION_PATTERN = new RegExp(
+    String.raw`(^|[^\p{L}\p{N}])(${COLOR_HEAD})` +
+    String.raw`(${COLOR_TERM})(?:(\s+|-|\s+d[’']|-d[’'])(${QUALIFIER_TERM}))?(?![\p{L}\p{N}-])`,
     "giu"
   );
-  // Après « en » / « de » : « repeints en roses pâles ».
-  const COMPOSED_COLOR_AFTER_EN_PATTERN = new RegExp(
-    String.raw`\b((?:en|de)\s+)(${COLOR_GROUP})\s+(${MODIFIER_GROUP})(?![\p{L}\p{N}-])`,
-    "giu"
-  );
 
-  function baseColorForm(word) {
+  // Ramène un mot de couleur accordé à sa forme de base, en le reconnaissant
+  // par son radical. Renvoie une chaîne vide si le mot n’est pas une couleur.
+  function colorStem(word, vocabularies) {
     const lowered = word.toLocaleLowerCase("fr-FR");
-    return COLOR_BASES.find((base) => lowered.startsWith(base)) || word;
+    for (const vocabulary of vocabularies) {
+      const base = vocabulary.find((entry) =>
+        lowered === entry || (lowered.startsWith(entry) && lowered.length - entry.length <= 3)
+      );
+      if (base) return base;
+    }
+    return "";
   }
 
-  function baseColorModifier(word) {
-    const lowered = word.toLocaleLowerCase("fr-FR");
-    return COLOR_MODIFIERS.find((base) => lowered.startsWith(base)) || word;
+  function normalizeColorMatch(args) {
+    const [match, prefix, head, color, link, qualifier] = args;
+    const colorBase = colorStem(color, [COLOR_ADJECTIVES, COLOR_NOUNS]);
+    if (!colorBase) return match;
+
+    // Sans qualifiant, seul un nom employé comme couleur est invariable : un
+    // adjectif ordinaire (« des murs verts ») doit garder son accord.
+    if (!qualifier) {
+      if (!COLOR_NOUNS.includes(colorBase)) return match;
+      return `${prefix}${head}${preserveCase(color, colorBase)}`;
+    }
+
+    const qualifierBase = colorStem(qualifier, [COLOR_QUALIFIERS, COLOR_ADJECTIVES]);
+    if (!qualifierBase) return match;
+    if (!COLOR_QUALIFIERS.includes(qualifierBase) && !/-/u.test(link)) return match;
+
+    // Le lien d’origine est conservé : « gris-bleu » reste soudé, « vert d’eau »
+    // garde sa préposition.
+    return `${prefix}${head}${preserveCase(color, colorBase)}${link}${preserveCase(qualifier, qualifierBase)}`;
+  }
+
+  function normalizeColorExpressions(text) {
+    return text.replace(COLOR_EXPRESSION_PATTERN, (...args) => normalizeColorMatch(args));
+  }
+
+  // ---------------------------------------------------------------------
+  // Minuscule aux noms de fonction (règle globale)
+  //
+  // Un titre de civilité, un déterminant ou une préposition devant un nom de
+  // fonction n’en fait pas un nom propre : « M. le Président » → « M. le
+  // président ». La majuscule reste en tête de phrase et dans une adresse
+  // directe (« Monsieur le Président, » en tête de lettre est admis, mais
+  // l’usage courant et l’Imprimerie nationale préfèrent la minuscule).
+  // ---------------------------------------------------------------------
+
+  const FUNCTION_NOUNS = [
+    "président", "présidente", "directeur", "directrice", "ministre",
+    "secrétaire", "maire", "préfet", "préfète", "recteur", "rectrice",
+    "doyen", "doyenne", "gérant", "gérante", "administrateur", "administratrice",
+    "trésorier", "trésorière", "inspecteur", "inspectrice", "juge", "procureur",
+    "ambassadeur", "ambassadrice", "consul", "sénateur", "sénatrice",
+    "député", "députée", "gouverneur", "chancelier", "chancelière",
+    "responsable", "chef", "cheffe", "délégué", "déléguée", "proviseur"
+  ];
+
+  const FUNCTION_TITLE_PATTERN = new RegExp(
+    String.raw`\b(M\.|MM\.|Mme|Mmes|Mlle|Mlles|Monsieur|Madame|Messieurs|Mesdames)\s+` +
+    String.raw`(Le|La|Les|L[’'])\s*(${anyOf(FUNCTION_NOUNS)}s?)(?![\p{L}\p{N}])`,
+    "giu"
+  );
+
+  // Déterminant + nom de fonction capitalisé en cours de phrase.
+  const CAPITALIZED_FUNCTION_PATTERN = new RegExp(
+    String.raw`([^.!?…\n]\s(?:le|la|les|l[’']|du|de\s+la|au|aux|notre|votre|leur)\s*)` +
+    String.raw`(${anyOf(FUNCTION_NOUNS.map((noun) => noun.slice(0, 1).toUpperCase() + noun.slice(1)))}s?)(?![\p{L}\p{N}])`,
+    "gu"
+  );
+
+  function normalizeFunctionTitles(text) {
+    return text
+      .replace(FUNCTION_TITLE_PATTERN, (match, civility, article, noun) =>
+        `${civility} ${article.toLocaleLowerCase("fr-FR")}${/[’']$/u.test(article) ? "" : " "}${noun.toLocaleLowerCase("fr-FR")}`
+      )
+      .replace(CAPITALIZED_FUNCTION_PATTERN, (match, lead, noun) =>
+        `${lead}${noun.toLocaleLowerCase("fr-FR")}`
+      );
   }
 
   // Verbes fréquents dont une virgule ne peut pas les séparer de leur sujet.

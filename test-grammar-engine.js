@@ -88,7 +88,7 @@ const cases = [
   ["On doit pallier au manque de moyens.", "On doit pallier le manque de moyens."],
   ["Pallier à cette difficulté.", "Pallier cette difficulté."],
   ["Il faut des réparations d’urgences.", "Il faut des réparations d’urgence."],
-  ["Mr. Le Maire est arrivé.", "M. Le Maire est arrivé."],
+  ["Mr. Le Maire est arrivé.", "M. le maire est arrivé."],
   ["Les habitants ce sont plains du bruit.", "Les habitants se sont plaints du bruit."],
   // Garde-fous : « ce sont » présentatif et « des urgences » (nom) intacts.
   ["Ce sont des problèmes graves.", "Ce sont des problèmes graves."],
@@ -217,11 +217,29 @@ const cases = [
   ],
   ["Ils se sont plut ici.", "Ils se sont plu ici."],
   ["Ce sont des amis fidèles.", "Ce sont des amis fidèles."],
-  // Adjectif de couleur qualifié : le groupe entier reste invariable.
+  // Couleur qualifiée par un second terme : le groupe entier est invariable,
+  // quel que soit le lien (espace, trait d’union) ou le qualifiant.
   ["Les murs repeints en roses pâles sont horribles.", "Les murs repeints en rose pâle sont horribles."],
   ["Des plantes vertes claires poussent ici.", "Des plantes vert clair poussent ici."],
-  // Garde-fou : « roses » est ici le nom, « pâles » son adjectif.
+  ["Elle porte des chaussures bleues marines.", "Elle porte des chaussures bleu marine."],
+  ["Des rideaux jaunes citrons ornent la pièce.", "Des rideaux jaune citron ornent la pièce."],
+  ["Des tissus rouges vifs sont arrivés.", "Des tissus rouge vif sont arrivés."],
+  ["Il a des yeux gris-bleus.", "Il a des yeux gris-bleu."],
+  // Nom employé comme couleur : invariable même sans qualifiant.
+  ["Des vestes marrons et des écharpes oranges.", "Des vestes marron et des écharpes orange."],
+  // Garde-fous : un adjectif de couleur seul s’accorde, « roses » est ici le
+  // nom et « pâles » son adjectif, « oranges » le fruit.
   ["Les roses pâles du jardin sont belles.", "Les roses pâles du jardin sont belles."],
+  ["Des murs verts et des portes bleues.", "Des murs verts et des portes bleues."],
+  ["Elle a mangé des oranges amères.", "Elle a mangé des oranges amères."],
+  ["Des nappes blanches cassées ornent les tables.", "Des nappes blanches cassées ornent les tables."],
+  // Les noms de fonction prennent la minuscule après un titre de civilité ou
+  // un déterminant.
+  ["À l’attention de M. Le Président,", "À l’attention de M. le président,"],
+  ["Nous avons vu le Directeur et la Ministre hier.", "Nous avons vu le directeur et la ministre hier."],
+  ["Monsieur Le Maire a parlé au Préfet.", "Monsieur le maire a parlé au préfet."],
+  // Garde-fou : la majuscule de début de phrase reste.
+  ["Le président a parlé.", "Le président a parlé."],
   // Participe présent employé comme épithète : il devient adjectif verbal.
   ["Des employés négligeant ont commis des erreurs.", "Des employés négligents ont commis des erreurs."],
   ["Les faits précédant, ils ont tranché.", "Les faits précédents, ils ont tranché."],
