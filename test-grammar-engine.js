@@ -210,6 +210,35 @@ const cases = [
   ["Nous avons versé deux cent euros.", "Nous avons versé deux cents euros."],
   ["Il reste deux cents trois dossiers.", "Il reste deux cent trois dossiers."],
   ["Vingt et un candidats se sont présentés.", "Vingt et un candidats se sont présentés."],
+  // « ce sont plu » : démonstratif mis pour le réfléchi, participe invariable.
+  [
+    "Les collaborateurs que nous avons convaincus de rester, ce sont plut immédiatement.",
+    "Les collaborateurs que nous avons convaincus de rester, se sont plu immédiatement."
+  ],
+  ["Ils se sont plut ici.", "Ils se sont plu ici."],
+  ["Ce sont des amis fidèles.", "Ce sont des amis fidèles."],
+  // Adjectif de couleur qualifié : le groupe entier reste invariable.
+  ["Les murs repeints en roses pâles sont horribles.", "Les murs repeints en rose pâle sont horribles."],
+  ["Des plantes vertes claires poussent ici.", "Des plantes vert clair poussent ici."],
+  // Garde-fou : « roses » est ici le nom, « pâles » son adjectif.
+  ["Les roses pâles du jardin sont belles.", "Les roses pâles du jardin sont belles."],
+  // Participe présent employé comme épithète : il devient adjectif verbal.
+  ["Des employés négligeant ont commis des erreurs.", "Des employés négligents ont commis des erreurs."],
+  ["Les faits précédant, ils ont tranché.", "Les faits précédents, ils ont tranché."],
+  // Garde-fou : suivi de son complément, c’est un vrai participe présent.
+  [
+    "Des employés négligeant leurs tâches ont été sanctionnés.",
+    "Des employés négligeant leurs tâches ont été sanctionnés."
+  ],
+  // Le participe passé avec « avoir » ne s’accorde pas avec ce qui le suit,
+  // sujet inversé d’incise compris.
+  ["« C’est inacceptable ! » a déclarée la directrice.", "« C’est inacceptable ! » a déclaré la directrice."],
+  ["Ils ont créés les fichiers hier.", "Ils ont créé les fichiers hier."],
+  ["Elle a rangé les dossiers.", "Elle a rangé les dossiers."],
+  // Complément rejeté derrière son infinitif.
+  ["Nous devrions des consultants externes embaucher.", "Nous devrions embaucher des consultants externes."],
+  ["Nous devons les dossiers archiver.", "Nous devons archiver les dossiers."],
+  ["Il faut les dossiers archivés.", "Il faut les dossiers archivés."],
   // Avec « si » au présent, le futur est correct.
   ["Si tu viens, je serai là.", "Si tu viens, je serai là."],
   ["Si tu as le temps, nous irons au cinéma.", "Si tu as le temps, nous irons au cinéma."],

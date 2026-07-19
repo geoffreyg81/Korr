@@ -845,6 +845,68 @@ function grammalecte() {
       "il faut à tout prix stopper la crise"
     );
 
+    // Un adjectif de couleur qualifié par un second adjectif forme un groupe
+    // invariable : « des murs rose pâle », « des plantes vert clair ».
+    replace(COMPOSED_COLOR_PATTERN, (match, head, color, modifier) =>
+      `${head} ${preserveCase(color, baseColorForm(color))} ${preserveCase(modifier, baseColorModifier(modifier))}`
+    );
+    replace(COMPOSED_COLOR_AFTER_EN_PATTERN, (match, preposition, color, modifier) =>
+      `${preposition}${preserveCase(color, baseColorForm(color))} ${preserveCase(modifier, baseColorModifier(modifier))}`
+    );
+
+    // « ce sont plu » : le démonstratif est mis pour le pronom réfléchi, et le
+    // participe de « plaire » est invariable. Aucune de ces graphies n’est
+    // correcte par ailleurs, la règle peut donc s’appliquer sans contexte.
+    replace(/\bce\s+sont\s+plu[ts]?(?![\p{L}\p{N}])/giu,
+      (match) => preserveCase(match, "se sont plu")
+    );
+    replace(/\bse\s+sont\s+plut(?![\p{L}\p{N}])/giu,
+      (match) => preserveCase(match, "se sont plu")
+    );
+
+    // Participe présent employé comme épithète : il devient adjectif et
+    // s’accorde. Le lookahead impose un verbe conjugué ou une ponctuation
+    // derrière, ce qui écarte le véritable participe présent, toujours suivi de
+    // son complément (« des employés négligeant leurs tâches »).
+    replace(
+      new RegExp(
+        String.raw`\b([\p{L}’'-]+)\s+(${[...PRESENT_PARTICIPLE_ADJECTIVES.keys()].join("|")})` +
+        String.raw`(?=\s+(?:a|ont|est|sont|était|étaient|avait|avaient|ne\s|n[’'])|\s*[,.;:!?…])`,
+        "giu"
+      ),
+      (match, noun, participle) => {
+        const adjective = PRESENT_PARTICIPLE_ADJECTIVES.get(participle.toLocaleLowerCase("fr-FR"));
+        if (!adjective) return match;
+        const plural = /s$/u.test(noun) && !/^(?:pas|plus|jamais|moins|très)$/iu.test(noun);
+        return `${noun} ${preserveCase(participle, plural ? `${adjective}s` : adjective)}`;
+      }
+    );
+
+    // Le participe passé conjugué avec « avoir » ne s’accorde jamais avec ce
+    // qui le suit : ni un COD postposé, ni le sujet inversé d’une incise
+    // (« … » a déclaré la directrice).
+    replace(
+      /\b(a|ai|as|ont|avons|avez|avait|avaient|avais|aura|auront|aurait)\s+([\p{L}’-]+(?:ée|ées|és))(?=\s+(?:l[’']|le|la|les|un|une|des|ce|cet|cette|ces|mon|ma|mes|son|sa|ses|notre|nos|votre|vos|leur|leurs)\s)/gu,
+      (match, auxiliary, participle) => {
+        const singular = participleMasculineSingular(participle);
+        if (!singular || singular === participle) return match;
+        return `${auxiliary} ${singular}`;
+      }
+    );
+
+    // Complément d’objet rejeté derrière son infinitif (calque de la structure
+    // d’origine) : « nous devrions des consultants embaucher ». L’infinitif est
+    // ramené devant son complément.
+    replace(
+      /\b(devons|devrions|devrait|devraient|devrais|pouvons|pourrions|allons|voulons|voudrions|faut|faudrait)\s+((?:des|les|un|une|le|la|l[’'])\s*[^.,;:!?…\n]{2,40}?)\s+([\p{L}]+er)(?=\s*[.,;:!?…]|\s*$)/giu,
+      (match, verb, object, infinitive) => {
+        if (!isInfinitive(infinitive)) return match;
+        // Un participe passé ou un adjectif dans le groupe complément signale
+        // une tout autre construction (« il faut les dossiers archivés »).
+        return `${verb} ${infinitive} ${object}`;
+      }
+    );
+
     // Nombres écrits en toutes lettres : « quatre » est invariable, « vingt » et
     // « cent » ne prennent la marque du pluriel qu’en fin de nombre et
     // multipliés, « mille » ne la prend jamais.
@@ -1058,6 +1120,65 @@ function grammalecte() {
       return preserveCase(verb, `${stem.slice(0, -1)}ç${imperfectEnding}`);
     }
     return preserveCase(verb, `${stem}${imperfectEnding}`);
+  }
+
+  function isInfinitive(word) {
+    return morphOf(word).some((morph) => /:Y(?=[:/])/u.test(morph));
+  }
+
+  // Participes présents dont il existe un adjectif verbal de graphie distincte.
+  // Seules les paires où les deux formes diffèrent sont listées : ailleurs, la
+  // graphie est identique et il n’y a rien à corriger.
+  const PRESENT_PARTICIPLE_ADJECTIVES = new Map(Object.entries({
+    négligeant: "négligent", différant: "différent", précédant: "précédent",
+    excédant: "excédent", influant: "influent", excellant: "excellent",
+    adhérant: "adhérent", équivalant: "équivalent", résidant: "résident",
+    somnolant: "somnolent", violant: "violent", convainquant: "convaincant",
+    provoquant: "provocant", communiquant: "communicant", suffoquant: "suffocant",
+    fatiguant: "fatigant", intriguant: "intrigant", naviguant: "navigant",
+    zigzaguant: "zigzagant", extravaguant: "extravagant", déléguant: "délégant",
+    fabriquant: "fabricant", vaquant: "vacant", divergeant: "divergent",
+    convergeant: "convergent", émergeant: "émergent", négligeants: "négligents"
+  }));
+
+  // Couleurs et qualifiants formant un groupe invariable. Les clés sont les
+  // formes de base ; les terminaisons d’accord sont ajoutées par le motif.
+  const COLOR_BASES = [
+    "blanc", "noir", "rouge", "vert", "bleu", "jaune", "gris", "brun", "rose",
+    "mauve", "violet", "beige", "orange", "pourpre", "roux", "fauve", "bistre"
+  ];
+  const COLOR_MODIFIERS = [
+    "clair", "foncé", "pâle", "sombre", "vif", "soutenu", "profond", "délavé",
+    "électrique", "marine", "ciel", "olive", "canard", "pétrole", "bouteille"
+  ];
+  // Suffixes d’accord possibles, y compris les féminins irréguliers
+  // (blanc/blanche, violet/violette, vif/vive, roux/rousse).
+  const AGREEMENT_SUFFIX = String.raw`(?:e?s?|he?s?|te?s?|ve?s?|sse?s?)`;
+  const COLOR_GROUP = String.raw`(?:${COLOR_BASES.join("|")})${AGREEMENT_SUFFIX}`;
+  const MODIFIER_GROUP = String.raw`(?:${COLOR_MODIFIERS.join("|")})${AGREEMENT_SUFFIX}`;
+
+  // Après un nom au pluriel : « des plantes vertes claires ». Le nom occupe la
+  // première capture, ce qui empêche « les roses pâles » (nom + adjectif) de
+  // correspondre : il y manque le troisième terme.
+  const COMPOSED_COLOR_PATTERN = new RegExp(
+    String.raw`\b((?!(?:les|des|ces|mes|tes|ses|nos|vos|leurs|aux|plusieurs|quelques|nous|vous|ils|elles)\b)[\p{L}’'-]+s)` +
+    String.raw`\s+(${COLOR_GROUP})\s+(${MODIFIER_GROUP})(?![\p{L}\p{N}-])`,
+    "giu"
+  );
+  // Après « en » / « de » : « repeints en roses pâles ».
+  const COMPOSED_COLOR_AFTER_EN_PATTERN = new RegExp(
+    String.raw`\b((?:en|de)\s+)(${COLOR_GROUP})\s+(${MODIFIER_GROUP})(?![\p{L}\p{N}-])`,
+    "giu"
+  );
+
+  function baseColorForm(word) {
+    const lowered = word.toLocaleLowerCase("fr-FR");
+    return COLOR_BASES.find((base) => lowered.startsWith(base)) || word;
+  }
+
+  function baseColorModifier(word) {
+    const lowered = word.toLocaleLowerCase("fr-FR");
+    return COLOR_MODIFIERS.find((base) => lowered.startsWith(base)) || word;
   }
 
   // Verbes fréquents dont une virgule ne peut pas les séparer de leur sujet.
