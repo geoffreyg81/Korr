@@ -238,6 +238,8 @@ const cases = [
   ["À l’attention de M. Le Président,", "À l’attention de M. le président,"],
   ["Nous avons vu le Directeur et la Ministre hier.", "Nous avons vu le directeur et la ministre hier."],
   ["Monsieur Le Maire a parlé au Préfet.", "Monsieur le maire a parlé au préfet."],
+  // Un sigle garde ses capitales, l’article passe quand même en minuscule.
+  ["À l’attention de M. Le DRH,", "À l’attention de M. le DRH,"],
   // Garde-fou : la majuscule de début de phrase reste.
   ["Le président a parlé.", "Le président a parlé."],
   // Participe présent employé comme épithète : il devient adjectif verbal.

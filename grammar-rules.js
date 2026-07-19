@@ -1373,10 +1373,14 @@ function grammalecte() {
     "responsable", "chef", "cheffe", "délégué", "déléguée", "proviseur"
   ];
 
+  // Après un titre de civilité, l’article est toujours en minuscule, quelle que
+  // soit la fonction qui suit — y compris un sigle (« M. le DRH »), que la
+  // seconde capture laisse intact puisque seule une fonction connue est
+  // décapitalisée.
   const FUNCTION_TITLE_PATTERN = new RegExp(
     String.raw`\b(M\.|MM\.|Mme|Mmes|Mlle|Mlles|Monsieur|Madame|Messieurs|Mesdames)\s+` +
-    String.raw`(Le|La|Les|L[’'])\s*(${anyOf(FUNCTION_NOUNS)}s?)(?![\p{L}\p{N}])`,
-    "giu"
+    String.raw`(Le|La|Les|L[’'])\s*([\p{L}]+)(?![\p{L}\p{N}])`,
+    "gu"
   );
 
   // Déterminant + nom de fonction capitalisé en cours de phrase.
@@ -1388,9 +1392,15 @@ function grammalecte() {
 
   function normalizeFunctionTitles(text) {
     return text
-      .replace(FUNCTION_TITLE_PATTERN, (match, civility, article, noun) =>
-        `${civility} ${article.toLocaleLowerCase("fr-FR")}${/[’']$/u.test(article) ? "" : " "}${noun.toLocaleLowerCase("fr-FR")}`
-      )
+      .replace(FUNCTION_TITLE_PATTERN, (match, civility, article, noun) => {
+        // Un sigle garde ses capitales : seule une fonction écrite en toutes
+        // lettres passe en minuscule.
+        const isFunction = FUNCTION_NOUNS.includes(noun.toLocaleLowerCase("fr-FR")) ||
+          FUNCTION_NOUNS.includes(noun.toLocaleLowerCase("fr-FR").replace(/s$/u, ""));
+        const separator = /[’']$/u.test(article) ? "" : " ";
+        return `${civility} ${article.toLocaleLowerCase("fr-FR")}${separator}` +
+          `${isFunction ? noun.toLocaleLowerCase("fr-FR") : noun}`;
+      })
       .replace(CAPITALIZED_FUNCTION_PATTERN, (match, lead, noun) =>
         `${lead}${noun.toLocaleLowerCase("fr-FR")}`
       );
