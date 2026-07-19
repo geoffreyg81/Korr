@@ -302,6 +302,14 @@ const cases = [
     "Il faut prendre garde à ne pas la scène de crime contaminer.",
     "Il faut prendre garde à ne pas contaminer la scène de crime."
   ],
+  // Parité des guillemets : un second « ouvrant après une fin de phrase ferme
+  // la citation en cours ; les paires légitimes ne bougent pas.
+  [
+    "Il répondit : « Quel que soit le coupable, il a commis des erreurs. « Des indices ont été découverts.",
+    "Il répondit : « Quel que soit le coupable, il a commis des erreurs. » Des indices ont été découverts."
+  ],
+  ["Il a dit « oui » puis « non » et enfin « peut-être ».", "Il a dit « oui » puis « non » et enfin « peut-être »."],
+  ["« Première citation. » « Seconde citation. »", "« Première citation. » « Seconde citation. »"],
   // Locutions figées.
   ["Je vous pris de m’envoyer le rapport.", "Je vous prie de m’envoyer le rapport."],
   ["Le rapport arrivera, quoi quel arrivant.", "Le rapport arrivera, quoi qu’il arrive."],

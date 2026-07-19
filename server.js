@@ -236,59 +236,47 @@ async function handleCorrection(request, response) {
     });
   }
 
-  let ollamaResponse;
-  try {
-    ollamaResponse = await fetch(`${OLLAMA_URL}/api/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      body: JSON.stringify({
-        model,
-        system: style.prompt,
-        prompt: preparedText,
-        stream: false,
-        think: false,
-        keep_alive: KEEP_ALIVE,
-        options: {
-          temperature: 0,
-          num_ctx: 4096,
-          num_predict: Math.min(4096, Math.max(96, Math.ceil(preparedText.length / 2) + 64)),
-          ...(OLLAMA_THREADS > 0 ? { num_thread: OLLAMA_THREADS } : {})
-        }
-      })
-    });
-  } catch (error) {
-    const timedOut = error?.name === "TimeoutError";
-    return sendJson(response, 503, {
-      error: timedOut
-        ? "Le modèle local a mis trop de temps à répondre."
-        : "Ollama est inaccessible. Vérifie qu'il est démarré."
-    });
-  }
-
-  const data = await ollamaResponse.json().catch(() => ({}));
-  if (!ollamaResponse.ok) {
-    const modelMissing = /not found/i.test(data?.error || "");
-    return sendJson(response, ollamaResponse.status, {
-      error: modelMissing
-        ? `Le modèle « ${model} » n'est pas installé. Lance : ollama pull ${model}`
-        : data?.error || "La génération locale a échoué."
-    });
-  }
-
-  const correctedText = typeof data.response === "string" ? data.response.trim() : "";
-  if (!correctedText) {
-    return sendJson(response, 502, { error: "Le modèle n'a renvoyé aucun texte." });
-  }
-
-  if (!isPlausibleCorrection(preparedText, correctedText, style)) {
-    return sendJson(response, 200, {
-      ...instantResult,
-      engine: instantEngineName(language),
-      language,
-      style: styleName,
-      fallback: "Réponse IA écartée car elle s’éloignait trop du texte."
-    });
+  // Un petit modèle sature sur un texte long : l'attention se dilue et la fin
+  // du texte part en hallucination (« quoi quel arrivant »). Chaque paragraphe
+  // est donc soumis séparément — la correction est une tâche locale, aucun
+  // paragraphe n'a besoin des autres. Seule la réécriture libre (style
+  // « concis ») garde le texte entier, car elle fusionne des paragraphes.
+  let correctedText;
+  if (style.sameParagraphs) {
+    const chunks = splitIntoLlmChunks(preparedText);
+    const correctedChunks = [];
+    for (const chunk of chunks) {
+      if (!chunk.trim()) {
+        correctedChunks.push(chunk);
+        continue;
+      }
+      const generated = await generateWithOllama(model, style, chunk);
+      if (generated.fatal) return sendJson(response, generated.status, { error: generated.error });
+      // Un paragraphe rejeté (réponse invraisemblable ou vide) retombe sur sa
+      // version déterministe : le reste du texte garde le bénéfice du modèle.
+      correctedChunks.push(
+        generated.text && isPlausibleCorrection(chunk, generated.text, style)
+          ? generated.text
+          : chunk
+      );
+    }
+    correctedText = correctedChunks.join("");
+  } else {
+    const generated = await generateWithOllama(model, style, preparedText);
+    if (generated.fatal) return sendJson(response, generated.status, { error: generated.error });
+    correctedText = generated.text;
+    if (!correctedText) {
+      return sendJson(response, 502, { error: "Le modèle n'a renvoyé aucun texte." });
+    }
+    if (!isPlausibleCorrection(preparedText, correctedText, style)) {
+      return sendJson(response, 200, {
+        ...instantResult,
+        engine: instantEngineName(language),
+        language,
+        style: styleName,
+        fallback: "Réponse IA écartée car elle s’éloignait trop du texte."
+      });
+    }
   }
 
   const verifiedResult = await correctInstantText(correctedText, language);
@@ -312,6 +300,97 @@ async function handleCorrection(request, response) {
     style: styleName,
     model
   });
+}
+
+// Découpe un texte en tranches pour le modèle : les paragraphes sont les
+// unités naturelles, regroupés tant que la tranche reste sous la limite où le
+// 4B commence à halluciner. Les séparateurs (sauts de ligne) sont des tranches
+// à part entière, ce qui garantit une reconstruction à l'identique.
+const LLM_CHUNK_TARGET = 700;
+
+function splitIntoLlmChunks(text) {
+  const parts = text.split(/(\n+)/u);
+  const chunks = [];
+  let current = "";
+
+  for (const part of parts) {
+    if (/^\n+$/u.test(part)) {
+      if (current) {
+        chunks.push(current);
+        current = "";
+      }
+      chunks.push(part);
+      continue;
+    }
+    // Un paragraphe monolithe dépassant nettement la cible est redécoupé sur
+    // ses fins de phrase : c'est précisément le format qui fait dériver le
+    // modèle en fin de génération.
+    const pieces = part.length > LLM_CHUNK_TARGET * 1.5
+      ? (part.match(/[^.!?…]*[.!?…]+[\s  ]*|[^.!?…]+$/gu) || [part])
+      : [part];
+
+    for (const piece of pieces) {
+      if (current && current.length + piece.length > LLM_CHUNK_TARGET) {
+        chunks.push(current);
+        current = piece;
+      } else {
+        current += piece;
+      }
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+// Une génération Ollama : ne retourne « fatal » que pour les erreurs qui
+// condamnent toute la requête (service éteint, modèle absent). Une réponse
+// vide n'est pas fatale : l'appelant décide du repli.
+async function generateWithOllama(model, style, prompt) {
+  let ollamaResponse;
+  try {
+    ollamaResponse = await fetch(`${OLLAMA_URL}/api/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      body: JSON.stringify({
+        model,
+        system: style.prompt,
+        prompt,
+        stream: false,
+        think: false,
+        keep_alive: KEEP_ALIVE,
+        options: {
+          temperature: 0,
+          num_ctx: 4096,
+          num_predict: Math.min(4096, Math.max(96, Math.ceil(prompt.length / 2) + 64)),
+          ...(OLLAMA_THREADS > 0 ? { num_thread: OLLAMA_THREADS } : {})
+        }
+      })
+    });
+  } catch (error) {
+    const timedOut = error?.name === "TimeoutError";
+    return {
+      fatal: true,
+      status: 503,
+      error: timedOut
+        ? "Le modèle local a mis trop de temps à répondre."
+        : "Ollama est inaccessible. Vérifie qu'il est démarré."
+    };
+  }
+
+  const data = await ollamaResponse.json().catch(() => ({}));
+  if (!ollamaResponse.ok) {
+    const modelMissing = /not found/i.test(data?.error || "");
+    return {
+      fatal: true,
+      status: ollamaResponse.status,
+      error: modelMissing
+        ? `Le modèle « ${model} » n'est pas installé. Lance : ollama pull ${model}`
+        : data?.error || "La génération locale a échoué."
+    };
+  }
+
+  return { text: typeof data.response === "string" ? data.response.trim() : "" };
 }
 
 async function correctInstantText(text, language) {

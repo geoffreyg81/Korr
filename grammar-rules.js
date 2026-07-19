@@ -102,7 +102,7 @@ function grammalecte() {
     // texte définitif : elles doivent survivre aussi bien à la passe
     // grammaticale qu’à une réécriture par un modèle en amont, qui l’une comme
     // l’autre ré-accordent volontiers une couleur composée.
-    const finalizedText = normalizeFunctionTitles(normalizeColorExpressions(correctedText))
+    const finalizedText = normalizeQuoteParity(normalizeFunctionTitles(normalizeColorExpressions(correctedText)))
       .replace(
         /\b(problèmes\s+numériques\s+que\s+nous\s+avons\s+rencontrés)\s*:/iu,
         "$1\u00a0:"
@@ -1406,6 +1406,51 @@ function grammalecte() {
 
   function normalizeColorExpressions(text) {
     return text.replace(COLOR_EXPRESSION_PATTERN, (...args) => normalizeColorMatch(args));
+  }
+
+  // ---------------------------------------------------------------------
+  // Parité des guillemets français (règle globale)
+  //
+  // Les guillemets « » ne s'imbriquent pas : à l'intérieur d'une citation, on
+  // passe aux guillemets anglais. Un second « ouvrant alors qu'une citation
+  // est déjà ouverte est donc un fermant mal typographié — bourde classique
+  // des modèles sur les dialogues. La ponctuation qui précède tranche : après
+  // une fin de phrase, l'ouvrant fautif ferme la citation en cours.
+  // ---------------------------------------------------------------------
+
+  function normalizeQuoteParity(text) {
+    let depth = 0;
+    let result = "";
+
+    for (let index = 0; index < text.length; index += 1) {
+      const character = text[index];
+      if (character === "»") {
+        depth = Math.max(0, depth - 1);
+        result += character;
+        continue;
+      }
+      if (character !== "«") {
+        result += character;
+        continue;
+      }
+      if (depth === 0) {
+        depth = 1;
+        result += character;
+        continue;
+      }
+      // « en trop. S'il suit une fin de phrase, il ferme la citation ouverte ;
+      // sinon (incise, énumération), on le laisse : mieux vaut une parité
+      // imparfaite qu'un contresens.
+      const before = result.replace(/[\s  ]+$/u, "");
+      if (/[.!?…]$/u.test(before)) {
+        result = `${before} »${text[index + 1] === " " || text[index + 1] === " " ? "" : " "}`;
+        depth = 0;
+        continue;
+      }
+      result += character;
+      depth += 1;
+    }
+    return result;
   }
 
   // ---------------------------------------------------------------------
