@@ -310,6 +310,22 @@ const cases = [
   ],
   ["Il a dit « oui » puis « non » et enfin « peut-être ».", "Il a dit « oui » puis « non » et enfin « peut-être »."],
   ["« Première citation. » « Seconde citation. »", "« Première citation. » « Seconde citation. »"],
+  // Graphies soudées, confusions lexicales et conjugaisons inventées.
+  ["Parcontre, je suis entrain de finir, en faite c’est bon.", "Par contre, je suis en train de finir, en fait c’est bon."],
+  ["Quand à moi, ils croivent que j’ai tord.", "Quant à moi, ils croient que j’ai tort."],
+  ["Il est sensé venir demain, soit-disant.", "Il est censé venir demain, soi-disant."],
+  ["Quelque soit la solution, quelques soient les problèmes.", "Quelle que soit la solution, quels que soient les problèmes."],
+  ["Il faut d’avantage de moyens pour les taches ménagères.", "Il faut davantage de moyens pour les tâches ménagères."],
+  ["L’envoie du rapport a échoué à cause d’une connection instable.", "L’envoi du rapport a échoué à cause d’une connexion instable."],
+  ["Il l’a fait comme même.", "Il l’a fait quand même."],
+  ["C’est difficile, voir même impossible.", "C’est difficile, voire impossible."],
+  // Garde-fous : emplois légitimes des mêmes mots.
+  ["Un homme sensé ne ferait pas ça.", "Un homme sensé ne ferait pas ça."],
+  ["Il tord le fer.", "Il tord le fer."],
+  ["Une tache de café sur la chemise.", "Une tache de café sur la chemise."],
+  ["J’envoie le rapport demain.", "J’envoie le rapport demain."],
+  ["Comme même les experts hésitent, restons prudents.", "Comme même les experts hésitent, restons prudents."],
+  ["Il faut voir même les détails.", "Il faut voir même les détails."],
   // Locutions figées.
   ["Je vous pris de m’envoyer le rapport.", "Je vous prie de m’envoyer le rapport."],
   ["Le rapport arrivera, quoi quel arrivant.", "Le rapport arrivera, quoi qu’il arrive."],

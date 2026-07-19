@@ -1578,6 +1578,63 @@ function grammalecte() {
     [/\bde\s+(?:ça|cela|celà)\s+dont\b/giu, "ce dont"],
     [/\bde\s+(?:ce|celui|celle)\s+dont\b/giu, "ce dont"],
     [/\bc[’']est\s+de\s+lui\s+dont\b/giu, "c’est de lui que"],
+    // Graphies soudées ou fusionnées qui n’existent pas.
+    [/\bparcontre(?![\p{L}\p{N}])/giu,
+      (match) => (/^P/u.test(match) ? "Par contre" : "par contre")],
+    [/\baulieu(?=\s+de(?![\p{L}\p{N}]))/giu, "au lieu"],
+    [/\bentrain\s+de(?=\s+[\p{L}])/giu, "en train de"],
+    [/\ben\s+faite(?=\s*[,.;:!?…]|\s*$)/giu, "en fait"],
+    [/\best-ce-que(?![\p{L}\p{N}])/giu, "est-ce que"],
+    [/\bsoit-disant(?![\p{L}\p{N}])/giu, "soi-disant"],
+    [/\bmalgrés(?![\p{L}\p{N}])/giu, "malgré"],
+    [/\bparmis(?![\p{L}\p{N}])/giu, "parmi"],
+    // Conjugaisons inventées : aucune de ces formes n’existe.
+    [/\bcroivent(?![\p{L}\p{N}])/giu, "croient"],
+    [/\bsoyent(?![\p{L}\p{N}])/giu, "soient"],
+    [/\bvoyent(?![\p{L}\p{N}])/giu, "voient"],
+    // « quant à » devant un pronom : « quand à moi » est impossible.
+    [/\bquand\s+à\s+(moi|toi|lui|elle|nous|vous|eux|elles|cela|ça)(?![\p{L}\p{N}])/giu,
+      (match, pronoun) => preserveCase(match, `quant à ${pronoun}`)],
+    // « davantage de » : « d’avantage de » signifierait « d’un avantage de ».
+    [/\bd[’']avantage\s+de(?=\s+[\p{L}])/giu, "davantage de"],
+    // « censé » (supposé) devant un infinitif ; « sensé » signifie « doué de sens ».
+    [/\bsensé(e?s?)\s+(?=(?:être|avoir|faire|venir|partir|arriver|rendre|savoir|pouvoir|devoir|[\p{L}]{3,}(?:er|ir))(?![\p{L}\p{N}]))/giu,
+      (match, agreement) => `censé${agreement} `],
+    // « avoir tort » : après l’auxiliaire avoir, « tord » (verbe tordre) est
+    // impossible.
+    [/\b(ai|as|a|avons|avez|ont|avais|avait|avaient|aura|auront|aurait|auraient|avoir|eu)\s+tord(?![\p{L}\p{N}])/giu,
+      (match, auxiliary) => `${auxiliary} tort`],
+    // « tâche » (travail) devant un verbe d’exécution ; « tache » est la
+    // salissure, déjà traitée dans l’autre sens pour « tache de sang ».
+    [/\btache(s?)(?=\s+(?:à\s+(?:accomplir|faire|effectuer|réaliser|terminer)|ménagères?|quotidiennes?|administratives?|urgentes?)(?![\p{L}\p{N}]))/giu,
+      (match, plural) => preserveCase(match, `tâche${plural}`)],
+    // « un envoi » : le nom ne prend pas de « e », « envoie » est le verbe.
+    [/\b(l[’']|un|cet|chaque|premier|dernier|nouvel)\s*envoie(s?)(?![\p{L}\p{N}])/giu,
+      (match, determiner, plural) => `${determiner}${/[’']$/u.test(determiner) ? "" : " "}envoi${plural}`],
+    // Anglicisme orthographique : en français, la connexion prend un « x ».
+    [/\bconnections?(?![\p{L}\p{N}])/giu,
+      (match) => preserveCase(match, /s$/u.test(match) ? "connexions" : "connexion")],
+    [/\bsa\s+va(?![\p{L}\p{N}])/giu, "ça va"],
+    // « comme même » en fin de proposition est « quand même » ; suivi d’un
+    // groupe (« comme même les experts »), il peut être légitime et ne bouge pas.
+    [/\bcomme\s+même(?=\s*[,.;:!?…]|\s*$)/giu, "quand même"],
+    [/,\s*voir\s+même(?=\s+[\p{L}])/giu, ", voire"],
+    // « quelque soit » : « quel que » s’accorde avec le nom qui suit.
+    // L’alternance des déterminants va du plus long au plus court, sinon
+    // « les » serait lu « le » + un nom commençant par « s ».
+    [/\bquelques?\s+(soit|soient)\s+(l[’']|les|leurs|leur|la|le|ses|sa|son|cette|ces|ce)\s*([\p{L}’-]+)/giu,
+      (match, verb, determiner, noun) => {
+        const features = nounFeatures(noun);
+        const plural = verb.toLocaleLowerCase("fr-FR") === "soient" ||
+          /^(?:les|ces|ses|leurs)$/iu.test(determiner) ||
+          features?.plural === true;
+        const feminine = features?.feminine === true;
+        const opening = plural
+          ? (feminine ? "quelles que soient" : "quels que soient")
+          : (feminine ? "quelle que soit" : "quel que soit");
+        const separator = /[’']$/u.test(determiner) ? "" : " ";
+        return `${preserveCase(match, opening)} ${determiner}${separator}${noun}`;
+      }],
     // « je vous prie » : « pris » est le passé simple de « prendre », qui ne se
     // construit pas avec « de » + infinitif.
     [/\b(je\s+vous\s+)pris(?=\s+de(?![\p{L}\p{N}]))/giu, "$1prie"],

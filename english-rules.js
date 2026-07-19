@@ -296,8 +296,84 @@
         return `it's ${adverb} ${word}`;
       });
 
+    // Après un auxiliaire de négation ou « to », le prétérit est impossible :
+    // seul l'infinitif sans marque convient. « didn't went » → « didn't go ».
+    replaceRaw(
+      new RegExp(
+        String.raw`\b(don['’]?t|doesn['’]?t|didn['’]?t|won['’]?t|wouldn['’]?t|can['’]?t|couldn['’]?t|shouldn['’]?t|mustn['’]?t|to)([ \t]+)` +
+        String.raw`(${[...PRETERITE_TO_BASE.keys()].join("|")})\b`,
+        "giu"
+      ),
+      (match, auxiliary, spacing, preterite) => {
+        const base = PRETERITE_TO_BASE.get(preterite.toLocaleLowerCase("en-US"));
+        if (!base) return match;
+        return `${auxiliary}${spacing}${preserveInitialCase(preterite, base)}`;
+      }
+    );
+
+    // Do-support : le verbe qui suit est à la forme de base, jamais en -s.
+    replace(
+      /\b(don['’]?t|doesn['’]?t|didn['’]?t)([ \t]+)(likes|wants|needs|knows|works|runs|seems|looks|comes|goes|gives|takes|makes|contains|uses|tries|says|tells|thinks|feels|keeps|means|helps|asks|calls|shows|starts|stops|plays|moves|lives|believes|remembers|understands)\b/giu,
+      (_match, auxiliary, spacing, verb) => `${auxiliary}${spacing}${baseVerb(verb)}`
+    );
+
+    // « there is » devant un pluriel quantifié.
+    // « news », « series »… sont des singuliers en -s et restent avec « is ».
+    replace(/\bthere[ \t]+is[ \t]+(fewer|less|some|no)[ \t]+(?!(?:news|means|series|species|progress|analysis|basis)\b)([a-z][a-z'’-]*s)\b/giu,
+      (_match, quantity, noun) => `there are ${quantity} ${noun}`);
+
+    // Fautes d'orthographe univoques : aucune de ces graphies n'existe.
+    replace(/\brecieve(s|d)?\b/giu, (_match, ending) => `receive${ending || ""}`);
+    replace(/\brecieving\b/giu, "receiving");
+    replace(/\bseperate(s|d|ly)?\b/giu, (_match, ending) => `separate${ending || ""}`);
+    replace(/\boccurence(s?)\b/giu, (_match, plural) => `occurrence${plural}`);
+    replace(/\baccomodate(s|d)?\b/giu, (_match, ending) => `accommodate${ending || ""}`);
+    replace(/\bwich\b/giu, "which");
+    replace(/\bbec(?:ua|asu)se\b/giu, "because");
+    replace(/\btruely\b/giu, "truly");
+    replace(/\barguement(s?)\b/giu, (_match, plural) => `argument${plural}`);
+    replace(/\benviroment(s?)\b/giu, (_match, plural) => `environment${plural}`);
+    replace(/\bgoverment(s?)\b/giu, (_match, plural) => `government${plural}`);
+    replace(/\btomm?orr?ow\b/giu, "tomorrow");
+    replace(/\bwierd\b/giu, "weird");
+    replace(/\bloosing\b/giu, "losing");
+    replace(/\birregardless\b/giu, "regardless");
+    replace(/\bfor[ \t]+all[ \t]+intensive[ \t]+purposes\b/giu, "for all intents and purposes");
+
+    // « number of » pour un dénombrable ; « amount of » vaut pour l'indénombrable.
+    replace(/\bamount[ \t]+of[ \t]+(people|employees|students|users|items|errors|mistakes|documents|problems|options)\b/giu,
+      (_match, noun) => `number of ${noun}`);
+
+    // « every day » adverbe en fin de proposition ; « everyday » est l'adjectif
+    // (« everyday life ») et reste intact devant un nom.
+    replace(/\beveryday\b(?=[ \t]*(?:[.,;:!?]|$))/gimu, "every day");
+
+    // « fewer » pour un pluriel dénombrable.
+    replace(/\bless[ \t]+(people|items|errors|mistakes|documents|employees|students|problems|options|words|cars|meetings)\b/giu,
+      (_match, noun) => `fewer ${noun}`);
+
     return { text, corrections };
   }
+
+  // Prétérits irréguliers dont l'infinitif diffère : après do-support ou
+  // « to », la forme de base est la seule possible. Les verbes dont prétérit
+  // et participe coïncident avec des noms courants (felt, left, read, set…)
+  // sont écartés pour ne pas réécrire un emploi légitime.
+  const PRETERITE_TO_BASE = new Map(Object.entries({
+    went: "go", came: "come", saw: "see", ate: "eat", wrote: "write",
+    took: "take", broke: "break", chose: "choose", drank: "drink",
+    began: "begin", spoke: "speak", drove: "drive", gave: "give",
+    knew: "know", grew: "grow", threw: "throw", flew: "fly", wore: "wear",
+    tore: "tear", forgot: "forget", froze: "freeze", woke: "wake",
+    rose: "rise", fell: "fall", swam: "swim", sang: "sing", rang: "ring",
+    stole: "steal", hid: "hide", did: "do", had: "have", made: "make",
+    said: "say", told: "tell", thought: "think", brought: "bring",
+    bought: "buy", caught: "catch", taught: "teach", kept: "keep",
+    lost: "lose", met: "meet", paid: "pay", sat: "sit", stood: "stand",
+    found: "find", heard: "hear", held: "hold", won: "win", sent: "send",
+    spent: "spend", built: "build", meant: "mean", understood: "understand",
+    got: "get"
+  }));
 
   // Prétérits irréguliers dont la forme diffère du participe passé. Les verbes
   // dont les deux formes coïncident (bought, made…) n'ont rien à corriger.

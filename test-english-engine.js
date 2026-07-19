@@ -226,6 +226,20 @@ const cases = [
   ["Its been a long day and its still raining.", "It's been a long day and it's still raining."],
   ["Its main advantage is speed.", "Its main advantage is speed."],
   ["The dog wagged its tail.", "The dog wagged its tail."],
+  // Do-support et « to » : la forme de base est la seule possible.
+  ["I didn't went to the meeting.", "I didn't go to the meeting."],
+  ["She doesn't knows it.", "She doesn't know it."],
+  ["We want to took the train.", "We want to take the train."],
+  // Orthographes univoques et idiotismes.
+  ["He recieved the seperate arguements.", "He received the separate arguments."],
+  ["Irregardless, it is for all intensive purposes finished.", "Regardless, it is for all intents and purposes finished."],
+  // Dénombrables : fewer/number, et « there are » devant un pluriel.
+  ["There is less errors in the report.", "There are fewer errors in the report."],
+  ["A big amount of people came.", "A big number of people came."],
+  ["There is no news today.", "There is no news today."],
+  // « everyday » adjectif contre « every day » adverbe.
+  ["I go to the gym everyday.", "I go to the gym every day."],
+  ["Everyday life is hard.", "Everyday life is hard."],
   [
     "Although the managers has announced that the new policies would comes into effect on Monday, several employee have complained that they was not informed in time. The informations they recieved were contradictory, and each of the teams have asked whether their supposed to continue using the old procedures or wait until the director give them clearer instructions. Maria, who had took the initiative to contact the director, realize that the documents sent yesterday also contains several errors, which have caused even more confusion among the team.",
     "Although the managers have announced that the new policies would come into effect on Monday, several employees have complained that they were not informed in time. The information they received was contradictory, and each of the teams has asked whether they're supposed to continue using the old procedures or wait until the director gives them clearer instructions. Maria, who had taken the initiative to contact the director, realized that the documents sent yesterday also contain several errors, which have caused even more confusion among the team."
