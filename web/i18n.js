@@ -163,8 +163,10 @@
     }
   };
 
-  let locale = localStorage.getItem("korr-ui-language") ||
-    (navigator.language?.toLowerCase().startsWith("fr") ? "fr" : "en");
+  // L'anglais est la langue par défaut d'une première visite, quelle que soit
+  // celle du navigateur : le site s'adresse d'abord à un public international.
+  // Le choix explicite du visiteur, lui, est mémorisé et prime toujours.
+  let locale = localStorage.getItem("korr-ui-language") || "en";
   if (!messages[locale]) locale = "en";
 
   function t(key, values = {}) {

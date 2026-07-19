@@ -20,6 +20,7 @@
     "model:light": "ollama pull gemma3:1b",
     "model:benchmark": "node benchmark-model.js",
     "package": "node package-extension.js",
+    "video": "node demo/render-video.js",
     "build:web": "node build-web.js",
     "preview:web": "node preview-web.js",
     "build:desktop": "node build-desktop.js",
@@ -30,5 +31,9 @@
   },
   "dependencies": {
     "harper.js": "^2.4.0"
+  },
+  "devDependencies": {
+    "@ffmpeg-installer/win32-x64": "^4.1.0",
+    "puppeteer-core": "^25.3.0"
   }
 }

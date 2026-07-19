@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Korr — Product Hunt demo</title>
+<style>
+  /* Palette reprise du thème sombre de l'application (popup.css). */
+  :root {
+    --bg: #0d0d10;
+    --panel: #17171c;
+    --panel-2: #1c1c23;
+    --border: #2b2b34;
+    --text: #f4f4f5;
+    --text-2: #c8c8d0;
+    --text-3: #8b8b96;
+    --accent: #818cf8;
+    --accent-2: #a78bfa;
+    --good: #4ade80;
+    --bad: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font-family: "Segoe UI Variable Display", "Segoe UI", Inter, system-ui, sans-serif;
+    font-feature-settings: "ss01", "cv01";
+    -webkit-font-smoothing: antialiased;
+  }
+  #stage { position: relative; width: 1920px; height: 1080px; }
+
+  /* Halos d'ambiance : deux dégradés radiaux animés par le temps. */
+  .glow { position: absolute; border-radius: 50%; filter: blur(120px); pointer-events: none; }
+  #glow-a { width: 1100px; height: 1100px; background: radial-gradient(circle, rgba(99,102,241,.30), transparent 70%); }
+  #glow-b { width: 900px;  height: 900px;  background: radial-gradient(circle, rgba(167,139,250,.24), transparent 70%); }
+  #grain { position: absolute; inset: 0; opacity: .035; pointer-events: none;
+    background-image: radial-gradient(rgba(255,255,255,.7) .5px, transparent .5px);
+    background-size: 4px 4px; }
+
+  .layer { position: absolute; inset: 0; display: grid; place-items: center; }
+
+  /* ---------- Intro / outro ---------- */
+  .brand-row { display: flex; align-items: center; gap: 30px; }
+  .mark {
+    width: 132px; height: 132px; border-radius: 34px; display: grid; place-items: center;
+    background: linear-gradient(145deg, var(--accent), var(--accent-2));
+    box-shadow: 0 30px 90px rgba(99,102,241,.45), inset 0 2px 0 rgba(255,255,255,.35);
+    font-size: 78px; font-weight: 800; color: #fff; letter-spacing: -.04em;
+  }
+  .wordmark { font-size: 128px; font-weight: 800; letter-spacing: -.055em; }
+  .tagline { margin-top: 44px; font-size: 46px; font-weight: 500; color: var(--text-2); letter-spacing: -.02em; text-align: center; }
+  .tagline em { font-style: normal; color: var(--accent); font-weight: 700; }
+  .sub { margin-top: 26px; font-size: 27px; color: var(--text-3); letter-spacing: .01em; text-align: center; }
+
+  .pills { display: flex; gap: 20px; margin-top: 56px; justify-content: center; flex-wrap: wrap; }
+  .pill {
+    padding: 17px 32px; border: 1px solid var(--border); border-radius: 999px;
+    background: rgba(255,255,255,.035); font-size: 25px; color: var(--text-2); font-weight: 600;
+    display: flex; align-items: center; gap: 13px; white-space: nowrap;
+  }
+  .pill b { color: var(--text); font-weight: 700; }
+
+  /* ---------- Fenêtre applicative ---------- */
+  #app {
+    position: absolute; left: 50%; top: 50%; width: 1500px;
+    border: 1px solid var(--border); border-radius: 26px; background: var(--panel);
+    box-shadow: 0 50px 130px rgba(0,0,0,.66), 0 0 0 1px rgba(255,255,255,.035) inset;
+    overflow: hidden;
+  }
+  .titlebar {
+    display: flex; align-items: center; gap: 16px; padding: 20px 28px;
+    border-bottom: 1px solid var(--border); background: rgba(255,255,255,.022);
+  }
+  .dots { display: flex; gap: 10px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; }
+  .tb-brand { display: flex; align-items: center; gap: 13px; margin-left: 10px; }
+  .tb-mark {
+    width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+    background: linear-gradient(145deg, var(--accent), var(--accent-2));
+    font-size: 21px; font-weight: 800; color: #fff;
+  }
+  .tb-name { font-size: 23px; font-weight: 700; letter-spacing: -.02em; }
+  .tb-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+  .chip {
+    display: flex; align-items: center; gap: 10px; padding: 9px 18px; border-radius: 999px;
+    font-size: 19px; font-weight: 650; border: 1px solid;
+  }
+  .chip-offline { border-color: rgba(74,222,128,.42); background: rgba(74,222,128,.11); color: #6ee7a0; }
+  .chip-lang { border-color: rgba(129,140,248,.45); background: rgba(129,140,248,.13); color: var(--accent); }
+
+  .body { padding: 38px 46px 44px; }
+  .field-label {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 20px; font-weight: 650; color: var(--text-3); letter-spacing: .05em;
+    text-transform: uppercase; margin-bottom: 16px;
+  }
+  .box {
+    position: relative; border: 1px solid var(--border); border-radius: 18px;
+    background: var(--panel-2); padding: 34px 38px; min-height: 208px;
+  }
+  .box.out { border-color: rgba(129,140,248,.4); background: rgba(129,140,248,.055); }
+  .text {
+    font-size: 34px; line-height: 1.58; letter-spacing: -.011em; color: var(--text);
+    font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  }
+  /* Les deux états du texte sont superposés : le fondu entre eux tient lieu de morphing. */
+  .stack { position: relative; }
+  .stack > .text { position: absolute; inset: 0; }
+  .stack > .text.flow { position: relative; }
+
+  .err { color: #fca5a5; text-decoration: underline wavy rgba(248,113,113,.85); text-underline-offset: 8px; text-decoration-thickness: 3px; }
+  .fix { border-radius: 7px; padding: 2px 7px; margin: 0 -3px; background: rgba(74,222,128,.19); color: #86efac; font-weight: 600; }
+
+  .caret { display: inline-block; width: 3px; height: 38px; margin-left: 3px; background: var(--accent); vertical-align: -7px; border-radius: 2px; }
+
+  .actions { display: flex; align-items: center; gap: 22px; margin-top: 30px; }
+  .btn {
+    display: flex; align-items: center; gap: 14px; padding: 20px 42px; border-radius: 15px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff;
+    font-size: 25px; font-weight: 700; letter-spacing: -.01em;
+    box-shadow: 0 14px 40px rgba(99,102,241,.42);
+  }
+  .btn-ghost { padding: 20px 34px; border: 1px solid var(--border); border-radius: 15px; color: var(--text-3); font-size: 23px; font-weight: 600; }
+  .meta { margin-left: auto; font-size: 22px; color: var(--text-3); font-weight: 600; }
+  .meta b { color: var(--good); }
+
+  /* Barre de progression du traitement */
+  .scan { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(129,140,248,.16); overflow: hidden; border-radius: 0 0 18px 18px; }
+  .scan i { position: absolute; top: 0; bottom: 0; width: 34%; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+
+  /* Légende de la règle appliquée */
+  #caption {
+    position: absolute; left: 50%; bottom: 76px; display: flex; align-items: center; gap: 18px;
+    padding: 20px 36px; border-radius: 999px; border: 1px solid rgba(129,140,248,.4);
+    background: rgba(23,23,28,.92); backdrop-filter: blur(14px);
+    box-shadow: 0 22px 60px rgba(0,0,0,.5);
+    font-size: 26px; font-weight: 600; color: var(--text-2); white-space: nowrap;
+  }
+  #caption .tag {
+    padding: 7px 16px; border-radius: 999px; background: rgba(129,140,248,.18);
+    color: var(--accent); font-size: 20px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase;
+  }
+
+  /* ---------- Grille de fonctionnalités ---------- */
+  .grid { display: grid; grid-template-columns: repeat(4, 316px); gap: 30px; }
+  .card {
+    padding: 46px 38px; border: 1px solid var(--border); border-radius: 24px;
+    background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.012));
+    text-align: center;
+  }
+  .card .ico { font-size: 60px; }
+  .card h3 { margin-top: 24px; font-size: 32px; font-weight: 750; letter-spacing: -.02em; }
+  .card p { margin-top: 14px; font-size: 23px; line-height: 1.45; color: var(--text-3); font-weight: 500; }
+
+  .headline { font-size: 74px; font-weight: 800; letter-spacing: -.035em; text-align: center; line-height: 1.1; }
+  .headline .grad { background: linear-gradient(120deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .cta { margin-top: 40px; font-size: 34px; color: var(--text-2); font-weight: 600; letter-spacing: -.01em; }
+  .url { margin-top: 30px; font-size: 40px; font-weight: 750; color: var(--accent); letter-spacing: -.02em; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="glow" id="glow-a"></div>
+  <div class="glow" id="glow-b"></div>
+  <div id="grain"></div>
+
+  <!-- Intro -->
+  <div class="layer" id="scene-intro">
+    <div style="text-align:center">
+      <div class="brand-row" style="justify-content:center">
+        <div class="mark" id="intro-mark">K</div>
+        <div class="wordmark" id="intro-word">Korr</div>
+      </div>
+      <div class="tagline" id="intro-tag">The grammar checker that <em>never sees</em> your text</div>
+      <div class="sub" id="intro-sub">French &amp; English · runs entirely on your device</div>
+    </div>
+  </div>
+
+  <!-- Application -->
+  <div id="app">
+    <div class="titlebar">
+      <div class="dots">
+        <span class="dot" style="background:#ff5f57"></span>
+        <span class="dot" style="background:#febc2e"></span>
+        <span class="dot" style="background:#28c840"></span>
+      </div>
+      <div class="tb-brand"><div class="tb-mark">K</div><div class="tb-name">Korr</div></div>
+      <div class="tb-right">
+        <div class="chip chip-lang" id="chip-lang">FR · French</div>
+        <div class="chip chip-offline">🔒 Offline · no server</div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="field-label"><span>Your text</span><span id="io-hint"></span></div>
+      <div class="box" id="box-in">
+        <div class="stack" id="stack-in">
+          <div class="text flow" id="text-before"></div>
+        </div>
+        <div class="scan" id="scan" style="display:none"><i id="scan-bar"></i></div>
+      </div>
+      <div class="actions">
+        <div class="btn" id="btn">✦ Correct</div>
+        <div class="btn-ghost">Rewrite</div>
+        <div class="meta" id="meta"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Légende -->
+  <div id="caption"><span class="tag" id="cap-tag"></span><span id="cap-text"></span></div>
+
+  <!-- Fonctionnalités -->
+  <div class="layer" id="scene-features">
+    <div style="text-align:center">
+      <div class="headline" style="margin-bottom:64px">Built for <span class="grad">privacy</span> and speed</div>
+      <div class="grid">
+        <div class="card f-card"><div class="ico">🔒</div><h3>100% offline</h3><p>Your text never leaves your device. No server, ever.</p></div>
+        <div class="card f-card"><div class="ico">⚡</div><h3>Instant</h3><p>Local engine corrects as fast as you can read.</p></div>
+        <div class="card f-card"><div class="ico">🌍</div><h3>FR + EN</h3><p>Deep French grammar and native-sounding English.</p></div>
+        <div class="card f-card"><div class="ico">🆓</div><h3>Free forever</h3><p>No account, no limits, open source.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Outro -->
+  <div class="layer" id="scene-outro">
+    <div style="text-align:center">
+      <div class="brand-row" style="justify-content:center; margin-bottom:46px">
+        <div class="mark" style="width:104px;height:104px;border-radius:28px;font-size:62px">K</div>
+        <div class="wordmark" style="font-size:104px">Korr</div>
+      </div>
+      <div class="headline">Write flawlessly.<br><span class="grad">Share nothing.</span></div>
+      <div class="cta" id="outro-platforms"></div>
+      <div class="url" id="outro-url"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ------------------------------------------------------------------
+   Rendu déterministe : chaque image est une fonction pure du temps.
+   Aucune transition CSS, aucun requestAnimationFrame — le moteur de
+   capture appelle seekTo(t) puis photographie, ce qui garantit une
+   vidéo parfaitement fluide quelle que soit la vitesse de rendu.
+   ------------------------------------------------------------------ */
+
+/* Réglages d'affichage : à ajuster avant de relancer le rendu. Le lien final
+   est volontairement le dépôt public, seule adresse vérifiable aujourd'hui —
+   remplacez-le par le domaine du produit dès qu'il est en ligne. */
+const CONFIG = {
+  url: "github.com/geoffreyg81/Korr",
+  platforms: "Browser extension · Web app · Windows app"
+};
+
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+// Progression normalisée de `from` à `to`, avec adoucissement.
+const span = (t, from, to) => clamp((t - from) / (to - from), 0, 1);
+const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+const easeInOut = (t) => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const easeOutBack = (t) => 1 + 2.7 * Math.pow(t - 1, 3) + 1.7 * Math.pow(t - 1, 2);
+// Fondu d'entrée puis de sortie sur un intervalle.
+const inOut = (t, a, b, fade = .45) => Math.min(span(t, a, a + fade), 1 - span(t, b - fade, b));
+
+/* Exemples : sorties réelles du moteur, vérifiées avant tournage. */
+const DEMOS = [
+  {
+    lang: "fr", flag: "FR · French",
+    before: "Parmi les membres du comité, une majorité, a décidée de s’opposer au projet.",
+    after:  "Parmi les membres du comité, une majorité a décidé de s’opposer au projet.",
+    tag: "Agreement", caption: "Comma splitting subject and verb · past participle with « avoir »",
+    type: true
+  },
+  {
+    lang: "fr", flag: "FR · French",
+    before: "Bien qu’ils aient quatres-vingts-dix jours, nous devrions des consultants externes embaucher.",
+    after:  "Bien qu’ils aient quatre-vingt-dix jours, nous devrions embaucher des consultants externes.",
+    tag: "Syntax", caption: "Spelled-out numbers · word order restored to subject–verb–object"
+  },
+  {
+    lang: "fr", flag: "FR · French",
+    before: "Les murs repeints en roses pâles sont horribles, et la moitie des équipes ont décidés de partir.",
+    after:  "Les murs repeints en rose pâle sont horribles, et la moitié des équipes ont décidé de partir.",
+    tag: "Rare rules", caption: "Compound colours stay invariable · missing accent · agreement"
+  },
+  {
+    lang: "en", flag: "EN · English",
+    before: "I am writing you to confirm that I will assist to the meeting tomorrow.",
+    after:  "I am writing to you to confirm that I will attend the meeting tomorrow.",
+    tag: "False friends", caption: "Catches literal translations a French speaker would write"
+  },
+  {
+    lang: "en", flag: "EN · English",
+    before: "There is much problems with the equipment's and we have send ed the feedback's.",
+    after:  "There are many problems with the equipment and we have sent the feedback.",
+    tag: "Uncountables", caption: "Plural agreement · uncountable nouns · irregular past participle"
+  }
+];
+
+/* Diff mot à mot (plus longue sous-séquence commune) pour ne surligner
+   que ce qui change réellement. */
+function diffWords(before, after) {
+  const A = before.split(/(\s+)/), B = after.split(/(\s+)/);
+  const n = A.length, m = B.length;
+  const dp = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+  for (let i = n - 1; i >= 0; i--)
+    for (let j = m - 1; j >= 0; j--)
+      dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  const oldParts = [], newParts = [];
+  let i = 0, j = 0;
+  while (i < n && j < m) {
+    if (A[i] === B[j]) { oldParts.push({ s: A[i], k: 0 }); newParts.push({ s: B[j], k: 0 }); i++; j++; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) { oldParts.push({ s: A[i], k: 1 }); i++; }
+    else { newParts.push({ s: B[j], k: 1 }); j++; }
+  }
+  while (i < n) oldParts.push({ s: A[i++], k: 1 });
+  while (j < m) newParts.push({ s: B[j++], k: 1 });
+  return { oldParts, newParts };
+}
+
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const renderParts = (parts, cls, reveal) => parts.map((p, idx) => {
+  if (!p.k || !p.s.trim()) return esc(p.s);
+  // Les corrections s'allument l'une après l'autre.
+  const on = reveal === undefined ? 1 : clamp(reveal * parts.length - idx * .55, 0, 1);
+  if (cls === "fix" && on <= 0) return `<span style="opacity:.25">${esc(p.s)}</span>`;
+  const style = cls === "fix" ? `background:rgba(74,222,128,${.19 * on});color:${on > .3 ? "#86efac" : "#f4f4f5"}` : "";
+  return `<span class="${cls}" style="${style}">${esc(p.s)}</span>`;
+}).join("");
+
+for (const d of DEMOS) Object.assign(d, diffWords(d.before, d.after));
+
+/* ---------------- Chronologie ---------------- */
+const INTRO = { start: 0, end: 4.6 };
+const APP_IN = 4.2;
+const SCENES = [];
+let cursor = 5.0;
+DEMOS.forEach((demo, index) => {
+  const typing = demo.type ? 2.9 : 1.15;   // le premier exemple se tape en direct
+  const s = {
+    demo,
+    t0: cursor,
+    typeEnd: cursor + typing,
+    click: cursor + typing + 0.55,
+    scanEnd: cursor + typing + 1.35,
+    revealEnd: cursor + typing + 2.5,
+    capIn: cursor + typing + 1.9
+  };
+  s.t1 = s.revealEnd + (index === 0 ? 2.1 : 1.7);
+  SCENES.push(s);
+  cursor = s.t1 + 0.35;
+});
+const APP_OUT = cursor;
+const FEATURES = { start: APP_OUT + 0.35, end: APP_OUT + 5.4 };
+const OUTRO = { start: FEATURES.end - 0.15, end: FEATURES.end + 5.0 };
+const DURATION = OUTRO.end;
+window.KORR_DURATION = DURATION;
+
+const $ = (id) => document.getElementById(id);
+const els = {
+  glowA: $("glow-a"), glowB: $("glow-b"),
+  intro: $("scene-intro"), introMark: $("intro-mark"), introWord: $("intro-word"),
+  introTag: $("intro-tag"), introSub: $("intro-sub"),
+  app: $("app"), boxIn: $("box-in"), before: $("text-before"), hint: $("io-hint"),
+  chipLang: $("chip-lang"), btn: $("btn"), meta: $("meta"),
+  scan: $("scan"), scanBar: $("scan-bar"),
+  caption: $("caption"), capTag: $("cap-tag"), capText: $("cap-text"),
+  features: $("scene-features"), outro: $("scene-outro"),
+  cards: [...document.querySelectorAll(".f-card")]
+};
+const show = (el, opacity, transform) => {
+  el.style.opacity = opacity;
+  el.style.transform = transform || "none";
+  el.style.visibility = opacity <= 0.001 ? "hidden" : "visible";
+};
+
+function seekTo(t) {
+  /* Ambiance : les halos dérivent lentement, ce qui évite une image figée. */
+  els.glowA.style.left = `${-260 + Math.sin(t * 0.21) * 190}px`;
+  els.glowA.style.top = `${-330 + Math.cos(t * 0.17) * 150}px`;
+  els.glowB.style.left = `${1180 + Math.cos(t * 0.19) * 210}px`;
+  els.glowB.style.top = `${540 + Math.sin(t * 0.23) * 170}px`;
+
+  /* ---- Intro ---- */
+  const introVis = 1 - span(t, INTRO.end - 0.6, INTRO.end);
+  if (introVis > 0.001) {
+    const a = easeOutBack(span(t, 0.15, 1.15));
+    show(els.intro, introVis);
+    els.introMark.style.transform = `scale(${lerp(.55, 1, a)}) rotate(${lerp(-14, 0, a)}deg)`;
+    els.introMark.style.opacity = span(t, 0.15, 0.8);
+    const w = easeOut(span(t, 0.5, 1.5));
+    els.introWord.style.opacity = w;
+    els.introWord.style.transform = `translateX(${lerp(-46, 0, w)}px)`;
+    const g = easeOut(span(t, 1.15, 2.1));
+    els.introTag.style.opacity = g;
+    els.introTag.style.transform = `translateY(${lerp(30, 0, g)}px)`;
+    const s = easeOut(span(t, 1.7, 2.6));
+    els.introSub.style.opacity = s * .95;
+    els.introSub.style.transform = `translateY(${lerp(24, 0, s)}px)`;
+    // Sortie : l'ensemble s'éloigne légèrement.
+    const out = easeInOut(span(t, INTRO.end - 0.6, INTRO.end));
+    els.intro.style.transform = `scale(${lerp(1, .94, out)})`;
+  } else show(els.intro, 0);
+
+  /* ---- Fenêtre applicative ---- */
+  const appIn = easeOut(span(t, APP_IN, APP_IN + 0.9));
+  const appOut = easeInOut(span(t, APP_OUT, APP_OUT + 0.7));
+  const appVis = appIn * (1 - appOut);
+  if (appVis > 0.001) {
+    const scale = lerp(.9, 1, appIn) * lerp(1, .93, appOut);
+    const y = lerp(70, 0, appIn) + lerp(0, -50, appOut);
+    show(els.app, appVis, `translate(-50%, calc(-50% + ${y}px)) scale(${scale})`);
+  } else show(els.app, 0);
+
+  /* ---- Scène de correction courante ---- */
+  const scene = SCENES.find((s) => t >= s.t0 - 0.5 && t <= s.t1 + 0.5) || SCENES[SCENES.length - 1];
+  const d = scene.demo;
+  els.chipLang.textContent = d.flag;
+
+  const typed = clamp((t - scene.t0) / (scene.typeEnd - scene.t0), 0, 1);
+  const revealed = span(t, scene.scanEnd, scene.revealEnd);
+  const corrected = t >= scene.scanEnd;
+
+  if (!corrected) {
+    // Frappe au clavier : le texte apparaît caractère par caractère, les
+    // fautes se soulignant dès qu'elles sont complètes.
+    const shown = Math.round(easeInOut(typed) * d.before.length);
+    const partial = d.before.slice(0, shown);
+    let html;
+    if (typed >= 1) {
+      html = renderParts(d.oldParts, "err");
+    } else {
+      html = esc(partial) + (Math.floor(t * 2.2) % 2 ? '<span class="caret"></span>' : '<span class="caret" style="opacity:0"></span>');
+    }
+    els.before.innerHTML = html;
+    els.before.style.color = "";
+  } else {
+    els.before.innerHTML = renderParts(d.newParts, "fix", easeOut(revealed));
+  }
+
+  els.boxIn.className = corrected ? "box out" : "box";
+  els.hint.textContent = corrected ? "Corrected" : (typed >= 1 ? `${d.oldParts.filter((p) => p.k && p.s.trim()).length} issues found` : "");
+  els.hint.style.color = corrected ? "var(--good)" : "var(--bad)";
+
+  // Bouton : léger enfoncement au moment du clic.
+  const press = t >= scene.click && t < scene.click + 0.22 ? 1 : 0;
+  els.btn.style.transform = `scale(${1 - press * 0.045})`;
+  els.btn.style.filter = `brightness(${1 + (t >= scene.click - 0.35 && t < scene.click ? 0.16 : 0)})`;
+
+  // Barre de traitement pendant l'analyse.
+  const scanning = t >= scene.click && t < scene.scanEnd;
+  els.scan.style.display = scanning ? "block" : "none";
+  if (scanning) {
+    const p = span(t, scene.click, scene.scanEnd);
+    els.scanBar.style.left = `${lerp(-34, 100, p)}%`;
+  }
+
+  els.meta.innerHTML = corrected
+    ? `<b>${d.newParts.filter((p) => p.k && p.s.trim()).length} corrections</b> · 12 ms · on-device`
+    : "";
+
+  /* ---- Légende de la règle ---- */
+  const capVis = inOut(t, scene.capIn, scene.t1 + 0.3, 0.4);
+  if (capVis > 0.001) {
+    els.capTag.textContent = d.tag;
+    els.capText.textContent = d.caption;
+    const e = easeOut(clamp(capVis * 1.6, 0, 1));
+    show(els.caption, capVis, `translateX(-50%) translateY(${lerp(34, 0, e)}px)`);
+  } else show(els.caption, 0);
+
+  /* ---- Grille de fonctionnalités ---- */
+  const featVis = inOut(t, FEATURES.start, FEATURES.end, 0.5);
+  if (featVis > 0.001) {
+    show(els.features, featVis);
+    els.cards.forEach((card, index) => {
+      const a = easeOut(span(t, FEATURES.start + 0.25 + index * 0.13, FEATURES.start + 1.0 + index * 0.13));
+      card.style.opacity = a;
+      card.style.transform = `translateY(${lerp(46, 0, a)}px) scale(${lerp(.95, 1, a)})`;
+    });
+  } else show(els.features, 0);
+
+  /* ---- Outro ---- */
+  const outroVis = span(t, OUTRO.start + 0.35, OUTRO.start + 1.1) * (1 - span(t, OUTRO.end - 0.5, OUTRO.end));
+  if (outroVis > 0.001) {
+    const a = easeOut(span(t, OUTRO.start + 0.35, OUTRO.start + 1.3));
+    show(els.outro, outroVis, `scale(${lerp(.96, 1, a)})`);
+  } else show(els.outro, 0);
+}
+
+document.getElementById("outro-url").textContent = CONFIG.url;
+document.getElementById("outro-platforms").textContent = CONFIG.platforms;
+
+window.seekTo = seekTo;
+seekTo(0);
+</script>
+</body>
+</html>
