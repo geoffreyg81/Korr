@@ -285,6 +285,26 @@ const cases = [
   ["Il est très content.", "Il est très content."],
   // Accent perdu sur un nom que le dictionnaire connaît comme forme verbale.
   ["La moitie du dossier manque.", "La moitié du dossier manque."],
+  // Infinitif en -er écrit pour le participe passé, derrière un auxiliaire.
+  ["Nous avons manger la pomme.", "Nous avons mangé la pomme."],
+  ["La police ne les a pas encore analyser.", "La police ne les a pas encore analysés."],
+  // Garde-fou : après une préposition, l’infinitif est bien à sa place.
+  ["Il reste des dossiers à analyser.", "Il reste des dossiers à analyser."],
+  ["J’ai à envoyer le rapport.", "J’ai à envoyer le rapport."],
+  // « à » mis pour l’auxiliaire « a » après un pronom.
+  ["Il à mangé trop vite.", "Il a mangé trop vite."],
+  ["Il faut prendre garde à ne pas tomber.", "Il faut prendre garde à ne pas tomber."],
+  // « ce sont » suivi d’un participe est un pronominal mal orthographié.
+  ["Les femmes ce sont enfin calmées.", "Les femmes se sont enfin calmées."],
+  ["Ce sont des dossiers classés.", "Ce sont des dossiers classés."],
+  // Complément rejeté derrière l’infinitif, après une préposition.
+  [
+    "Il faut prendre garde à ne pas la scène de crime contaminer.",
+    "Il faut prendre garde à ne pas contaminer la scène de crime."
+  ],
+  // Locutions figées.
+  ["Je vous pris de m’envoyer le rapport.", "Je vous prie de m’envoyer le rapport."],
+  ["Le rapport arrivera, quoi quel arrivant.", "Le rapport arrivera, quoi qu’il arrive."],
   // Avec « si » au présent, le futur est correct.
   ["Si tu viens, je serai là.", "Si tu viens, je serai là."],
   ["Si tu as le temps, nous irons au cinéma.", "Si tu as le temps, nous irons au cinéma."],

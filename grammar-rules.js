@@ -904,6 +904,20 @@ function grammalecte() {
       }
     );
 
+    // Même inversion après une préposition qui introduit l’infinitif :
+    // « prendre garde à ne pas la scène contaminer ». Un infinitif en fin de
+    // proposition, précédé de son propre complément, n’a pas d’autre lecture.
+    replace(
+      /(?<![\p{L}\p{N}])((?:à|de|d[’']|pour|sans)\s+(?:ne\s+(?:pas|jamais|plus)\s+)?)((?:le|la|les|l[’']|un|une|des|ce|cet|cette|ces|mon|ma|mes|son|sa|ses|notre|nos|votre|vos|leur|leurs)\s*[^.,;:!?…\n]{2,40}?)\s+([\p{L}]+(?:er|ir|re|oir))(?=\s*[.,;:!?…]|\s*$)/giu,
+      (match, opening, object, infinitive) => {
+        if (!isInfinitive(infinitive)) return match;
+        // Le complément ne doit pas déjà contenir un verbe conjugué : ce serait
+        // une proposition complète, et non un groupe nominal déplacé.
+        if ((object.match(/[\p{L}’-]+/gu) || []).some(isConjugatedVerbForm)) return match;
+        return `${opening}${infinitive} ${object}`;
+      }
+    );
+
     // Adjectifs strictement invariables : les formes accordées ci-dessous
     // n’existent pas en français, la substitution est donc sans contexte.
     replace(INVARIABLE_ADJECTIVE_PATTERN, (match) =>
@@ -967,6 +981,47 @@ function grammalecte() {
         const head = whole.slice(Math.max(0, offset - 40), offset).match(/([\p{L}’-]+)\s+$/u)?.[1] || "";
         const plural = /s$/u.test(head) && !/^(?:pas|plus|très|est|sont)$/iu.test(head);
         return `${intensifier}${preserveCase(word, plural ? `${adjective}s` : adjective)}`;
+      }
+    );
+
+    // « à » pour l’auxiliaire « a ». La préposition est impossible après un
+    // pronom sujet ou un pronom complément, et ce qui suit est une forme
+    // verbale : les deux conditions lèvent toute ambiguïté avec « garde à ne
+    // pas… », où « à » est bien une préposition.
+    replace(
+      /(?<![\p{L}\p{N}])((?:je|tu|il|elle|on|ils|elles|les|le|la|l[’']|nous|vous|me|te|se|en|y)\s+)à(?=\s+(?:(?:ne|n[’']|pas|plus|jamais|encore|déjà|toujours|bien|enfin|eu|été)\s+)*[\p{L}]+(?:er|é|ée|és|ées|ie|ies|is|it|u|ue|us|ues)(?![\p{L}\p{N}]))/giu,
+      "$1a"
+    );
+
+    // Infinitif en -er écrit à la place du participe passé après un auxiliaire :
+    // « la police ne les a pas encore analyser » → « analysé ». Seul un
+    // auxiliaire, éventuellement suivi d’adverbes, déclenche la règle ; une
+    // préposition (« j’ai à envoyer ») laisse bien l’infinitif en place.
+    replace(
+      new RegExp(
+        String.raw`(?<![\p{L}\p{N}])((?:${[...HAVING_AUXILIARIES, ...BEING_AUXILIARIES].join("|")})` +
+        String.raw`(?:\s+(?:${INFINITIVE_BLOCKING_ADVERBS.join("|")}))*)\s+([\p{L}]+er)(?![\p{L}\p{N}])`,
+        "gu"
+      ),
+      (match, auxiliaryGroup, verb) => {
+        if (!isInfinitive(verb)) return match;
+        const participle = `${verb.slice(0, -2)}é`;
+        if (!isParticiple(participle)) return match;
+        return `${auxiliaryGroup} ${preserveCase(verb, participle)}`;
+      }
+    );
+
+    // « ce sont calmées » : le démonstratif est mis pour le pronom réfléchi.
+    // Un participe passé derrière « ce sont » n’a aucune lecture correcte, à la
+    // différence de « ce sont des collègues ».
+    replace(
+      /(?<![\p{L}\p{N}])ce\s+(sont|étaient|seront|seraient)\s+((?:[\p{L}’-]+\s+)?)([\p{L}]+(?:é|ée|és|ées|i|ie|is|ies|u|ue|us|ues))(?![\p{L}\p{N}])/giu,
+      (match, verb, adverb, participle) => {
+        if (!isParticiple(participle)) return match;
+        // Le mot intercalé doit être un adverbe, sinon « ce sont des dossiers
+        // classés » serait pris pour un pronominal.
+        if (adverb.trim() && !isAdverb(adverb.trim())) return match;
+        return `${preserveCase(match, "se")} ${verb} ${adverb}${participle}`;
       }
     );
 
@@ -1477,8 +1532,37 @@ function grammalecte() {
     // « dont » contient déjà « de » : le doubler est fautif.
     [/\bde\s+(?:ça|cela|celà)\s+dont\b/giu, "ce dont"],
     [/\bde\s+(?:ce|celui|celle)\s+dont\b/giu, "ce dont"],
-    [/\bc[’']est\s+de\s+lui\s+dont\b/giu, "c’est de lui que"]
+    [/\bc[’']est\s+de\s+lui\s+dont\b/giu, "c’est de lui que"],
+    // « je vous prie » : « pris » est le passé simple de « prendre », qui ne se
+    // construit pas avec « de » + infinitif.
+    [/\b(je\s+vous\s+)pris(?=\s+de(?![\p{L}\p{N}]))/giu, "$1prie"],
+    // « quoi qu’il arrive » : la locution figée admet plusieurs graphies
+    // fautives, toutes phonétiquement proches.
+    [/\bquoi\s+qu[’']?\s*(?:el|elle|il)\s+arrivan?t(?![\p{L}\p{N}])/giu, "quoi qu’il arrive"],
+    [/\bquoi\s+que\s+il\s+arrive(?![\p{L}\p{N}])/giu, "quoi qu’il arrive"],
+    // « être habitué à » : « dont » ne peut pas reprendre un complément en « à ».
+    [/\b(affaires?|situations?|choses?)\s+dont\s+(je|tu|il|elle|nous|vous|ils|elles)\s+(ne\s+)?(suis|es|est|sommes|êtes|sont)\s+(pas\s+)?habitué(e?s?)(?![\p{L}\p{N}])/giu,
+      (match, noun, subject, negation, verb, negationEnd, ending) =>
+        `${noun} ${/s$/u.test(noun) ? "auxquelles" : "à laquelle"} ${subject} ${negation || ""}${verb} ${negationEnd || ""}habitué${ending}`]
   ];
+
+  const BEING_AUXILIARIES = [
+    "suis", "es", "est", "sommes", "êtes", "sont",
+    "étais", "était", "étions", "étiez", "étaient", "été",
+    "serai", "seras", "sera", "serons", "serez", "seront"
+  ];
+
+  // Adverbes qui peuvent s’intercaler entre l’auxiliaire et le participe sans
+  // rompre la construction.
+  const INFINITIVE_BLOCKING_ADVERBS = [
+    "ne", "n[’']", "pas", "plus", "jamais", "encore", "déjà", "toujours",
+    "bien", "mal", "vite", "enfin", "rien", "guère", "même", "tout", "très",
+    "peut-être", "sans\\s+doute", "aussi", "beaucoup", "trop"
+  ];
+
+  function isAdverb(word) {
+    return morphOf(word).some((morph) => /:W(?![\p{L}\p{N}])/u.test(morph));
+  }
 
   const HAVING_AUXILIARIES = [
     "ai", "as", "a", "avons", "avez", "ont",
