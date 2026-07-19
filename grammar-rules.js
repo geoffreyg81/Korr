@@ -52,48 +52,64 @@ function grammalecte() {
       return { ...cached, durationMs: Math.round(performance.now() - startedAt) };
     }
 
+    // Les règles contextuelles et Grammalecte se débloquent mutuellement : une
+    // correction de l'un fait souvent apparaître un motif que l'autre sait
+    // corriger (« à » → « a » ouvre la voie à « analyser » → « analysés »).
+    // Le pipeline entier converge donc en interne, jusqu'à un point fixe :
+    // l'utilisateur ne doit jamais avoir à cliquer deux fois.
     let correctedText = normalizedText;
-    const contextualResult = correctHighConfidenceContextualPatterns(correctedText);
-    correctedText = contextualResult.text;
-    const contractionResult = correctExplicitPluralContractions(correctedText);
-    correctedText = contractionResult.text;
-    let correctionCount = contextualResult.corrections + contractionResult.corrections;
+    let correctionCount = 0;
+    let smsDetected = false;
 
-    // Grammalecte travaille paragraphe par paragraphe : chaque paragraphe
-    // converge donc séparément, et un paragraphe déjà correct n’est analysé
-    // qu’une seule fois même si un voisin demande trois passes. Les paragraphes
-    // déjà vus (brouillon re-corrigé après ajout d’un passage) sortent du cache.
-    correctedText = correctedText
-      .split("\n")
-      .map((paragraph) => {
-        if (!paragraph.trim()) return paragraph;
+    for (let cycle = 0; cycle < 4; cycle += 1) {
+      const beforeCycle = correctedText;
 
-        const cacheKey = `${contextualResult.smsDetected ? "s" : "n"}:${paragraph}`;
-        const cachedParagraph = paragraphCache.get(cacheKey);
-        if (cachedParagraph) {
-          paragraphCache.delete(cacheKey);
-          paragraphCache.set(cacheKey, cachedParagraph);
-          correctionCount += cachedParagraph.corrections;
-          return cachedParagraph.text;
-        }
+      const contextualResult = correctHighConfidenceContextualPatterns(correctedText);
+      correctedText = contextualResult.text;
+      if (cycle === 0) smsDetected = contextualResult.smsDetected;
+      const contractionResult = correctExplicitPluralContractions(correctedText);
+      correctedText = contractionResult.text;
+      correctionCount += contextualResult.corrections + contractionResult.corrections;
 
-        let current = paragraph;
-        let paragraphCorrections = 0;
-        for (let pass = 0; pass < 3; pass += 1) {
-          const result = correctOnePass(current, contextualResult.smsDetected);
-          paragraphCorrections += result.corrections;
-          if (result.text === current) break;
-          current = result.text;
-        }
+      // Grammalecte travaille paragraphe par paragraphe : chaque paragraphe
+      // converge donc séparément, et un paragraphe déjà correct n’est analysé
+      // qu’une seule fois même si un voisin demande trois passes. Les
+      // paragraphes déjà vus (brouillon re-corrigé après ajout d’un passage,
+      // cycles suivants du point fixe) sortent du cache.
+      correctedText = correctedText
+        .split("\n")
+        .map((paragraph) => {
+          if (!paragraph.trim()) return paragraph;
 
-        correctionCount += paragraphCorrections;
-        paragraphCache.set(cacheKey, { text: current, corrections: paragraphCorrections });
-        if (paragraphCache.size > PARAGRAPH_CACHE_LIMIT) {
-          paragraphCache.delete(paragraphCache.keys().next().value);
-        }
-        return current;
-      })
-      .join("\n");
+          const cacheKey = `${smsDetected ? "s" : "n"}:${paragraph}`;
+          const cachedParagraph = paragraphCache.get(cacheKey);
+          if (cachedParagraph) {
+            paragraphCache.delete(cacheKey);
+            paragraphCache.set(cacheKey, cachedParagraph);
+            correctionCount += cachedParagraph.corrections;
+            return cachedParagraph.text;
+          }
+
+          let current = paragraph;
+          let paragraphCorrections = 0;
+          for (let pass = 0; pass < 3; pass += 1) {
+            const result = correctOnePass(current, smsDetected);
+            paragraphCorrections += result.corrections;
+            if (result.text === current) break;
+            current = result.text;
+          }
+
+          correctionCount += paragraphCorrections;
+          paragraphCache.set(cacheKey, { text: current, corrections: paragraphCorrections });
+          if (paragraphCache.size > PARAGRAPH_CACHE_LIMIT) {
+            paragraphCache.delete(paragraphCache.keys().next().value);
+          }
+          return current;
+        })
+        .join("\n");
+
+      if (correctedText === beforeCycle) break;
+    }
 
     // Quelques conventions typographiques sont susceptibles d’être annulées
     // par la capitalisation de début de phrase ou une passe grammaticale. Le
@@ -119,7 +135,7 @@ function grammalecte() {
     const result = {
       text: correctedText,
       corrections: correctionCount,
-      smsDetected: contextualResult.smsDetected
+      smsDetected
     };
     resultCache.set(normalizedText, result);
     if (resultCache.size > RESULT_CACHE_LIMIT) {
@@ -1102,7 +1118,13 @@ function grammalecte() {
         String.raw`\s*,\s+(${SUBJECT_VERB_AFTER_COMMA.join("|")})(?![-\p{L}])`,
         "giu"
       ),
-      "$1$2 $3"
+      (match, prefix, subject, verb) => {
+        // Un vrai groupe sujet ne contient pas de verbe conjugué : « dont
+        // l'ordinateur a planté, est partie » est une relative complète dont la
+        // virgule est légitime.
+        if ((subject.match(/[\p{L}’-]+/gu) || []).some(isConjugatedVerbForm)) return match;
+        return `${prefix}${subject} ${verb}`;
+      }
     );
 
     // Un insecte pique : « vénéneux » qualifie ce qui est toxique lorsqu’on
@@ -1117,6 +1139,9 @@ function grammalecte() {
     replace(/\b(la\s+plupart\s+des\s+employés)\s*,\s+(ont\b)/giu, "$1 $2");
     replace(/(?:\?\s*){2,}/gu, (match) => match.replace(/\s/gu, ""));
     replace(/(?:!\s*){2,}/gu, (match) => match.replace(/\s/gu, ""));
+    // « ?! » forme un tout : l'espace que la typographie insère devant chaque
+    // signe isolé ne s'applique pas entre les deux.
+    replace(/([!?])[\s  ]+(?=[!?])/gu, "$1");
     replace(
       /(^|[.!?…]\s+|\n\s*)(il|elle|je|tu|nous|vous|on|le|la|les|un|une|ce|ça|c’est)(?=\s)/gu,
       (match, prefix, word) => `${prefix}${word.slice(0, 1).toLocaleUpperCase("fr-FR")}${word.slice(1)}`

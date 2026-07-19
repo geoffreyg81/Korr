@@ -513,27 +513,40 @@
   }
 
   async function correctWithHarper(linter, source) {
-    const rulesResult = applyEnglishRules(source);
-    const lints = await linter.lint(rulesResult.text, { language: "plaintext" });
-    const applicable = lints
-      .filter((lint) => lint.suggestion_count() > 0)
-      .filter(shouldApplyHarperLint)
-      .sort((left, right) => right.span().start - left.span().start);
+    // Les règles et Harper se débloquent mutuellement : une correction de
+    // l'un fait parfois apparaître un motif que l'autre sait corriger. Le
+    // couple converge donc vers un point fixe, comme le moteur français —
+    // l'utilisateur ne doit jamais avoir à relancer la correction.
+    let text = source;
+    let corrections = 0;
 
-    let text = rulesResult.text;
-    let corrections = rulesResult.corrections;
-    let nextBoundary = Infinity;
+    for (let cycle = 0; cycle < 4; cycle += 1) {
+      const beforeCycle = text;
 
-    for (const lint of applicable) {
-      const span = lint.span();
-      if (span.end > nextBoundary) continue;
-      const suggestion = lint.suggestions()[0];
-      const updated = await linter.applySuggestion(text, lint, suggestion);
-      if (updated !== text) {
-        text = updated;
-        corrections += 1;
-        nextBoundary = span.start;
+      const rulesResult = applyEnglishRules(text);
+      text = rulesResult.text;
+      corrections += rulesResult.corrections;
+
+      const lints = await linter.lint(text, { language: "plaintext" });
+      const applicable = lints
+        .filter((lint) => lint.suggestion_count() > 0)
+        .filter(shouldApplyHarperLint)
+        .sort((left, right) => right.span().start - left.span().start);
+
+      let nextBoundary = Infinity;
+      for (const lint of applicable) {
+        const span = lint.span();
+        if (span.end > nextBoundary) continue;
+        const suggestion = lint.suggestions()[0];
+        const updated = await linter.applySuggestion(text, lint, suggestion);
+        if (updated !== text) {
+          text = updated;
+          corrections += 1;
+          nextBoundary = span.start;
+        }
       }
+
+      if (text === beforeCycle) break;
     }
 
     return { text, corrections };
