@@ -66,4 +66,4 @@ politique en le lisant.
 
 ## Contact
 
-Pour toute question : g.giner81@gmail.com
+Pour toute question : contact@peekrapp.com

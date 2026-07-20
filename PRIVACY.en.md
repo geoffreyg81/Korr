@@ -60,4 +60,4 @@ can inspect the source code and verify the statements in this policy.
 
 ## Contact
 
-For questions, contact: g.giner81@gmail.com
+For questions, contact: contact@peekrapp.com

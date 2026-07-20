@@ -108,14 +108,38 @@ top of this document.
 
 These terms are governed by **French law**.
 
-In the event of a dispute, and failing an amicable settlement, the French courts
-have jurisdiction. Consumers may use a consumer mediation service free of charge
-or bring proceedings before the courts of their place of residence, in
-accordance with applicable law.
+In the event of a dispute, an amicable solution will be sought first. Any
+complaint may be sent to contact@peekrapp.com.
 
-## 13. Contact
+As the service is provided free of charge, no contract of sale is concluded with
+the user. Failing an amicable settlement, the French courts have jurisdiction;
+consumers retain the right to bring proceedings before the courts of their place
+of residence, in accordance with applicable law.
 
-**g.giner81@gmail.com**
+<!-- TO COMPLETE ONCE A PAID OFFERING EXISTS: a professional selling to
+     consumers must join a consumer mediation scheme and state its name and
+     website here (articles L. 616-1 and R. 616-1 of the French consumer code).
+     The obligation does not apply while the service remains entirely free. -->
+
+## 13. Right of withdrawal
+
+The service is provided free of charge and involves no payment: no right of
+withdrawal applies as things stand.
+
+<!-- TO REVIEW IF A PAID OFFERING EXISTS: supplying digital content without a
+     physical medium follows a specific regime. The consumer must expressly
+     consent to immediate performance and waive their right of withdrawal;
+     otherwise they keep fourteen days to withdraw. -->
+
+## 14. Severability
+
+If any of these clauses is held void or unenforceable, the remaining clauses
+keep full effect.
+
+## 15. Contact
+
+Any question or complaint regarding these terms:
+**contact@peekrapp.com**
 
 ---
 

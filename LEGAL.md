@@ -4,17 +4,18 @@ _Dernière mise à jour : 20 juillet 2026_
 
 ## Éditeur du site et de l'application
 
-<!-- À COMPLÉTER : ces informations sont légalement obligatoires (article 6-III
-     de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l'économie
-     numérique). Voir la note en fin de document sur l'adresse. -->
 
-- **Éditeur** : [Nom et prénom, ou dénomination sociale]
-- **Statut** : [Personne physique / Auto-entrepreneur / SASU / SARL…]
-- **Adresse** : [Adresse postale]
-- **Contact** : g.giner81@gmail.com
-- **Directeur de la publication** : [Nom et prénom]
-- **Numéro SIREN/SIRET** : [Le cas échéant]
-- **Numéro de TVA intracommunautaire** : [Le cas échéant]
+
+- **Éditeur** : Geoffrey Giner
+- **Statut** : Entrepreneur individuel (auto-entrepreneur)
+- **Adresse** : [Numéro et rue], [Code postal] Pont-de-Larn, France
+- **Téléphone** : [À COMPLÉTER — obligatoire pour un professionnel]
+- **Contact** : contact@peekrapp.com
+- **Numéro SIREN** : [À COMPLÉTER — obligatoire]
+- **TVA** : TVA non applicable, article 293 B du code général des impôts
+  <!-- Si vous n'êtes plus en franchise en base, remplacez cette ligne par
+       votre numéro de TVA intracommunautaire. -->
+- **Directeur de la publication** : Geoffrey Giner
 
 ## Hébergement
 
@@ -24,7 +25,7 @@ Le site est hébergé par :
 - 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis
 - <https://vercel.com>
 
-<!-- À VÉRIFIER : confirmez l'adresse exacte sur vercel.com avant publication. -->
+
 
 L'application Windows et l'extension de navigateur ne sont pas hébergées : elles
 s'exécutent entièrement sur l'appareil de l'utilisateur. Les fichiers
@@ -33,7 +34,7 @@ San Francisco, CA 94107, États-Unis).
 
 ## Nature du service
 
-Korr est un correcteur orthographique et grammaticale pour le français et
+Korr est un correcteur orthographique et grammatical pour le français et
 l'anglais. **Le traitement du texte est intégralement local** : il s'effectue
 dans le navigateur ou sur l'ordinateur de l'utilisateur.
 
@@ -78,20 +79,29 @@ les [conditions générales d'utilisation](TERMS.md).
 ## Contact
 
 Pour toute question relative au site, à l'application ou aux présentes mentions
-légales : **g.giner81@gmail.com**
+légales : **contact@peekrapp.com**
 
 ---
 
-### Note sur l'adresse de l'éditeur
+### Note sur les mentions obligatoires
 
-Si vous publiez Korr **à titre non professionnel**, en tant que personne
-physique, la loi vous autorise à ne pas rendre publics vos nom et adresse, à
-condition d'avoir communiqué ces informations à votre hébergeur, qui les tiendra
-à disposition des autorités. Dans ce cas, ces mentions se limitent au nom de
-l'hébergeur et à un moyen de contact.
+L'éditeur exerce sous le statut d'entrepreneur individuel. Il s'agit d'une
+**activité professionnelle** : la dispense de publication de l'identité, ouverte
+aux seuls éditeurs non professionnels, ne s'applique pas.
 
-Dès lors que Korr génère un revenu, même accessoire, cette dispense tombe :
-l'identité complète et, le cas échéant, le numéro SIRET deviennent obligatoires.
+L'article 6-III-1 de la loi n° 2004-575 du 21 juin 2004 impose donc de faire
+figurer, en accès direct depuis le site :
+
+- les nom et prénom de l'éditeur ;
+- son adresse complète ;
+- son numéro de téléphone ;
+- son numéro d'inscription au répertoire des entreprises (SIREN) ;
+- son numéro de TVA intracommunautaire s'il y est assujetti ;
+- le nom du directeur de la publication ;
+- les coordonnées de l'hébergeur.
+
+Ces obligations valent que le service soit gratuit ou payant, dès lors qu'il
+s'inscrit dans une activité professionnelle déclarée.
 
 ### Avertissement
 

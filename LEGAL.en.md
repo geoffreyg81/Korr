@@ -4,17 +4,19 @@ _Last updated: 20 July 2026_
 
 ## Publisher
 
-<!-- TO COMPLETE: these details are legally required in France (article 6-III
-     of Act no. 2004-575 of 21 June 2004). See the note at the end about the
-     address. -->
 
-- **Publisher**: [Full name or company name]
-- **Status**: [Individual / Sole trader / Company]
-- **Address**: [Postal address]
-- **Contact**: g.giner81@gmail.com
-- **Publication director**: [Full name]
-- **Company registration number**: [If applicable]
-- **VAT number**: [If applicable]
+
+- **Publisher**: Geoffrey Giner
+- **Status**: Sole trader (French *entrepreneur individuel*)
+- **Address**: [Street], [Postcode] Pont-de-Larn, France
+- **Telephone**: [TO COMPLETE — mandatory for a professional]
+- **Contact**: contact@peekrapp.com
+- **Company registration number (SIREN)**: [TO COMPLETE — mandatory]
+- **VAT**: VAT not applicable, article 293 B of the French tax code
+  <!-- If you are no longer under the VAT exemption scheme, replace this line
+       with your intra-Community VAT number. -->
+- **Publication director**: Geoffrey Giner
+
 
 ## Hosting
 
@@ -24,7 +26,6 @@ The website is hosted by:
 - 440 N Barranca Ave #4133, Covina, CA 91723, United States
 - <https://vercel.com>
 
-<!-- TO VERIFY: confirm the exact address on vercel.com before publishing. -->
 
 The Windows application and the browser extension are not hosted anywhere: they
 run entirely on the user's device. Installation files are distributed through
@@ -74,20 +75,29 @@ send**. Full terms are set out in the [terms of use](TERMS.en.md).
 ## Contact
 
 For any question about the website, the application or this notice:
-**g.giner81@gmail.com**
+**contact@peekrapp.com**
 
 ---
 
-### Note on the publisher's address
+### Note on mandatory disclosures
 
-If you publish Korr **on a non-professional basis**, as an individual, French
-law allows you not to disclose your name and address publicly, provided you have
-given them to your host, who keeps them available to the authorities. In that
-case this notice is limited to the host's identity and a means of contact.
+The publisher operates as a sole trader. This is a **professional activity**:
+the exemption from disclosing one's identity, available only to non-professional
+publishers, does not apply.
 
-As soon as Korr generates any revenue, even incidental, that exemption no longer
-applies: full identity and, where relevant, the company registration number
-become mandatory.
+Article 6-III-1 of French Act no. 2004-575 of 21 June 2004 therefore requires
+the following to be directly accessible from the website:
+
+- the publisher's first name and surname;
+- their full address;
+- their telephone number;
+- their company registration number (SIREN);
+- their intra-Community VAT number, if VAT-registered;
+- the name of the publication director;
+- the host's contact details.
+
+These obligations apply whether the service is free or paid, as soon as it forms
+part of a declared professional activity.
 
 ### Disclaimer
 

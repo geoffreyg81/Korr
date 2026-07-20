@@ -114,14 +114,39 @@ dernière mise à jour figure en tête de document.
 
 Les présentes conditions sont soumises au **droit français**.
 
-En cas de litige, et à défaut de résolution amiable, les tribunaux français
-sont compétents. Le consommateur peut recourir gratuitement à un médiateur de
-la consommation ou saisir la juridiction de son lieu de résidence,
-conformément aux dispositions applicables.
+En cas de litige, une solution amiable sera recherchée en priorité. Toute
+réclamation peut être adressée à contact@peekrapp.com.
 
-## 13. Contact
+Le service étant fourni à titre gratuit, aucun contrat de vente n'est conclu
+avec l'utilisateur. À défaut de résolution amiable, les tribunaux français sont
+compétents ; le consommateur conserve la faculté de saisir la juridiction de son
+lieu de résidence, conformément aux dispositions applicables.
 
-**g.giner81@gmail.com**
+<!-- À COMPLÉTER LE JOUR OÙ UNE OFFRE PAYANTE EXISTE : un professionnel qui
+     vend à des consommateurs doit adhérer à un dispositif de médiation de la
+     consommation et en indiquer ici le nom et l'adresse du site (articles
+     L. 616-1 et R. 616-1 du code de la consommation). L'obligation ne
+     s'applique pas tant que le service reste entièrement gratuit. -->
+
+## 13. Droit de rétractation
+
+Le service est fourni gratuitement et ne donne lieu à aucun paiement : aucun
+droit de rétractation ne trouve à s'appliquer en l'état.
+
+<!-- À REVOIR EN CAS D'OFFRE PAYANTE : la fourniture d'un contenu numérique
+     sans support matériel obéit à un régime particulier. Le consommateur doit
+     consentir expressément à l'exécution immédiate et renoncer à son droit de
+     rétractation, faute de quoi il conserve quatorze jours pour se rétracter. -->
+
+## 14. Nullité partielle
+
+Si l'une des présentes clauses était déclarée nulle ou inapplicable, les autres
+clauses conserveraient leur plein effet.
+
+## 15. Contact
+
+Toute question ou réclamation relative aux présentes conditions :
+**contact@peekrapp.com**
 
 ---
 
