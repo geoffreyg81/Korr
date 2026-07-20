@@ -65,11 +65,31 @@ function Save-Config($config) {
 $script:config = Load-Config
 
 # --- Appel du backend -------------------------------------------------------
-function Invoke-Backend($text) {
-  $payload = @{ mode = $script:config.mode; style = $script:config.style; text = $text } | ConvertTo-Json -Depth 3
+function Invoke-Backend($text, $language = "auto") {
+  $payload = @{ mode = $script:config.mode; style = $script:config.style; text = $text; language = $language } |
+    ConvertTo-Json -Depth 3
   $bytes = [System.Text.Encoding]::UTF8.GetBytes($payload)
   return Invoke-RestMethod -Uri "$backendUrl/api/correct" -Method Post `
     -ContentType "application/json; charset=utf-8" -Body $bytes -TimeoutSec 180
+}
+
+# Sur un texte réellement bilingue, le moteur refuse de trancher seul : envoyer
+# le tout à un seul dictionnaire ferait « corriger » les mots de l'autre langue.
+# Plutôt que de renvoyer l'utilisateur vers un réglage, on lui pose la question.
+function Get-MixedLanguageChoice {
+  $title = Get-KorrText -Fr "Texte bilingue" -En "Mixed-language text"
+  $message = Get-KorrText `
+    -Fr "Ce texte mélange le français et l'anglais. Dans quelle langue faut-il le corriger ?`n`n Oui = Français`n Non = Anglais" `
+    -En "This text mixes French and English. Which language should Korr correct it in?`n`n Yes = French`n No = English"
+  $answer = [System.Windows.Forms.MessageBox]::Show(
+    $message, $title,
+    [System.Windows.Forms.MessageBoxButtons]::YesNoCancel,
+    [System.Windows.Forms.MessageBoxIcon]::Question)
+  switch ($answer) {
+    ([System.Windows.Forms.DialogResult]::Yes) { return "fr" }
+    ([System.Windows.Forms.DialogResult]::No)  { return "en" }
+    default { return $null }
+  }
 }
 
 function Start-BackendIfDown {
@@ -449,12 +469,21 @@ function Invoke-CorrectionCore {
   }
 
   if ($result.engine -eq "mixed") {
-    [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $copySequence)
-    Show-Balloon `
-      (Get-KorrText -Fr "Texte bilingue détecté" -En "Mixed-language text detected") `
-      (Get-KorrText -Fr "Sélectionnez séparément la partie française ou anglaise, puis relancez Korr." -En "Select only the French or English section, then run Korr again.") `
-      "Warning"
-    return
+    $chosen = Get-MixedLanguageChoice
+    if (-not $chosen) {
+      [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $copySequence)
+      return
+    }
+    try {
+      $result = Invoke-Backend $selection $chosen
+    } catch {
+      [void](Try-RestoreClipboardSnapshot $clipboardSnapshot $copySequence)
+      Show-Balloon `
+        (Get-KorrText -Fr "Correction impossible" -En "Correction failed") `
+        (Get-KorrText -Fr "Le moteur n'a pas répondu. Réessayez dans un instant." -En "The engine did not respond. Please try again in a moment.") `
+        "Warning"
+      return
+    }
   }
 
   if ($result.text -eq $selection) {

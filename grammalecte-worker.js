@@ -45,7 +45,8 @@ function initialize() {
 
   // Les règles trouvent « gc_engine » dans la portée globale du Worker,
   // exactement comme dans le contexte « vm » du backend Node.
-  importScripts("grammar-rules.js");
+  // Les jeux de mots servent aux gardes anti-massacre de l'autre langue.
+  importScripts("language-detection.js", "grammar-rules.js");
   ready = true;
 }
 

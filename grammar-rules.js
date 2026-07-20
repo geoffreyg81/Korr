@@ -2295,6 +2295,11 @@ function grammalecte() {
     // le rapprocher d'un mot français produit des absurdités (« team » →
     // « tram », « dead » → « deal », « Kgs » → « KGy »).
     if (ENGLISH_LOANWORDS.has(source)) return false;
+    // Un mot anglais courant dans un texte français est un choix de l'auteur,
+    // pas une faute : sans cette garde, « the meeting » devient « thé meeting »
+    // et « je suis late » devient « je suis latte ». Indispensable dès que
+    // l'utilisateur impose une langue à un texte réellement bilingue.
+    if (globalThis.korrLanguage?.isEnglishWord?.(source)) return false;
     // Un mot français ne contient ni chiffre, ni apostrophe, ni trait d’union.
     if (/[\d’'\-]/u.test(source)) return false;
     return true;

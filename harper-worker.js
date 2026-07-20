@@ -3,6 +3,7 @@
 
 import { Dialect, LocalLinter } from "./vendor/harper/index.js";
 import { binary } from "./vendor/harper/binary.js";
+import "./language-detection.js";
 import "./english-rules.js";
 
 const linter = new LocalLinter({ binary, dialect: Dialect.American });

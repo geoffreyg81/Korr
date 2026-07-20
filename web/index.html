@@ -59,6 +59,13 @@
             <span id="engine-state" class="engine-state" data-i18n="loading">Loading the grammar checker…</span>
             <button id="correct" class="primary" type="button" disabled data-i18n="correct">Correct</button>
           </div>
+          <div id="mixed-choice" class="mixed-choice" hidden>
+            <span data-i18n="mixedAsk">This text mixes French and English. Which language should Korr correct it in?</span>
+            <span class="mixed-actions">
+              <button id="force-fr" class="secondary" type="button">Français</button>
+              <button id="force-en" class="secondary" type="button">English</button>
+            </span>
+          </div>
         </div>
 
         <div id="result" class="result" hidden>

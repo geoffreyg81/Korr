@@ -101,5 +101,50 @@
     return english >= 2 && english > french * 1.25 ? "en" : "fr";
   }
 
-  globalThis.korrLanguage = Object.freeze({ detectLanguage });
+  // Listes de protection, distinctes de celles de détection : elles servent
+  // aux moteurs de correction, à qui il faut interdire de « rapprocher » un
+  // mot de l'autre langue d'une graphie voisine — « the » deviendrait « thé »
+  // et « late » deviendrait « latte ». Elles sont volontairement plus larges
+  // que les jeux de détection, qu'elles n'influencent pas.
+  const PROTECTED_ENGLISH = new Set([
+    ...ENGLISH_WORDS, ...STRONG_ENGLISH,
+    "about", "after", "again", "all", "also", "always", "any", "back", "because",
+    "been", "before", "being", "best", "better", "both", "call", "can", "come",
+    "could", "day", "days", "did", "does", "done", "down", "each", "early",
+    "end", "even", "ever", "every", "first", "get", "give", "going", "good",
+    "great", "help", "here", "hi", "how", "into", "just", "keep", "know",
+    "last", "late", "later", "left", "let", "like", "look", "made", "make",
+    "many", "may", "meet", "might", "more", "most", "much", "must", "need",
+    "never", "new", "next", "nice", "now", "off", "old", "one", "only", "other",
+    "our", "out", "over", "own", "part", "put", "read", "ready", "right",
+    "said", "same", "say", "see", "send", "sent", "set", "should", "since",
+    "some", "soon", "sorry", "still", "such", "sure", "take", "team", "tell",
+    "than", "thank", "thanks", "then", "there", "these", "thing", "things",
+    "think", "those", "time", "too", "took", "try", "under", "until", "up",
+    "us", "use", "used", "very", "want", "way", "week", "well", "went", "what",
+    "when", "where", "which", "while", "who", "why", "will", "with", "work",
+    "working", "would", "year", "years", "yes", "yet", "you", "your"
+  ]);
+
+  const PROTECTED_FRENCH = new Set([
+    ...FRENCH_WORDS, ...STRONG_FRENCH,
+    "alors", "après", "assez", "aussi", "autre", "avant", "beaucoup", "bien",
+    "bientôt", "bon", "bonne", "ça", "car", "cette", "chez", "comme", "déjà",
+    "demain", "depuis", "dernier", "donc", "encore", "enfin", "ensuite",
+    "être", "faire", "fait", "hier", "ici", "jamais", "jour", "journée",
+    "leur", "maintenant", "mal", "même", "mieux", "moins", "monsieur",
+    "madame", "non", "oui", "par", "parce", "peu", "peut", "plus", "quand",
+    "rien", "salut", "sans", "semaine", "seulement", "si", "soir", "sous",
+    "souvent", "toujours", "tout", "toute", "très", "trop", "vers", "voici",
+    "voilà", "vraiment", "cordialement", "amicalement", "merci", "bonjour"
+  ]);
+
+  const isWordOf = (set) => (word) =>
+    set.has(String(word || "").toLocaleLowerCase().replace(/[’'].*$/u, ""));
+
+  globalThis.korrLanguage = Object.freeze({
+    detectLanguage,
+    isEnglishWord: isWordOf(PROTECTED_ENGLISH),
+    isFrenchWord: isWordOf(PROTECTED_FRENCH)
+  });
 })();

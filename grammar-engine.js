@@ -78,6 +78,11 @@ export function initializeGrammarEngine() {
   // Les règles rejoignent le contexte où Grammalecte vient d'être monté :
   // elles y trouvent « gc_engine » comme globale, exactement comme dans le
   // Worker de l'extension.
+  // La détection de langue précède les règles : celles-ci s'en servent pour ne
+  // jamais « corriger » un mot anglais présent dans un texte français.
+  const detectionPath = path.join(PROJECT_DIR, "language-detection.js");
+  vm.runInContext(fs.readFileSync(detectionPath, "utf8"), context, { filename: detectionPath });
+
   const rulesSource = fs.readFileSync(RULES_PATH, "utf8");
   vm.runInContext(rulesSource, context, { filename: RULES_PATH });
 

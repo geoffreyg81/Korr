@@ -8,6 +8,7 @@ const result = document.getElementById("result");
 const summary = document.getElementById("summary");
 const engineState = document.getElementById("engine-state");
 const correctButton = document.getElementById("correct");
+const mixedChoice = document.getElementById("mixed-choice");
 const copyButton = document.getElementById("copy");
 const reuseButton = document.getElementById("reuse");
 const sampleButton = document.getElementById("sample");
@@ -131,7 +132,9 @@ languageSelect.addEventListener("change", () => {
   setState(languageSelect.value === "en" && !englishReady ? "harperFirst" : "ready", {}, "is-ready");
 });
 
-async function runCorrection() {
+// « forced » court-circuite la détection : c'est ce que renvoient les deux
+// boutons proposés quand le texte est réellement bilingue.
+async function runCorrection(forced) {
   const text = input.value;
   if (!text.trim()) {
     input.focus();
@@ -140,20 +143,23 @@ async function runCorrection() {
   correctButton.disabled = true;
   correctButton.textContent = t("correcting");
 
-  const language = languageSelect.value === "auto"
-    ? globalThis.korrLanguage.detectLanguage(text)
-    : languageSelect.value;
+  const language = forced
+    || (languageSelect.value === "auto"
+      ? globalThis.korrLanguage.detectLanguage(text)
+      : languageSelect.value);
   if (language === "mixed") {
+    // Envoyer un texte bilingue à un seul dictionnaire ferait « corriger » les
+    // mots de l'autre langue. Plutôt que de renvoyer l'utilisateur vers le
+    // menu déroulant, on lui pose directement la question.
     correctButton.disabled = false;
     correctButton.textContent = t("correct");
     setState("mixedDetected", {}, "is-warning");
-    output.value = text;
-    result.hidden = false;
-    summaryTranslation = { key: "mixedHelp", values: {} };
-    summary.textContent = t(summaryTranslation.key);
-    result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    mixedChoice.hidden = false;
+    result.hidden = true;
+    mixedChoice.scrollIntoView({ behavior: "smooth", block: "nearest" });
     return;
   }
+  mixedChoice.hidden = true;
   if (language === "en" && !englishReady) correctButton.textContent = t("loadingHarper");
   const response = await (language === "en" ? englishClient() : frenchClient())("CORRECT", text);
   if (language === "en" && response.ok) englishReady = true;
@@ -180,7 +186,17 @@ async function runCorrection() {
   result.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
-correctButton.addEventListener("click", runCorrection);
+correctButton.addEventListener("click", () => runCorrection());
+// Le choix explicite se retient : l'utilisateur qui écrit régulièrement en
+// bilingue n'a pas à répondre à la même question à chaque correction.
+for (const [id, locale] of [["force-fr", "fr"], ["force-en", "en"]]) {
+  document.getElementById(id)?.addEventListener("click", () => {
+    languageSelect.value = locale;
+    localStorage.setItem("korr-language", locale);
+    mixedChoice.hidden = true;
+    runCorrection(locale);
+  });
+}
 input.addEventListener("keydown", (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
     event.preventDefault();

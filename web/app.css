@@ -232,3 +232,21 @@ footer p { margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* Choix de langue proposé lorsque le texte est réellement bilingue : le
+   moteur ne peut pas trancher seul sans risquer de « corriger » les mots de
+   l'autre langue, donc on pose la question plutôt que de renvoyer au menu. */
+/* « display » sur la classe l'emporterait sur le « [hidden] » du navigateur :
+   sans cette règle, la barre resterait visible après le choix. */
+.mixed-choice[hidden] { display: none; }
+.mixed-choice {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  margin-top: 14px; padding: 14px 16px;
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--accent-soft); color: var(--text-2); font-size: 14px;
+}
+.mixed-choice .mixed-actions { display: flex; gap: 8px; margin-left: auto; }
+@media (max-width: 640px) {
+  .mixed-choice .mixed-actions { margin-left: 0; width: 100%; }
+  .mixed-choice .mixed-actions button { flex: 1; }
+}

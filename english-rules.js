@@ -971,6 +971,9 @@
         /^\p{Lu}/u.test(problem) && /^\p{Ll}/u.test(proposed)) {
       return false;
     }
+    // Symétrique du garde-fou français : un mot français dans un texte anglais
+    // ne doit pas être rapproché d'une graphie anglaise voisine.
+    if (globalThis.korrLanguage?.isFrenchWord?.(problem.trim())) return false;
     if (/\bwhom\b/iu.test(problem)) return false;
     // Les confusions « their is » sûres sont déjà traitées avant Harper. On
     // refuse ici son remplacement lexical « Their » -> « There », qui casse

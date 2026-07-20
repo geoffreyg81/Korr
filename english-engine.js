@@ -3,6 +3,7 @@
 // appels suivants soient rapides. Le binaire WASM intégré évite les problèmes
 // de chemin rencontrés avec un fichier .wasm séparé sous Windows.
 
+import "./language-detection.js";
 import "./english-rules.js";
 
 let setupPromise = null;
