@@ -367,6 +367,14 @@ const cases = [
   ["C’est un vrai disaster.", "C’est un vrai désastre."],
   ["On doit les restore en urgence.", "On doit les restaurer en urgence."],
   ["On va dead ça ce soir.", "On va gérer ça ce soir."],
+  // Le verbe d'une relative suit le nom-tête, pas son complément.
+  [
+    "La pile de rapports financiers qui contiennent les chiffres a été perdue.",
+    "La pile de rapports financiers qui contient les chiffres a été perdue."
+  ],
+  ["La liste de contacts qui restent à jour est utile.", "La liste de contacts qui reste à jour est utile."],
+  // Adjectif employé comme adverbe dans le registre familier.
+  ["On va gérer ça sérieux.", "On va gérer ça sérieusement."],
   // Nom-tête concret : son complément pluriel ne commande pas le verbe.
   [
     "La pile de dossiers qui contient les données sensibles sont toujours bloqués.",

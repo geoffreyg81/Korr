@@ -136,7 +136,18 @@
     "madame", "non", "oui", "par", "parce", "peu", "peut", "plus", "quand",
     "rien", "salut", "sans", "semaine", "seulement", "si", "soir", "sous",
     "souvent", "toujours", "tout", "toute", "très", "trop", "vers", "voici",
-    "voilà", "vraiment", "cordialement", "amicalement", "merci", "bonjour"
+    "voilà", "vraiment", "cordialement", "amicalement", "merci", "bonjour",
+    // Mots français qui n'existent pas en anglais : sans eux, le correcteur
+    // anglais les rapproche d'une graphie voisine (« niveau » → « Nivea »).
+    // Les homographes anglais (client, service, chose, note…) sont exclus :
+    // les protéger empêcherait une correction anglaise légitime.
+    "niveau", "boulot", "taf", "truc", "gens", "monde", "équipe", "réunion",
+    "dossier", "entreprise", "société", "travail", "semaine", "matin",
+    "soir", "midi", "heure", "journée", "année", "aujourd", "quelqu",
+    "beaucoup", "pourquoi", "comment", "combien", "toujours", "jamais",
+    "chaque", "plusieurs", "certains", "aucun", "quelques", "besoin",
+    "envie", "peut-être", "d'accord", "s'il", "n'est", "c'est", "qu'il",
+    "bises", "bisous", "salutations", "sincères", "veuillez", "agréer"
   ]);
 
   const isWordOf = (set) => (word) =>

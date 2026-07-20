@@ -421,7 +421,9 @@
     // « le planning » : en anglais, « planning » est l'action de planifier ;
     // le document s'appelle un « schedule ». Seule la lecture document est
     // réécrite (déterminant + fin de proposition ou verbe d'état).
-    replace(/\b(the|our|your|this|a)[ \t]+((?:new|current|updated|revised)[ \t]+)?planning\b(?=[ \t]+(?:is|was|looks|seems)\b|[ \t]*[.,;:!?]|$)/gimu,
+    // Le gérondif (« planning the launch takes time ») garde son sens verbal :
+    // seul le nom précédé d'un déterminant est réécrit.
+    replace(/\b(the|our|your|this|a)[ \t]+((?:new|current|updated|revised|final|whole)[ \t]+)?planning\b(?=[ \t]+(?:is|was|looks|seems|before|after|for|with|of|on|in|and|or|to|that|which)\b|[ \t]*[.,;:!?]|$)/gimu,
       (_match, determiner, adjective) => `${determiner} ${adjective || ""}schedule`);
     // « je l'aime trop » : « too much » signifie l'excès, pas l'intensité.
     replace(/\b(i|we)[ \t]+(like|love)[ \t]+(it|this|that)[ \t]+too[ \t]+much\b(?=[ \t]*[.!]|$)/giu,
@@ -543,8 +545,17 @@
       (_match, verb) => `${verb} for `);
     replace(/\b(ask(?:s|ed|ing)?)[ \t]+to[ \t]+(?=(?:me|him|her|us|them|the[ \t]+(?:manager|director|team|client|teacher|boss))\b)/giu,
       (_match, verb) => `${verb} `);
-    replace(/\b(explain(?:s|ed|ing)?)[ \t]+(me|us|him|her|them)\b(?=[ \t]+(?:the|this|that|how|why|what|your|my|it)\b)/giu,
+    // « expliquer quelqu'un » : en anglais on explique quelque chose À
+    // quelqu'un, et le complément d'objet passe devant le destinataire.
+    replace(/\b(explain(?:s|ed|ing)?|describe(?:s|d)?|mention(?:s|ed)?|suggest(?:s|ed)?)[ \t]+(me|you|us|him|her|them)[ \t]+((?:the|this|that|your|my|our|his|her|their)[ \t]+[a-z]+(?:[ \t]+[a-z]+)?)\b/giu,
+      (_match, verb, pronoun, object) => `${verb} ${object} to ${pronoun}`);
+    replace(/\b(explain(?:s|ed|ing)?)[ \t]+(me|you|us|him|her|them)\b(?=[ \t]+(?:how|why|what|it)\b)/giu,
       (_match, verb, pronoun) => `${verb} to ${pronoun}`);
+
+    // « whose » marque la possession : il ne peut pas introduire une relative
+    // dont le sujet suit. « the reports whose you talked about » → le pronom
+    // relatif est simplement de trop.
+    replace(/\b(whose)[ \t]+(?=(?:i|you|we|they|he|she|it)[ \t]+[a-z]+(?:ed|ke|nt|w|d|t)?\b)/giu, "");
     replaceRaw(/\b(married)[ \t]+with[ \t]+(?=(?:him|her|me|you|us|them|[A-Z][a-z]+\b)(?![ \t]*(?:children|kids)))/gu,
       (_match, verb) => `${verb} to `);
     // « depuis trois ans » : une durée s'introduit par « for », pas « since ».

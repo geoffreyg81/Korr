@@ -1212,6 +1212,23 @@ function grammalecte() {
       }
     );
 
+    // Le verbe d'une relative suit le nom-tête, pas son complément : « la pile
+    // de rapports qui contiennent » → « qui contient ». C'est la pile qui
+    // contient, et le pluriel voisin est un leurre.
+    replace(
+      new RegExp(
+        String.raw`\b((?:La|Le|Cette|Ce|Notre|Votre|Leur)\s+(?:${CONCRETE_HEADS.join("|")})\s+(?:de|des|du|d[’'])\s*[\p{L}’-]+s(?:\s+[\p{L}’-]+s)?\s+qui\s+)([\p{L}]+ent)(?![\p{L}\p{N}])`,
+        "gu"
+      ),
+      (match, lead, verb) => {
+        const singular = singularThirdPerson(verb);
+        return singular ? `${lead}${singular}` : match;
+      }
+    );
+
+    // Adjectif employé comme adverbe dans le registre familier.
+    replace(/(?<![\p{L}\p{N}])ça\s+sérieux(?![\p{L}\p{N}])/giu, "ça sérieusement");
+
     // Accent mangé sur un nom : le correcteur orthographique ne signale rien
     // quand la graphie sans accent existe par ailleurs comme forme verbale rare
     // (« moitie », participe de « moitir »). Or un déterminant appelle un nom :
@@ -2027,6 +2044,40 @@ function grammalecte() {
       plural: morphologies.every((morph) => !/:s(?![\p{L}\p{N}])/u.test(morph)) &&
         morphologies.some((morph) => /:p(?![\p{L}\p{N}])/u.test(morph))
     };
+  }
+
+  // Troisième personne du singulier d'un verbe donné au pluriel. Les formes
+  // irrégulières viennent d'une table ; les régulières se déduisent en ôtant
+  // « nt », le dictionnaire validant le résultat.
+  const PLURAL_TO_SINGULAR_VERB = new Map(Object.entries({
+    sont: "est", ont: "a", font: "fait", vont: "va", peuvent: "peut",
+    doivent: "doit", veulent: "veut", savent: "sait", valent: "vaut",
+    contiennent: "contient", comprennent: "comprend", prennent: "prend",
+    tiennent: "tient", viennent: "vient", reviennent: "revient",
+    disent: "dit", lisent: "lit", écrivent: "écrit", décrivent: "décrit",
+    mettent: "met", permettent: "permet", promettent: "promet",
+    conduisent: "conduit", produisent: "produit", traduisent: "traduit",
+    suivent: "suit", vivent: "vit", servent: "sert", sortent: "sort",
+    partent: "part", dorment: "dort", sentent: "sent", perdent: "perd",
+    rendent: "rend", répondent: "répond", attendent: "attend",
+    entendent: "entend", descendent: "descend", vendent: "vend",
+    apparaissent: "apparaît", paraissent: "paraît", connaissent: "connaît",
+    croissent: "croît", plaisent: "plaît", reçoivent: "reçoit",
+    aperçoivent: "aperçoit", résolvent: "résout", craignent: "craint",
+    joignent: "joint", atteignent: "atteint", peignent: "peint"
+  }));
+
+  function singularThirdPerson(verb) {
+    const lowered = verb.toLocaleLowerCase("fr-FR");
+    const irregular = PLURAL_TO_SINGULAR_VERB.get(lowered);
+    if (irregular) return preserveCase(verb, irregular);
+    if (!lowered.endsWith("nt")) return "";
+    const candidate = lowered.slice(0, -2);
+    // Le dictionnaire doit confirmer une véritable 3e personne du singulier.
+    const valid = morphOf(candidate).some((morph) =>
+      /:V\d/u.test(morph) && /:Ip/u.test(morph) && /:3s/u.test(morph)
+    );
+    return valid ? preserveCase(verb, candidate) : "";
   }
 
   // Noms-têtes concrets : leur complément pluriel ne commande pas le verbe.

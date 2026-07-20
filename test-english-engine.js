@@ -240,6 +240,18 @@ const cases = [
   // « everyday » adjectif contre « every day » adverbe.
   ["I go to the gym everyday.", "I go to the gym every day."],
   ["Everyday life is hard.", "Everyday life is hard."],
+  // « expliquer quelqu'un » : l'objet passe devant le destinataire.
+  ["I need to explain you the situation.", "I need to explain the situation to you."],
+  ["Explain the rules to them.", "Explain the rules to them."],
+  // « whose » marque la possession et ne peut pas introduire un sujet.
+  ["I've sent you the reports whose you talked about.", "I've sent you the reports you talked about."],
+  ["The manager whose team won the award is here.", "The manager whose team won the award is here."],
+  ["Whose turn is it?", "Whose turn is it?"],
+  // « planning » nom, y compris devant une préposition ; le gérondif reste.
+  ["Approve the new planning before the quarter ends.", "Approve the new schedule before the quarter ends."],
+  ["Planning the launch takes time.", "Planning the launch takes time."],
+  // Mot français isolé dans un texte anglais : jamais « corrigé ».
+  ["We are short niveau timing.", "We are short niveau timing."],
   // Soudure de deux mots : refusée quand le second est le verbe de la phrase,
   // acceptée quand un verbe conjugué suit et confirme le groupe sujet.
   [
@@ -356,7 +368,7 @@ const cases = [
   ["They entered into an agreement.", "They entered into an agreement."],
   ["I listen music every day.", "I listen to music every day."],
   ["Wait me at the station.", "Wait for me at the station."],
-  ["Can you explain me the problem?", "Can you explain to me the problem?"],
+  ["Can you explain me the problem?", "Can you explain the problem to me?"],
   ["She is married with John.", "She is married to John."],
   ["I work here since three years.", "I work here for three years."],
   ["I have 25 years.", "I am 25 years old."],
