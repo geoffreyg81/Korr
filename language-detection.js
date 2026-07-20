@@ -75,6 +75,16 @@
     "dias", "adios", "senor", "anos", "quiero", "tiene", "hacer", "muchas",
     "nada", "algo", "bueno", "todos", "cuando", "donde", "quien"
   ]);
+  // Mots identiques d'une langue à l'autre. Les listes espagnoles les écartent
+  // déjà — « que » ou « la » ne départagent rien — mais les listes française et
+  // anglaise, plus anciennes, les comptaient encore. Un courriel espagnol
+  // gagnait ainsi dix points « français » sur ses dix « que » et zéro point
+  // espagnol : il partait chez Grammalecte. Ils ne comptent donc pour personne.
+  const SHARED_WORDS = new Set([
+    "a", "de", "la", "le", "les", "se", "en", "un", "que", "no", "me", "te",
+    "y", "o", "e", "ni", "son", "nos", "mas", "tu", "mi"
+  ]);
+
   // Signes propres à chaque langue : la ponctuation ouvrante et le ñ sont
   // exclusivement espagnols, tandis que ç, œ, è et ê sont français.
   const SPANISH_MARKS = /[ñ¿¡]|[áíóú]/u;
@@ -120,6 +130,7 @@
     let strongSpanish = 0;
 
     for (const word of words) {
+      if (SHARED_WORDS.has(word)) continue;
       if (FRENCH_WORDS.has(word)) french += 1;
       if (ENGLISH_WORDS.has(word)) english += 1;
       if (SPANISH_WORDS.has(word)) spanish += 1;

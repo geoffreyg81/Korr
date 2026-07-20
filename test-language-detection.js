@@ -97,7 +97,23 @@ const cases = [
   ["Mi corazon esta roto. Como estas? Enserio, aveces dudo.", "es"],
   ["Los nuevos empleados llegaron ayer por la noche.", "es"],
   ["Buenos días, quiero hacer una pregunta sobre el trabajo.", "es"],
+  // Un courriel professionnel espagnol : ses « que », « de » et « la » sont
+  // aussi français, ils ne doivent plus peser d'un seul côté.
+  [
+    "Hola equipo, fyi os escribo rapido xq la mayoria de los servidores han sido apagados por error, no puedo mas. La pila de informes financieros que contienen los datos clave se han perdido, no se que hacer. Los archivos de los que me hablasteis esta mañana no los he encontrado.",
+    "es"
+  ],
+  [
+    "Es vital que el director apruebe el nuevo planning antes de que termine el trimestre actual. Decirme vuestras dispo para un call de emergencia antes de que el jefe se vaya.",
+    "es"
+  ],
+  ["Te confirmo que el pedido de los clientes se ha enviado esta tarde.", "es"],
   // Garde-fous : le français et l'anglais ne basculent jamais vers l'espagnol.
+  // Un texte français saturé de mots communs aux deux langues reste français.
+  [
+    "Le rapport que je vous ai envoyé hier contient les chiffres de la réunion, mais il faut que nous en discutions avant que le directeur ne le valide.",
+    "fr"
+  ],
   ["Bonjour, je vous envoie le rapport que j'ai écrit hier.", "fr"],
   ["Les nouveaux employés sont arrivés hier soir.", "fr"],
   ["Le président de la République a reçu le maire.", "fr"],
