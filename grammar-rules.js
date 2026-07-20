@@ -1120,7 +1120,7 @@ function grammalecte() {
     // le COD est placé avant l'auxiliaire avoir, l'accord est obligatoire.
     // « les échantillons que le bras a manipulé » → « manipulés ».
     replace(
-      /(?<![\p{L}\p{N}’-])([\p{L}’-]+(?:s|x))\s+(qu[e’']\s*[^,.;:!?\n]{0,40}?(?<![\p{L}\p{N}])(?:a|ont|avait|avaient|aura|auront)\s+)([\p{L}]+(?:é|i|u))(?=\s*[,.;:!?…]|\s+(?:se\s|s[’']|est|sont|ont|a)\b)/gu,
+      /(?<![\p{L}\p{N}’-])([\p{L}’-]+(?:s|x))\s+(qu[e’']\s*[^,.;:!?\n]{0,40}?(?<![\p{L}\p{N}])(?:ai|as|a|avons|avez|ont|avais|avait|avions|aviez|avaient|aura|auront|aurait)\s+)([\p{L}]+(?:é|i|u))(?=\s*[,.;:!?…]|\s+(?:se\s|s[’']|est|sont|ont|a|hier|aujourd|demain|ce\s|cette\s|la\s|le\s|les\s)\b)/gu,
       (match, antecedent, relative, participle) => {
         if (!isParticiple(participle)) return match;
         if (INVARIABLE_PARTICIPLES.has(participle.toLocaleLowerCase("fr-FR"))) return match;
@@ -1228,6 +1228,87 @@ function grammalecte() {
 
     // Adjectif employé comme adverbe dans le registre familier.
     replace(/(?<![\p{L}\p{N}])ça\s+sérieux(?![\p{L}\p{N}])/giu, "ça sérieusement");
+
+    // « son » possessif pour « sont » : après un sujet pluriel suivi d'un
+    // participe, le possessif est impossible et l'accord se propage.
+    // « Les nouveaux employés son arrivée » → « sont arrivés ».
+    replace(
+      // Le pluriel français se marque en « s » ou en « x » (nouveaux, chevaux).
+      /\b((?:Les|Des|Ces|Mes|Tes|Ses|Nos|Vos|Leurs)\s+(?:[\p{L}’-]+[sx]\s+)?[\p{L}’-]+[sx])\s+son\s+([\p{L}]+(?:é|ée|és|ées|i|ie|is|ies|u|ue|us|ues))(?![\p{L}\p{N}])/giu,
+      (match, subject, participle) => {
+        const singular = participleMasculineSingular(participle);
+        if (!singular) return match;
+        const head = subject.match(/([\p{L}’-]+)s$/u)?.[1] || "";
+        const features = nounFeatures(`${head}s`) || { feminine: false, plural: true };
+        const inflected = inflectParticiple(singular, { feminine: features.feminine, plural: true }) ||
+          `${singular}s`;
+        return `${subject} sont ${inflected}`;
+      }
+    );
+
+    // Infinitif en -er écrit pour un nom, après un déterminant et un adjectif :
+    // « les nouveaux employer » → « employés ». L'adjectif intercalé garantit
+    // que « les » est bien un déterminant et non un pronom complément.
+    replace(
+      /\b((?:Les|Des|Ces|Mes|Tes|Ses|Nos|Vos|Leurs)\s+[\p{L}’-]+[sx]\s+)([\p{L}]+er)(?![\p{L}\p{N}])/giu,
+      (match, lead, word) => {
+        if (!isInfinitive(word)) return match;
+        const noun = `${word.slice(0, -2)}és`;
+        return nounFeatures(noun) ? `${lead}${noun}` : match;
+      }
+    );
+
+    // Négation amputée de son « ne », omission constante à l'oral et fautive à
+    // l'écrit : « on a pas le temps » → « on n'a pas le temps ». Le sujet doit
+    // être un pronom ou un groupe nominal simple, et le verbe une forme
+    // conjuguée confirmée par le dictionnaire.
+    replace(
+      new RegExp(
+        String.raw`(^|[.!?;:…]\s+|,\s+|\n\s*|(?<![\p{L}\p{N}])(?:et|mais|car|donc|que|qui|quand|si|lorsque|puisque|comme)\s+)` +
+        // Le pronom élidé colle à son verbe : « j'ai » n'a pas d'espace, alors
+        // que « je sais » en a un. Les deux formes doivent être acceptées.
+        String.raw`((?:j[’']|c[’']|(?:je|tu|il|elle|on|nous|vous|ils|elles|ça|cela|ce|` +
+        String.raw`(?:le|la|les|un|une|des|mon|ma|mes|ton|ta|tes|son|sa|ses|notre|nos|votre|vos|leur|leurs|cet|cette|ces)\s+[\p{L}’-]+)\s+))` +
+        String.raw`([\p{L}’-]+)\s+(${NEGATION_ADVERBS.join("|")})(?![\p{L}\p{N}])`,
+        "giu"
+      ),
+      (match, prefix, subject, verb, adverb) => {
+        // Un « ne » déjà présent, ou un verbe qui n'en est pas un, disqualifie.
+        if (/(?:^|[^\p{L}])n[e’']$/iu.test(subject.trim())) return match;
+        if (!isConjugatedVerbForm(verb)) return match;
+        // « il faut pas » : le sujet peut aussi être « il » impersonnel.
+        const elides = /^[aeéèêiouyh]/iu.test(verb);
+        // « j'ai » redevient « je n'ai » : le pronom perd son élision au profit
+        // de celle du « ne ».
+        const cleanSubject = subject.trim().replace(/^j[’']$/iu, "je").replace(/^c[’']$/iu, "ce")
+          .replace(/[’']$/u, (m) => (subject.trim().length === 2 ? "" : m));
+        const negation = elides ? "n’" : "ne ";
+        return `${prefix}${cleanSubject} ${negation}${verb} ${adverb}`;
+      }
+    );
+
+    // « leur » déterminant s'accorde avec son nom : « leur affaires » →
+    // « leurs affaires ». Le pronom complément (« je leur ai dit ») est suivi
+    // d'un verbe, jamais d'un nom pluriel, et reste donc intact.
+    replace(/(?<![\p{L}\p{N}])leur\s+([\p{L}’-]+s)(?![\p{L}\p{N}])/giu, (match, noun) => {
+      const features = nounFeatures(noun);
+      return features?.plural ? match.replace(/^leur/iu, (m) => preserveCase(m, "leurs")) : match;
+    });
+
+    // Infinitif employé pour une forme conjuguée après un pronom sujet :
+    // « vous corriger les bugs » → « vous corrigez ». Le pronom doit ouvrir la
+    // proposition, sinon il est complément (« il vient nous voir »).
+    replace(
+      /(^|[.!?;:…]\s+|,\s+|\n\s*|(?<![\p{L}\p{N}])(?:et|mais|puis|où|que)\s+)(nous|vous)\s+([\p{L}]+er)(?![\p{L}\p{N}])/giu,
+      (match, prefix, pronoun, infinitive) => {
+        if (!isInfinitive(infinitive)) return match;
+        const stem = infinitive.slice(0, -2);
+        const conjugated = pronoun.toLocaleLowerCase("fr-FR") === "vous"
+          ? `${stem}ez`
+          : /g$/u.test(stem) ? `${stem}eons` : /c$/u.test(stem) ? `${stem.slice(0, -1)}çons` : `${stem}ons`;
+        return morphOf(conjugated).length ? `${prefix}${pronoun} ${conjugated}` : match;
+      }
+    );
 
     // Accent mangé sur un nom : le correcteur orthographique ne signale rien
     // quand la graphie sans accent existe par ailleurs comme forme verbale rare
@@ -2080,6 +2161,11 @@ function grammalecte() {
     return valid ? preserveCase(verb, candidate) : "";
   }
 
+  // Adverbes de négation qui appellent « ne ». « plus » et « personne » sont
+  // écartés : « on en a plus » et « une personne » ont un sens positif, et les
+  // rendre négatifs par défaut inverserait le propos.
+  const NEGATION_ADVERBS = ["pas", "jamais", "rien", "guère", "nullement"];
+
   // Noms-têtes concrets : leur complément pluriel ne commande pas le verbe.
   // Distincts des collectifs de quantité (plupart, majorité, foule), qui eux
   // admettent l'accord de proximité.
@@ -2500,7 +2586,14 @@ function grammalecte() {
     if (morphologies.some((morph) => /:(?:M[12]|O)/u.test(morph))) return null;
 
     const feminine = nouns.some((morph) => /:f(?=[:/])/u.test(morph));
-    const masculine = nouns.some((morph) => /:m(?=[:/])/u.test(morph));
+    const explicitMasculine = nouns.some((morph) => /:m(?=[:/])/u.test(morph));
+    // Un nom épicène (« docs », « élèves ») porte l'étiquette « :e » : sa forme
+    // ne varie pas selon le genre, et l'accord se fait au masculin, genre non
+    // marqué. Ce repli ne joue que faute de lecture genrée : sinon une lecture
+    // adjectivale épicène écraserait un nom féminin (« les primes »).
+    const epicene = !feminine && !explicitMasculine &&
+      nouns.some((morph) => /:e(?=[:/])/u.test(morph));
+    const masculine = explicitMasculine || epicene;
     const plural = nouns.some((morph) => /:p(?=[:/])/u.test(morph));
     const singular = nouns.some((morph) => /:s(?=[:/])/u.test(morph));
     // Un mot à la fois masculin et féminin, ou singulier et pluriel, ne permet

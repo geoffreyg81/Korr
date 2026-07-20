@@ -116,20 +116,14 @@ the user. Failing an amicable settlement, the French courts have jurisdiction;
 consumers retain the right to bring proceedings before the courts of their place
 of residence, in accordance with applicable law.
 
-<!-- TO COMPLETE ONCE A PAID OFFERING EXISTS: a professional selling to
-     consumers must join a consumer mediation scheme and state its name and
-     website here (articles L. 616-1 and R. 616-1 of the French consumer code).
-     The obligation does not apply while the service remains entirely free. -->
+
 
 ## 13. Right of withdrawal
 
 The service is provided free of charge and involves no payment: no right of
 withdrawal applies as things stand.
 
-<!-- TO REVIEW IF A PAID OFFERING EXISTS: supplying digital content without a
-     physical medium follows a specific regime. The consumer must expressly
-     consent to immediate performance and waive their right of withdrawal;
-     otherwise they keep fourteen days to withdraw. -->
+
 
 ## 14. Severability
 

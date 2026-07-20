@@ -9,14 +9,10 @@ _Last updated: 20 July 2026_
 - **Publisher**: Geoffrey Giner
 - **Status**: Sole trader (French *entrepreneur individuel*)
 - **Address**: 11 rue du Gué de Larn, 81660 Pont-de-Larn, France
-  <!-- TO CONFIRM: 81660 is the postcode for Pont-de-Larn. -->
 - **Telephone**: +33 7 68 65 33 07
 - **Contact**: contact@peekrapp.com
 - **Company registration number**: SIRET 105 685 739 00010 (SIREN 105 685 739)
 - **VAT**: VAT not applicable, article 293 B of the French tax code
-  <!-- TO CONFIRM: this applies under the VAT exemption scheme, which covers
-       most French sole traders. If you do charge VAT, replace it with:
-       "Intra-Community VAT number: FR22105685739". -->
 - **Publication director**: Geoffrey Giner
 
 

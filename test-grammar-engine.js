@@ -68,7 +68,7 @@ const cases = [
   ["ca marche, askip tlm sera la dmn", "Ça marche, à ce qu’il paraît tout le monde sera là demain"],
   [
     "pk tu ma pa dit ca deja? cest pas grave jte pardonne",
-    "Pourquoi tu m’as pas dit ça déjà ? C’est pas grave je te pardonne"
+    "Pourquoi tu m’as pas dit ça déjà ? Ce n’est pas grave je te pardonne"
   ],
   // Élision « ma/ta + participe » et « deja », actives aussi hors mode SMS.
   ["il ma fait un cadeau, elle ta rien dit?", "Il m’a fait un cadeau, elle t’a rien dit ?"],
@@ -113,7 +113,7 @@ const cases = [
   // Un adverbe ferme le groupe nominal : pas d’accord avec le nom distant.
   [
     "slt, jpe pa venir a la réunion dmn dsl pour le retard.",
-    "Salut, je peux pas venir à la réunion demain désolé pour le retard."
+    "Salut, je ne peux pas venir à la réunion demain désolé pour le retard."
   ],
   // Infinitif attendu après « veuillez » / « vouloir » (tournures épistolaires).
   ["Veuillez trouvés ci-joint le rapport.", "Veuillez trouver ci-joint le rapport."],
@@ -160,7 +160,7 @@ const cases = [
   // La règle « infi » de Grammalecte est spéculative : elle ne s’applique que
   // là où un infinitif est attendu, sinon « venir demain désolé » devenait
   // « désoler ».
-  ["jpe pa venir dmn dsl", "Je peux pas venir demain désolé"],
+  ["jpe pa venir dmn dsl", "Je ne peux pas venir demain désolé"],
   ["je vais mangé", "Je vais manger"],
   ["C’est pour mangé.", "C’est pour manger."],
   ["Je dois partir sans mangé.", "Je dois partir sans manger."],
@@ -367,6 +367,31 @@ const cases = [
   ["C’est un vrai disaster.", "C’est un vrai désastre."],
   ["On doit les restore en urgence.", "On doit les restaurer en urgence."],
   ["On va dead ça ce soir.", "On va gérer ça ce soir."],
+  // Négation amputée de son « ne » : fautive à l'écrit.
+  ["On a pas le temps.", "On n’a pas le temps."],
+  ["Il faut pas venir.", "Il ne faut pas venir."],
+  ["J’ai jamais reçu le mail.", "Je n’ai jamais reçu le mail."],
+  ["Le directeur veut pas signer.", "Le directeur ne veut pas signer."],
+  ["Elle a rien dit.", "Elle n’a rien dit."],
+  // Garde-fous : « pas » nom, « plus » positif, « leur » pronom, infinitif
+  // légitime après un semi-auxiliaire.
+  ["Le pas de la porte est étroit.", "Le pas de la porte est étroit."],
+  ["Il marche à pas lents.", "Il marche à pas lents."],
+  ["On en a plus qu’hier.", "On en a plus qu’hier."],
+  ["Je leur ai parlé hier.", "Je leur ai parlé hier."],
+  ["Il vient nous voir demain.", "Il vient nous voir demain."],
+  ["Je vais vous appeler.", "Je vais vous appeler."],
+  // « leur » déterminant s’accorde avec son nom.
+  ["Ils ont mis leur affaires dans le bureau.", "Ils ont mis leurs affaires dans le bureau."],
+  // Infinitif employé pour une forme conjuguée après un pronom sujet.
+  ["Nous finissons le développement et vous corriger les bugs.", "Nous finissons le développement et vous corrigez les bugs."],
+  // « son » possessif pour « sont », avec propagation de l’accord.
+  ["Les nouveaux employer son arrivée hier soir.", "Les nouveaux employés sont arrivés hier soir."],
+  ["Mes clés son tombées.", "Mes clés sont tombées."],
+  ["C’est son rapport.", "C’est son rapport."],
+  ["Je vais les employer demain.", "Je vais les employer demain."],
+  // Accord du participe avec un COD antéposé, quel que soit l’auxiliaire.
+  ["Envoyez-moi les docs que vous avez signé ce matin.", "Envoyez-moi les docs que vous avez signés ce matin."],
   // Le verbe d'une relative suit le nom-tête, pas son complément.
   [
     "La pile de rapports financiers qui contiennent les chiffres a été perdue.",
