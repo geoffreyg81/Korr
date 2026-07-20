@@ -240,6 +240,24 @@ const cases = [
   // « everyday » adjectif contre « every day » adverbe.
   ["I go to the gym everyday.", "I go to the gym every day."],
   ["Everyday life is hard.", "Everyday life is hard."],
+  // Le trio d'homophones : un possessif ne précède ni une négation, ni un
+  // participe présent, ni un adjectif attribut.
+  ["Their going to miss their flight.", "They're going to miss their flight."],
+  ["Your not ready for this, but its okay.", "You're not ready for this, but it's okay."],
+  ["Their flight was cancelled.", "Their flight was cancelled."],
+  ["Your report is ready.", "Your report is ready."],
+  ["Its main advantage is speed.", "Its main advantage is speed."],
+  // « s » de troisième personne, y compris avec un adverbe intercalé.
+  ["The manager always want to check the files.", "The manager always wants to check the files."],
+  ["He doesn't like when an employee make a mistake.", "He doesn't like when an employee makes a mistake."],
+  ["The managers want to check the files.", "The managers want to check the files."],
+  ["The team members always work late.", "The team members always work late."],
+  ["The dog run, held every week, is popular.", "The dog run, held every week, is popular."],
+  // Un verbe pluriel derrière un quantifieur impose le pluriel au nom.
+  ["All the study show that it works.", "All the studies show that it works."],
+  ["Several student work permits expired.", "Several student work permits expired."],
+  // Matériel informatique : indénombrable et soudé.
+  ["I need some information about the new hard wares.", "I need some information about the new hardware."],
   // « which » s'accorde avec son antécédent, comme « who ».
   [
     "The new updates we pushed yesterday, which includes the payment gateway, are causing errors.",

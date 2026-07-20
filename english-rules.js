@@ -311,6 +311,73 @@
     replace(/\bnowdays\b/giu, "nowadays");
 
     // ------------------------------------------------------------------
+    // Le trio d'homophones destructeurs : their/they're, your/you're, its/it's.
+    // Un possessif ne peut pas précéder une négation, un participe présent ni
+    // un adjectif attribut : dans ces positions, la contraction est la seule
+    // lecture possible.
+    // ------------------------------------------------------------------
+    replaceRaw(/\b(their|your)([ \t]+)(not|never|always|already|still|just)\b(?![ \t]+[a-z]+(?:ed|ing)[ \t]+[a-z])/gimu,
+      (_match, possessive, spacing, adverb) =>
+        `${preserveInitialCase(possessive, possessive.toLocaleLowerCase("en-US") === "their" ? "they're" : "you're")}${spacing}${adverb}`);
+    // « their going to miss » : le participe présent ferme la lecture
+    // possessive. Mais « your going to college surprised me » est un gérondif
+    // sujet : un verbe au passé plus loin dans la phrase le signale.
+    replaceRaw(/\b(their|your)([ \t]+)(going[ \t]+to)\b(?=[ \t]+[a-z])(?![^.!?\n]{0,120}\b(?:annoy|annoys|annoyed|cause|causes|caused|help|helps|helped|make|makes|made|mean|means|meant|please|pleases|pleased|surprise|surprises|surprised|worry|worries|worried|bother|bothers|bothered|shock|shocks|shocked)\b)/gimu,
+      (_match, possessive, spacing, rest) =>
+        `${preserveInitialCase(possessive, possessive.toLocaleLowerCase("en-US") === "their" ? "they're" : "you're")}${spacing}${rest}`);
+    // « its okay » : un adjectif attribut suivi d'une fin de proposition
+    // n'admet pas le possessif, qui exigerait un nom derrière lui.
+    replaceRaw(
+      new RegExp(String.raw`\b(its)([ \t]+)(${PREDICATE_ADJECTIVES.join("|")})\b(?=[ \t]*(?:[.,;:!?]|$)|[ \t]+(?:to|for|that|but|and|so|because|now|today|tonight)\b)`, "gimu"),
+      (_match, pronoun, spacing, adjective) => `${preserveInitialCase(pronoun, "it's")}${spacing}${adjective}`
+    );
+
+    // ------------------------------------------------------------------
+    // Troisième personne du singulier : le « s » manquant. Le sujet est un
+    // pronom singulier ou un groupe nominal singulier, éventuellement séparé
+    // du verbe par un adverbe de fréquence.
+    // ------------------------------------------------------------------
+    replaceRaw(
+      new RegExp(
+        String.raw`(^|[.!?][ \t]+|,[ \t]+|\b(?:when|if|because|that|while|since|although|and|but)[ \t]+)` +
+        // Le groupe sujet ne doit pas avaler l'adverbe : « always » finit par
+        // un « s » et serait alors pris pour un nom-tête au pluriel.
+        String.raw`((?:he|she|it|(?:the|a|an|this|that|every|each|one)[ \t]+` +
+        String.raw`(?:(?!(?:${FREQUENCY_ADVERBS.join("|")})\b)[a-z]+[ \t]+)?(?!(?:${FREQUENCY_ADVERBS.join("|")})\b)[a-z]+))` +
+        String.raw`([ \t]+(?:${FREQUENCY_ADVERBS.join("|")}))?([ \t]+)(${THIRD_PERSON_VERBS.join("|")})\b` +
+        // La virgule est exclue de la fin de proposition : « the dog run, held
+        // every week, is popular » est un nom composé suivi d'une apposition,
+        // pas un sujet suivi de son verbe.
+        String.raw`(?=[ \t]+(?:to|the|a|an|this|that|these|those|my|your|our|their|his|her|its|me|you|him|us|them|it|not|when|if|how|what|why|all|some|any|more|well|hard|fast|about|for|with|at|on|in|from)\b|[ \t]*[.;:!?])`,
+        "gimu"
+      ),
+      (match, prefix, subject, adverb, spacing, verb) => {
+        const head = subject.toLocaleLowerCase("en-US").split(/[ \t]+/u).pop();
+        // Un nom-tête au pluriel commande la forme de base : rien à ajouter.
+        if (/s$/u.test(head) && !SINGULAR_S_NOUNS.has(head)) return match;
+        return `${prefix}${subject}${adverb || ""}${spacing}${preserveInitialCase(verb, singularVerb(verb))}`;
+      }
+    );
+
+    // « All the study show » : un verbe pluriel derrière un quantifieur impose
+    // le pluriel au nom, et non l'inverse.
+    replaceRaw(
+      // « work » est absent de la liste : dans « several student work permits »,
+      // c'est un nom composé, pas un verbe. Le lookahead exige par ailleurs une
+      // fin de proposition ou un complément, jamais un nom qui suivrait.
+      /\b(all|both|most|many|several|few)([ \t]+(?:the|these|those|our|your|their)?[ \t]*)([a-z]+)([ \t]+)(show|indicate|prove|confirm|suggest|demonstrate|reveal|report|agree|seem|remain|exist)\b(?=[ \t]+(?:that|it|the|a|an|this|these|to|for|with|why|how|no|not)\b|[ \t]*[.,;:!?])/gimu,
+      (match, quantifier, middle, noun, spacing, verb) => {
+        const lower = noun.toLocaleLowerCase("en-US");
+        if (/s$/u.test(lower) || UNCOUNTABLE_NOUNS.includes(lower)) return match;
+        return `${quantifier}${middle}${preserveInitialCase(noun, pluralNoun(lower))}${spacing}${verb}`;
+      }
+    );
+
+    // « hard wares » : le matériel informatique est un indénombrable soudé.
+    replace(/\bhard[ \t]*wares?\b/giu, "hardware");
+    replace(/\bsoft[ \t]+wares?\b/giu, "software");
+
+    // ------------------------------------------------------------------
     // Apostrophe de pluriel (« greengrocer's apostrophe ») : « policy's » pour
     // « policies ». Un génitif est toujours suivi de la chose possédée ; devant
     // une ponctuation, une conjonction ou un verbe pluriel, il n'y a rien à
@@ -800,6 +867,38 @@
     do: "doing", read: "reading", visit: "visiting", welcome: "welcoming"
   }));
 
+  // Adjectifs attributs : derrière « its », ils ferment la lecture possessive,
+  // qui exigerait un nom. Les mots pouvant aussi être des noms (« fine »,
+  // « right », « close ») sont écartés.
+  const PREDICATE_ADJECTIVES = [
+    "okay", "ok", "great", "good", "bad", "amazing", "terrible", "awful",
+    "important", "urgent", "possible", "impossible", "necessary", "useful",
+    "useless", "obvious", "clear", "difficult", "easy", "hard", "expensive",
+    "cheap", "ready", "done", "finished", "broken", "wrong", "true", "false",
+    "empty", "full", "cold", "hot", "warm", "late", "early", "quick", "slow"
+  ];
+
+  const FREQUENCY_ADVERBS = [
+    "always", "never", "often", "usually", "sometimes", "rarely", "seldom",
+    "really", "still", "also", "only", "just", "generally", "normally",
+    "occasionally", "frequently", "constantly"
+  ];
+
+  // Verbes courants à la forme de base, pour le « s » de troisième personne.
+  // « be », « can », « will » et les modaux en sont absents : ils ne prennent
+  // jamais cette marque.
+  const THIRD_PERSON_VERBS = [
+    "want", "need", "like", "know", "work", "run", "walk", "seem", "look",
+    "give", "take", "make", "contain", "use", "try", "go", "do", "have",
+    "check", "keep", "come", "feel", "find", "help", "mean", "put", "say",
+    "see", "show", "start", "stop", "tell", "think", "write", "read", "send",
+    "ask", "call", "play", "live", "move", "open", "close", "sell", "buy",
+    "pay", "cost", "prefer", "allow", "require", "include", "involve",
+    "apply", "appear", "remain", "exist", "matter", "depend", "belong",
+    "expect", "accept", "refuse", "decide", "explain", "manage", "handle",
+    "review", "approve", "reject", "deliver", "arrive", "leave", "return"
+  ];
+
   // Mots dont la forme en « 's » est une contraction de « is », « has » ou
   // « us », et non un nom au génitif.
   const CONTRACTION_SUBJECTS = new Set([
@@ -987,15 +1086,15 @@
     return forms[verb.toLocaleLowerCase("en-US")] || verb;
   }
 
+  // Troisième personne du singulier : les sifflantes prennent -es, un -y
+  // précédé d'une consonne donne -ies, le reste prend -s.
   function singularVerb(verb) {
-    const forms = {
-      do: "does", go: "goes", have: "has", try: "tries",
-      contain: "contains", give: "gives", like: "likes", look: "looks",
-      make: "makes", need: "needs", know: "knows", run: "runs",
-      seem: "seems", take: "takes", use: "uses", walk: "walks",
-      want: "wants", work: "works"
-    };
-    return forms[verb.toLocaleLowerCase("en-US")] || verb;
+    const irregular = { do: "does", go: "goes", have: "has", be: "is" };
+    const lower = verb.toLocaleLowerCase("en-US");
+    if (irregular[lower]) return irregular[lower];
+    if (/[^aeiou]y$/u.test(lower)) return `${lower.slice(0, -1)}ies`;
+    if (/(?:s|x|z|ch|sh|o)$/u.test(lower)) return `${lower}es`;
+    return `${lower}s`;
   }
 
   // Pluriel régulier : -y précédé d'une consonne donne -ies, les sifflantes
