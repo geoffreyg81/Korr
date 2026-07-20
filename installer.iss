@@ -3,7 +3,7 @@
 #endif
 
 #define AppName "Korr"
-#define AppPublisher "Korr"
+#define AppPublisher "Geoffrey Giner"
 #define AppURL "https://github.com/geoffreyg81/Korr"
 #define LauncherName "1 - START KORR - DÉMARRER KORR.vbs"
 #define InternalDir "Korr engine - moteur - do not modify"
@@ -32,6 +32,20 @@ ArchitecturesInstallIn64BitMode=x64compatible
 CloseApplications=yes
 RestartApplications=no
 LicenseFile=LICENSE
+UninstallDisplayName={#AppName}
+; Un installateur légitime décrit précisément ce qu'il est. Ces métadonnées
+; renseignent le bloc « Détails » du Setup.exe (éditeur, version, copyright) :
+; leur absence est un signal de suspicion pour les analyses heuristiques de
+; SmartScreen et de Defender.
+MinVersion=10.0
+AppCopyright=Copyright (C) 2026 Geoffrey Giner - GPL 3.0
+VersionInfoVersion={#AppVersion}
+VersionInfoProductVersion={#AppVersion}
+VersionInfoProductName={#AppName}
+VersionInfoCompany={#AppPublisher}
+VersionInfoDescription=Korr - correcteur francais et anglais hors ligne
+VersionInfoCopyright=Copyright (C) 2026 Geoffrey Giner - GPL 3.0
+VersionInfoOriginalFileName=Korr-Setup.exe
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
