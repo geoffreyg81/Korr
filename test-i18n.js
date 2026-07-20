@@ -32,7 +32,9 @@ const context = vm.createContext({
 });
 vm.runInContext(source, context, { filename: "web/i18n.js" });
 
-for (const locale of ["fr", "en"]) {
+const LOCALES = ["fr", "en", "es"];
+
+for (const locale of LOCALES) {
   context.korrI18n.apply(locale);
   for (const key of keys) {
     if (context.korrI18n.t(key) === key) {
@@ -41,5 +43,25 @@ for (const locale of ["fr", "en"]) {
   }
 }
 
+// Une clé absente d'une langue retombe silencieusement sur le français : rien
+// ne plante et la traduction manquante passe inaperçue. Interroger t() ne
+// peut donc pas la détecter — il faut lire les catalogues eux-mêmes.
+function catalogueKeys(locale) {
+  const start = source.indexOf(`\n    ${locale}: {`);
+  if (start < 0) throw new Error(`Catalogue absent : ${locale}`);
+  const block = source.slice(start, source.indexOf("\n    }", start));
+  return new Set([...block.matchAll(/^ {6}([A-Za-z0-9_]+):/gmu)].map((match) => match[1]));
+}
+
+const catalogues = new Map(LOCALES.map((locale) => [locale, catalogueKeys(locale)]));
+const reference = catalogues.get("fr");
+
+for (const [locale, catalogue] of catalogues) {
+  const missing = [...reference].filter((key) => !catalogue.has(key));
+  const extra = [...catalogue].filter((key) => !reference.has(key));
+  if (missing.length) throw new Error(`Clés absentes de ${locale} : ${missing.join(", ")}`);
+  if (extra.length) throw new Error(`Clés en trop dans ${locale} : ${extra.join(", ")}`);
+}
+
 if (!fs.existsSync("PRIVACY.en.md")) throw new Error("Politique de confidentialité anglaise absente.");
-console.log(`Traductions FR/EN vérifiées : ${keys.size} clés.`);
+console.log(`Traductions FR/EN/ES vérifiées : ${keys.size} clés × ${LOCALES.length} langues.`);
