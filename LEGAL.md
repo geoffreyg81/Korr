@@ -8,13 +8,16 @@ _Dernière mise à jour : 20 juillet 2026_
 
 - **Éditeur** : Geoffrey Giner
 - **Statut** : Entrepreneur individuel (auto-entrepreneur)
-- **Adresse** : [Numéro et rue], [Code postal] Pont-de-Larn, France
-- **Téléphone** : [À COMPLÉTER — obligatoire pour un professionnel]
+- **Adresse** : 11 rue du Gué de Larn, 81660 Pont-de-Larn, France
+  <!-- À CONFIRMER : le code postal 81660 est celui de Pont-de-Larn. -->
+- **Téléphone** : 07 68 65 33 07
 - **Contact** : contact@peekrapp.com
-- **Numéro SIREN** : [À COMPLÉTER — obligatoire]
+- **SIRET** : 105 685 739 00010 (SIREN : 105 685 739)
 - **TVA** : TVA non applicable, article 293 B du code général des impôts
-  <!-- Si vous n'êtes plus en franchise en base, remplacez cette ligne par
-       votre numéro de TVA intracommunautaire. -->
+  <!-- À CONFIRMER : cette mention vaut sous le régime de la franchise en base,
+       celui de la grande majorité des auto-entrepreneurs. Si vous facturez la
+       TVA, remplacez-la par : « Numéro de TVA intracommunautaire :
+       FR22105685739 ». -->
 - **Directeur de la publication** : Geoffrey Giner
 
 ## Hébergement
