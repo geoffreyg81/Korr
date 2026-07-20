@@ -364,13 +364,28 @@
     // Accord d'un relatif : « the devs who is working » → « who are ».
     // Le nom immédiatement à gauche de « who » fixe le nombre.
     // ------------------------------------------------------------------
+    // « which » reprend le même antécédent que « who » : une relative
+    // appositive séparée par une virgule s'accorde elle aussi avec lui.
     replaceRaw(
-      /\b([a-z]+s)([ \t]+who[ \t]+)(is|was|has|does)\b/gimu,
+      /\b([a-z]+s)((?:[ \t]+[^,.;:!?\n]{0,40})?,?[ \t]+(?:who|which)[ \t]+)(is|was|has|does|includes|contains|concerns|covers|involves|requires|affects)\b/gimu,
       (match, antecedent, middle, verb) => {
         const lower = antecedent.toLocaleLowerCase("en-US");
         if (SINGULAR_S_NOUNS.has(lower)) return match;
-        const plural = { is: "are", was: "were", has: "have", does: "do" }[verb.toLocaleLowerCase("en-US")];
+        const plural = { is: "are", was: "were", has: "have", does: "do" }[verb.toLocaleLowerCase("en-US")] ||
+          verb.replace(/s$/iu, "");
         return `${antecedent}${middle}${preserveInitialCase(verb, plural)}`;
+      }
+    );
+
+    // Une action commencée dans le passé et toujours en cours se dit au
+    // present perfect continuous : « who is working on it for 3 days » →
+    // « who has been working ». Le complément de durée en « for » est ce qui
+    // impose l'aspect ; sans lui, le présent simple est correct.
+    replaceRaw(
+      /\b(is|are|am)([ \t]+)([a-z]+ing)\b(?=[ \t][^,.;:!?\n]{0,40}?[ \t]for[ \t]+(?:\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten|several|many)[ \t]+(?:second|minute|hour|day|week|month|year|decade)s?\b)/gimu,
+      (match, be, spacing, participle) => {
+        const perfect = be.toLocaleLowerCase("en-US") === "are" ? "have been" : "has been";
+        return `${preserveInitialCase(be, perfect)}${spacing}${participle}`;
       }
     );
 
@@ -395,7 +410,7 @@
     // « actual » signifie « réel », jamais « en cours ». Devant ces noms-là,
     // la lecture « réel » supposerait un contraste avec une version fictive :
     // c'est le calque de « actuel » qui est en cause.
-    replace(/\b(the|our|your|this)[ \t]+actual[ \t]+(?=(?:version|release|build|sprint|roadmap|planning|agenda|schedule|month|week|year|quarter)\b)/giu,
+    replace(/\b(the|our|your|this)[ \t]+actual[ \t]+(?=(?:version|release|build|sprint|roadmap|planning|agenda|schedule|day|month|week|year|quarter|semester|period|status|situation)\b)/giu,
       (_match, determiner) => `${determiner} current `);
     replace(/\bat[ \t]+the[ \t]+actual[ \t]+(?:moment|time)\b/giu, "at the moment");
 

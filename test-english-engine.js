@@ -240,6 +240,23 @@ const cases = [
   // « everyday » adjectif contre « every day » adverbe.
   ["I go to the gym everyday.", "I go to the gym every day."],
   ["Everyday life is hard.", "Everyday life is hard."],
+  // « which » s'accorde avec son antécédent, comme « who ».
+  [
+    "The new updates we pushed yesterday, which includes the payment gateway, are causing errors.",
+    "The new updates we pushed yesterday, which include the payment gateway, are causing errors."
+  ],
+  ["The business, which includes two branches, is growing.", "The business, which includes two branches, is growing."],
+  ["The analysis, which covers all cases, is complete.", "The analysis, which covers all cases, is complete."],
+  // Action commencée dans le passé et toujours en cours : present perfect
+  // continuous, imposé par le complément de durée en « for ».
+  [
+    "The dev team who is working on it for 3 days has met a lot of difficulties.",
+    "The dev team who has been working on it for 3 days has met a lot of difficulties."
+  ],
+  ["He is working on it right now.", "He is working on it right now."],
+  ["She is leaving for three days.", "She is leaving for three days."],
+  // « actual » temporel : le jour aussi.
+  ["Call the client before the actual day ends.", "Call the client before the current day ends."],
   // « expliquer quelqu'un » : l'objet passe devant le destinataire.
   ["I need to explain you the situation.", "I need to explain the situation to you."],
   ["Explain the rules to them.", "Explain the rules to them."],
