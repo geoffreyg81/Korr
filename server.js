@@ -215,6 +215,9 @@ async function handleCorrection(request, response) {
       language,
       ...(language === "mixed" ? {
         fallback: "Texte français et anglais mélangé : choisissez explicitement la langue."
+      } : {}),
+      ...(language === "es" ? {
+        fallback: "Texte espagnol détecté : la correction espagnole (beta) n'existe que sur le site."
       } : {})
     });
   }
@@ -231,6 +234,18 @@ async function handleCorrection(request, response) {
       language,
       style: styleName,
       fallback: "Texte français et anglais mélangé : choisissez explicitement la langue."
+    });
+  }
+
+  // Le modèle reçoit un prompt rédigé pour le français ou l'anglais : lui
+  // soumettre de l'espagnol produirait une réécriture dans la mauvaise langue.
+  if (language === "es") {
+    return sendJson(response, 200, {
+      ...instantResult,
+      engine: "unsupported",
+      language,
+      style: styleName,
+      fallback: "Texte espagnol détecté : la correction espagnole (beta) n'existe que sur le site."
     });
   }
 
@@ -410,7 +425,10 @@ async function generateWithOllama(model, style, prompt) {
 }
 
 async function correctInstantText(text, language) {
-  if (language === "mixed") {
+  // L'espagnol n'existe que sur le site : l'application n'embarque pas son
+  // moteur. Le renvoyer au correcteur français lui appliquerait des règles
+  // d'une autre langue, ce qui abîmerait le texte au lieu de le corriger.
+  if (language === "mixed" || language === "es") {
     return { text, corrections: 0, durationMs: 0 };
   }
   return language === "en" ? correctEnglishText(text) : correctFrenchText(text);
@@ -418,6 +436,7 @@ async function correctInstantText(text, language) {
 
 function instantEngineName(language) {
   if (language === "mixed") return "mixed";
+  if (language === "es") return "unsupported";
   return language === "en" ? "harper" : "grammalecte";
 }
 

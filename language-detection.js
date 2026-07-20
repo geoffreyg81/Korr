@@ -43,6 +43,43 @@
     "dans", "avec", "pour", "que", "qui", "suis", "notre", "votre"
   ]);
 
+  // Espagnol (beta). Les mots retenus sont ceux qui n'appartiennent ni au
+  // français ni à l'anglais : « que », « en » ou « la » sont communs et ne
+  // départageraient rien.
+  const SPANISH_WORDS = new Set([
+    "el", "los", "las", "una", "unos", "unas", "del", "al", "por", "para",
+    "con", "sin", "sobre", "desde", "hasta", "pero", "porque", "cuando",
+    "donde", "como", "muy", "más", "menos", "todo", "todos", "toda", "todas",
+    "esto", "eso", "esta", "este", "estos", "estas", "ese", "esa", "aquí",
+    "ahí", "allí", "ahora", "siempre", "nunca", "también", "tampoco",
+    "hola", "gracias", "señor", "señora", "buenos", "días", "noches",
+    "hacer", "hace", "tiene", "tienen", "puede", "pueden", "quiere",
+    "está", "están", "estoy", "estamos", "soy", "eres", "somos", "hay",
+    "ser", "estar", "tener", "año", "años", "día", "vida", "gente",
+    "trabajo", "casa", "cosa", "cosas", "vez", "veces", "algo", "nada",
+    "nadie", "alguien", "mucho", "mucha", "muchos", "muchas", "poco",
+    "otro", "otra", "otros", "otras", "mismo", "cada", "entre", "según",
+    "mañana", "ayer", "hoy", "tarde", "noche", "bueno", "buena", "mejor",
+    "quién", "cuál", "cuánto", "qué", "cómo", "sí", "usted", "ustedes",
+    "ellos", "ellas", "nosotros", "vosotros", "conmigo", "así"
+  ]);
+  const STRONG_SPANISH = new Set([
+    "el", "los", "las", "una", "del", "al", "por", "para", "con", "pero",
+    "porque", "muy", "está", "están", "hay", "hola", "gracias", "qué",
+    "cómo", "también", "usted", "ustedes", "ellos", "nosotros", "mañana",
+    "hoy", "ayer", "siempre", "nunca", "señor", "señora", "días",
+    // Un correcteur reçoit surtout de l'espagnol tapé sans accents : sans ces
+    // formes, le texte à corriger est justement celui qu'on ne détecte pas.
+    // Chacune est absente du français comme de l'anglais.
+    "esta", "estan", "estoy", "estamos", "como", "tambien", "aqui", "asi",
+    "dias", "adios", "senor", "anos", "quiero", "tiene", "hacer", "muchas",
+    "nada", "algo", "bueno", "todos", "cuando", "donde", "quien"
+  ]);
+  // Signes propres à chaque langue : la ponctuation ouvrante et le ñ sont
+  // exclusivement espagnols, tandis que ç, œ, è et ê sont français.
+  const SPANISH_MARKS = /[ñ¿¡]|[áíóú]/u;
+  const FRENCH_MARKS = /[çœàèêë]/u;
+
   const ENGLISH_CONTRACTION = /\b(?:aren['’]t|can['’]t|couldn['’]t|didn['’]t|doesn['’]t|don['’]t|hasn['’]t|haven['’]t|isn['’]t|let['’]s|shouldn['’]t|wasn['’]t|weren['’]t|won['’]t|wouldn['’]t|i['’]m|i['’]ve|we['’]re|we['’]ve|they['’]re|you['’]re)\b/giu;
   const ENGLISH_SHORT_MESSAGES = Object.freeze([
     /^(?:yes|yep|yeah)$/u,
@@ -76,12 +113,25 @@
     let strongEnglish = (normalized.match(ENGLISH_CONTRACTION) || []).length;
     english += strongEnglish * 2;
 
+    // Le « ñ » et la ponctuation ouvrante n'existent qu'en espagnol ; les
+    // accents propres au français jouent le rôle inverse.
+    let spanish = SPANISH_MARKS.test(normalized) ? 3 : 0;
+    if (FRENCH_MARKS.test(normalized)) spanish -= 2;
+    let strongSpanish = 0;
+
     for (const word of words) {
       if (FRENCH_WORDS.has(word)) french += 1;
       if (ENGLISH_WORDS.has(word)) english += 1;
+      if (SPANISH_WORDS.has(word)) spanish += 1;
       if (STRONG_FRENCH.has(word)) strongFrench += 1;
       if (STRONG_ENGLISH.has(word)) strongEnglish += 1;
+      if (STRONG_SPANISH.has(word)) strongSpanish += 1;
     }
+
+    // L'espagnol ne se déclare que sur un signal net et dominant : le
+    // français reste la langue de repli, et un doute ne doit jamais faire
+    // basculer un texte français vers un moteur qui ne le connaît pas.
+    if (strongSpanish >= 2 && spanish > french && spanish > english) return "es";
 
     // Un mélange net ne doit jamais être envoyé en bloc à un seul dictionnaire :
     // Harper et Grammalecte pourraient alors "corriger" les mots de l'autre

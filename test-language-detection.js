@@ -89,7 +89,21 @@ const cases = [
     "Bonjour, je vous envoie le rapport que j'ai écrit hier. Le deadline est vendredi, merci de faire un feedback rapide sur le planning.",
     "fr"
   ],
-  ["OK", "fr"]
+  ["OK", "fr"],
+  // Espagnol (beta) : détecté avec ou sans accents, puisqu'un correcteur
+  // reçoit surtout du texte non accentué.
+  ["Hola, ¿cómo estás? Muy bien, gracias.", "es"],
+  ["El corazón de María está roto y no sé qué hacer.", "es"],
+  ["Mi corazon esta roto. Como estas? Enserio, aveces dudo.", "es"],
+  ["Los nuevos empleados llegaron ayer por la noche.", "es"],
+  ["Buenos días, quiero hacer una pregunta sobre el trabajo.", "es"],
+  // Garde-fous : le français et l'anglais ne basculent jamais vers l'espagnol.
+  ["Bonjour, je vous envoie le rapport que j'ai écrit hier.", "fr"],
+  ["Les nouveaux employés sont arrivés hier soir.", "fr"],
+  ["Le président de la République a reçu le maire.", "fr"],
+  ["On n'a pas le temps de voir ça.", "fr"],
+  ["The new employees arrived yesterday evening.", "en"],
+  ["I look forward to hearing from you.", "en"]
 ];
 
 let failures = 0;
