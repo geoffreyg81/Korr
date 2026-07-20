@@ -240,6 +240,18 @@ const cases = [
   // « everyday » adjectif contre « every day » adverbe.
   ["I go to the gym everyday.", "I go to the gym every day."],
   ["Everyday life is hard.", "Everyday life is hard."],
+  // Soudure de deux mots : refusée quand le second est le verbe de la phrase,
+  // acceptée quand un verbe conjugué suit et confirme le groupe sujet.
+  [
+    "It is crucial that the manager approve the budget before the current week ends.",
+    "It is crucial that the manager approve the budget before the current week ends."
+  ],
+  ["The week ends were busy.", "The weekends were busy."],
+  ["Have a good week-end!", "Have a good weekend!"],
+  // Terminaison détachée du verbe : scorie de frappe, jamais un mot.
+  ["The team has met ted many troubles.", "The team has met many troubles."],
+  ["I sent ed the file.", "I sent the file."],
+  ["I met Ted at the conference.", "I met Ted at the conference."],
   // Nom-tête collectif : son complément pluriel ne commande pas le verbe.
   [
     "The team of experts who are working on the project have met many troubles.",

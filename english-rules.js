@@ -718,6 +718,13 @@
     // « send ed » recollé, et participe irrégulier de « send ».
     replace(/\b(has|have|had)[ \t]+send(?:[ \t]+ed|ed)?\b/giu, (_match, auxiliary) => `${auxiliary} sent`);
     replace(/\bsended\b/giu, "sent");
+    // Terminaison détachée du verbe qu'elle suit : « met ted », « kept ped ».
+    // Un prétérit irrégulier ne prend jamais de suffixe, la scorie est donc
+    // toujours parasite. Le test de casse épargne « met Ted » (le prénom).
+    replaceRaw(
+      /\b(met|sent|kept|felt|left|lost|found|held|told|paid|built|meant|spent|dealt|sold|won)[ \t]+([td]?ed)\b/gu,
+      (match, verb, fragment) => (fragment === fragment.toLowerCase() ? verb : match)
+    );
 
     // Passé daté : « I have sent the report yesterday » → prétérit.
     replace(
@@ -1014,10 +1021,32 @@
     return true;
   }
 
-  function shouldApplyHarperLint(lint) {
+  // Verbes conjugués qui, placés après un groupe nominal, confirment que ce
+  // groupe est bien le sujet — et donc qu'il ne fallait pas le souder.
+  const FINITE_VERBS_AFTER_SUBJECT = new Set([
+    "is", "are", "was", "were", "has", "have", "had", "will", "would", "can",
+    "could", "may", "might", "must", "should", "do", "does", "did", "seem",
+    "seems", "seemed", "look", "looks", "remain", "remains", "become",
+    "becomes", "became", "start", "starts", "began", "went", "come", "comes"
+  ]);
+
+  function shouldApplyHarperLint(lint, text = "") {
     const problem = lint.get_problem_text();
     const message = lint.message();
     const proposed = lint.suggestions().map((suggestion) => suggestion.get_replacement_text()).join(" ");
+
+    // Soudure de deux mots en un nom composé : Harper lit « the current week
+    // ends » comme « weekends », alors que « ends » est le verbe de la phrase.
+    // Si rien de conjugué ne suit, le second mot est le verbe : on refuse.
+    if (/\s/u.test(problem.trim()) && !/\s/u.test(proposed) &&
+        problem.replace(/[\s-]/gu, "").toLocaleLowerCase("en-US") ===
+          proposed.replace(/[\s-]/gu, "").toLocaleLowerCase("en-US")) {
+      const second = problem.trim().split(/\s+/u).pop() || "";
+      if (/s$/iu.test(second)) {
+        const after = text.slice(lint.span().end).trimStart().match(/^[a-z']+/iu)?.[0] || "";
+        if (!FINITE_VERBS_AFTER_SUBJECT.has(after.toLocaleLowerCase("en-US"))) return false;
+      }
+    }
     // « Who's » → « who's » : Harper propose sa graphie canonique en
     // minuscules et efface la majuscule de début de phrase. Un remplacement
     // qui ne fait que décapitaliser le mot n'apporte rien et casse la phrase.
@@ -1080,7 +1109,7 @@
       const lints = await linter.lint(text, { language: "plaintext" });
       const applicable = lints
         .filter((lint) => lint.suggestion_count() > 0)
-        .filter(shouldApplyHarperLint)
+        .filter((lint) => shouldApplyHarperLint(lint, text))
         .sort((left, right) => right.span().start - left.span().start);
 
       let nextBoundary = Infinity;
