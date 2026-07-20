@@ -23,7 +23,8 @@ const WEB_FILES = ["index.html", "app.css", "app.js", "i18n.js", "sw.js", "manif
 // Moteur partagé avec l'extension.
 const SHARED_FILES = [
   "grammalecte-worker.js", "harper-worker.js", "language-detection.js",
-  "grammar-rules.js", "english-rules.js", "LICENSE", "PRIVACY.md", "PRIVACY.en.md"
+  "grammar-rules.js", "english-rules.js", "LICENSE", "PRIVACY.md", "PRIVACY.en.md",
+  "LEGAL.md", "LEGAL.en.md", "TERMS.md", "TERMS.en.md"
 ];
 const DIRECTORIES = ["icons", "vendor"];
 const HARPER_FILES = [
