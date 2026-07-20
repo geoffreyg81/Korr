@@ -31,7 +31,10 @@ const SHELL = [
 
 // Le moteur : volumineux, donc mis en cache à la première utilisation plutôt
 // qu'à l'installation, pour que la page s'affiche sans attendre.
-const ENGINE_PATTERN = /vendor\/(?:grammalecte|harper)\//u;
+// L'espagnol (beta) est optionnel : ses fichiers et son dictionnaire de 0,7 Mo
+// ne sont pas précachés, mais deviennent disponibles hors ligne après un
+// premier usage, comme les moteurs français et anglais.
+const ENGINE_PATTERN = /vendor\/(?:grammalecte|harper|nspell)\/|(?:spanish-worker|spanish-rules)\.js$|spanish\.(?:aff|dic)$/u;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

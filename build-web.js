@@ -24,7 +24,9 @@ const WEB_FILES = ["index.html", "app.css", "app.js", "i18n.js", "sw.js", "manif
 const SHARED_FILES = [
   "grammalecte-worker.js", "harper-worker.js", "language-detection.js",
   "grammar-rules.js", "english-rules.js", "LICENSE", "PRIVACY.md", "PRIVACY.en.md",
-  "LEGAL.md", "LEGAL.en.md", "TERMS.md", "TERMS.en.md"
+  "LEGAL.md", "LEGAL.en.md", "TERMS.md", "TERMS.en.md",
+  // Espagnol (beta) : site uniquement, absent de l'application Windows.
+  "spanish-worker.js", "spanish-rules.js"
 ];
 const DIRECTORIES = ["icons", "vendor"];
 const HARPER_FILES = [
@@ -66,6 +68,16 @@ for (const directory of DIRECTORIES) {
   fs.cpSync(path.join(PROJECT_DIR, directory), path.join(OUT_DIR, directory), { recursive: true });
 }
 copyHarperRuntime(OUT_DIR);
+
+// Dictionnaire espagnol Hunspell, renommé pour un chemin stable côté site. Le
+// Worker le récupère par fetch("spanish.aff") / fetch("spanish.dic").
+const spanishDict = path.join(PROJECT_DIR, "node_modules", "dictionary-es");
+if (fs.existsSync(spanishDict)) {
+  fs.copyFileSync(path.join(spanishDict, "index.aff"), path.join(OUT_DIR, "spanish.aff"));
+  fs.copyFileSync(path.join(spanishDict, "index.dic"), path.join(OUT_DIR, "spanish.dic"));
+} else {
+  console.warn("Dictionnaire espagnol absent : la beta espagnole ne fonctionnera pas.");
+}
 
 // Les navigateurs demandent encore /favicon.ico même lorsqu'une icône PNG est
 // déclarée. On génère un véritable conteneur ICO à partir de notre PNG 32 px,

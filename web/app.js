@@ -112,6 +112,18 @@ function frenchClient() {
   return askFrench;
 }
 
+// Espagnol (beta) : moteur isolé, chargé seulement à la première demande, sans
+// aucune incidence sur les chemins français et anglais.
+let askSpanish = null;
+function spanishClient() {
+  if (!askSpanish) {
+    askSpanish = createWorkerClient("spanish-worker.js", { type: "module" }, () => {
+      askSpanish = null;
+    });
+  }
+  return askSpanish;
+}
+
 (async () => {
   await prepareOfflineRuntime();
   // L'interface devient utilisable avant la chauffe du français. Ainsi, une
@@ -161,7 +173,10 @@ async function runCorrection(forced) {
   }
   mixedChoice.hidden = true;
   if (language === "en" && !englishReady) correctButton.textContent = t("loadingHarper");
-  const response = await (language === "en" ? englishClient() : frenchClient())("CORRECT", text);
+  const client = language === "en" ? englishClient()
+    : language === "es" ? spanishClient()
+    : frenchClient();
+  const response = await client("CORRECT", text);
   if (language === "en" && response.ok) englishReady = true;
 
   correctButton.disabled = false;
@@ -172,7 +187,10 @@ async function runCorrection(forced) {
     return;
   }
 
-  setState(language === "en" ? "engineEnglish" : "engineFrench", {}, "is-ready");
+  const engineState = language === "en" ? "engineEnglish"
+    : language === "es" ? "engineSpanish"
+    : "engineFrench";
+  setState(engineState, {}, "is-ready");
   output.value = response.text;
   result.hidden = false;
   const count = Number(response.corrections) || 0;
