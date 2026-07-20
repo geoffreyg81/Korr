@@ -240,6 +240,34 @@ const cases = [
   // « everyday » adjectif contre « every day » adverbe.
   ["I go to the gym everyday.", "I go to the gym every day."],
   ["Everyday life is hard.", "Everyday life is hard."],
+  // Apostrophe de pluriel devant un pronom relatif réduit.
+  ["The new feature's we want to add are ready.", "The new features we want to add are ready."],
+  // Accord distant : sujet pluriel, relative appositive, verbe principal.
+  [
+    "The new feature's we want to add, which include the premium dashboard, is going to increase the costs.",
+    "The new features we want to add, which include the premium dashboard, are going to increase the costs."
+  ],
+  // Subjonctif mandatif avec un sujet de plusieurs mots.
+  ["It is mandatory that the financial manager approves the budget.", "It is mandatory that the financial manager approve the budget."],
+  // « his » et « always » ne sont pas des verbes en -s.
+  ["It is vital that everyone give his opinion.", "It is vital that everyone give their opinion."],
+  ["He says that everyone always downloads it.", "He says that everyone always downloads it."],
+  // « actual » temporel, « demand a delay » avec adjectifs, calques d'affaires.
+  ["The budget expires before the actual month ends.", "The budget expires before the current month ends."],
+  ["They demand a very long delay to pay.", "They ask for more time to pay."],
+  ["We made a discount for this client.", "We gave a discount for this client."],
+  ["The new planning is ready.", "The new schedule is ready."],
+  ["Planning the launch takes time.", "Planning the launch takes time."],
+  ["I like it too much!", "I really like it!"],
+  ["I will pass by the office tomorrow.", "I will stop by the office tomorrow."],
+  ["Have a good week-end!", "Have a good weekend!"],
+  // Accord de base avec adjectif interposé.
+  ["The new design look very modern.", "The new design looks very modern."],
+  // Abréviations de courriel ; les sigles en capitales restent des sigles.
+  ["fyi the report is late, asap please.", "For your information the report is late, as soon as possible please."],
+  ["i'm busy atm, thx.", "I'm busy at the moment, thanks."],
+  ["The ATM is broken.", "The ATM is broken."],
+  ["The THX logo is visible.", "The THX logo is visible."],
   // Apostrophe de pluriel : un génitif est suivi de la chose possédée.
   ["We reviewed the ticket's and the invoice's.", "We reviewed the tickets and the invoices."],
   ["The box's are ready.", "The boxes are ready."],

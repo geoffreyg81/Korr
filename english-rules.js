@@ -222,7 +222,7 @@
         `${comparative}${firstSpacing}than${secondSpacing}${determiner}${thirdSpacing}${noun}`
     );
     replaceRaw(
-      /(^|[.!?][ \t]+)(the[ \t]+(?:dog|cat|manager|student|team))([ \t]+)(run|walk|work|need|want|like|know|seem|look|give|take|make|contain|use|try|go|do|have)\b(?=[ \t]+(?:a|an|the|this|that|these|those|my|your|our|their|his|her|its|me|you|him|us|them|it|well|fast|slowly|hard|today|tomorrow|now|always|often|never|usually|every|to|for|with|at|on|in|from|because|when|if|not|away|around|home|outside|inside)\b)/gimu,
+      /(^|[.!?][ \t]+)((?:the|this|our|your)[ \t]+(?:(?:new|old|latest|current|final|first|next|updated|main|whole)[ \t]+)?(?:dog|cat|manager|student|team|design|plan|report|system|website|feature|product|project|update|interface|dashboard|page|app|layout|logo|code|version|document|schedule|budget|price|service|tool|workflow|campaign))([ \t]+)(run|walk|work|need|want|like|know|seem|look|give|take|make|contain|use|try|go|do|have)\b(?=[ \t]+(?:a|an|the|this|that|these|those|my|your|our|their|his|her|its|me|you|him|us|them|it|well|fast|slowly|hard|very|really|quite|good|great|modern|ready|today|tomorrow|now|always|often|never|usually|every|to|for|with|at|on|in|from|because|when|if|not|away|around|home|outside|inside)\b)/gimu,
       (_match, prefix, subject, spacing, verb) =>
         `${prefix}${subject}${spacing}${preserveInitialCase(verb, singularVerb(verb))}`
     );
@@ -290,7 +290,9 @@
     // posséder et la marque est donc un pluriel mal orthographié.
     // ------------------------------------------------------------------
     replaceRaw(
-      /\b([a-z][a-z-]{2,})['’]s\b(?=[ \t]*(?:[.,;:!?)]|$)|[ \t]+(?:and|or|but|are|were|have|which|that|too|also)\b)/gimu,
+      // Un pronom sujet derrière la marque (« the feature's we want ») signale
+      // une relative réduite : un génitif ne peut pas être suivi d'un sujet.
+      /\b([a-z][a-z-]{2,})['’]s\b(?=[ \t]*(?:[.,;:!?)]|$)|[ \t]+(?:and|or|but|are|were|have|which|that|too|also|we|you|they|i)\b)/gimu,
       (match, noun) => {
         const lower = noun.toLocaleLowerCase("en-US");
         // Contractions de « is », « has » et « us » : ce ne sont pas des noms.
@@ -309,15 +311,19 @@
     replaceRaw(
       new RegExp(
         String.raw`\b(${SUBJUNCTIVE_TRIGGERS.join("|")})([ \t]+that[ \t]+)` +
-        // Le second mot du sujet est facultatif et paresseux : sans cela, le
-        // groupe avalerait le verbe (« everyone downloads » pris pour sujet).
-        String.raw`((?:the[ \t]+|each[ \t]+|every[ \t]+)?[a-z]+(?:[ \t]+[a-z]+)??)([ \t]+)([a-z]+)\b`,
+        // Le verbe doit se terminer en -s : c'est ce qui permet au moteur de
+        // regex de découper correctement « the financial manager approves »
+        // (sujet de deux mots) sans jamais prendre un nom pour le verbe.
+        String.raw`((?:the[ \t]+|each[ \t]+|every[ \t]+)?[a-z]+(?:[ \t]+[a-z]+)??)([ \t]+)([a-z]+s)\b`,
         "gimu"
       ),
       (match, trigger, thatPart, subject, spacing, verb) => {
         // Le sujet ne doit pas être un pluriel ni « I / you / we / they » :
         // leur forme est déjà celle du subjonctif, il n'y a rien à corriger.
         if (/^(?:i|you|we|they)$/iu.test(subject.trim())) return match;
+        // Le motif attrape tout mot en -s : les pronoms, adverbes et
+        // conjonctions qui finissent en -s ne sont pas des verbes à réduire.
+        if (NOT_VERBS_IN_S.has(verb.toLocaleLowerCase("en-US"))) return match;
         const base = subjunctiveBase(verb);
         if (!base || base === verb.toLocaleLowerCase("en-US")) return match;
         // « that the team members meet » : un sujet pluriel porte déjà la
@@ -362,9 +368,62 @@
     // « actual » signifie « réel », jamais « en cours ». Devant ces noms-là,
     // la lecture « réel » supposerait un contraste avec une version fictive :
     // c'est le calque de « actuel » qui est en cause.
-    replace(/\b(the|our|your|this)[ \t]+actual[ \t]+(?=(?:version|release|build|sprint|roadmap|planning|agenda|schedule)\b)/giu,
+    replace(/\b(the|our|your|this)[ \t]+actual[ \t]+(?=(?:version|release|build|sprint|roadmap|planning|agenda|schedule|month|week|year|quarter)\b)/giu,
       (_match, determiner) => `${determiner} current `);
     replace(/\bat[ \t]+the[ \t]+actual[ \t]+(?:moment|time)\b/giu, "at the moment");
+
+    // Accord distant : un sujet pluriel séparé de son verbe par une relative
+    // appositive (« …, which …, is ») commande le pluriel. Le nom-tête doit
+    // être un vrai pluriel, jamais un singulier en -s.
+    replaceRaw(
+      /\b([a-z]+s)((?:[ \t]+(?:we|you|they|i)[ \t]+[^,.;:!?\n]{0,50})?,[ \t]+which[ \t]+[^,.;:!?\n]{0,60},[ \t]+)(is|was|has)\b/gimu,
+      (match, head, middle, verb) => {
+        if (SINGULAR_S_NOUNS.has(head.toLocaleLowerCase("en-US"))) return match;
+        const plural = { is: "are", was: "were", has: "have" }[verb.toLocaleLowerCase("en-US")];
+        return `${head}${middle}${preserveInitialCase(verb, plural)}`;
+      }
+    );
+
+    // « exiger un délai » : « demand » est agressif en anglais d'affaires, et
+    // « delay » désigne un contretemps subi, pas un délai accordé.
+    replace(/\b(demand|demands|demanded)[ \t]+a(?:n)?[ \t]+(?:(?:very|really|quite)[ \t]+)?(?:long|short|small|reasonable|additional|extra)?[ \t]*delay\b/giu,
+      (_match, verb) => `${verb === "demanded" ? "asked" : verb === "demands" ? "asks" : "ask"} for more time`);
+    // « faire une remise » : l'anglais accorde une remise, il ne la fait pas.
+    replace(/\b(make|makes|made|making)[ \t]+a[ \t]+discount\b/giu,
+      (_match, verb) => `${({ make: "give", makes: "gives", made: "gave", making: "giving" })[verb.toLocaleLowerCase("en-US")]} a discount`);
+    // « le planning » : en anglais, « planning » est l'action de planifier ;
+    // le document s'appelle un « schedule ». Seule la lecture document est
+    // réécrite (déterminant + fin de proposition ou verbe d'état).
+    replace(/\b(the|our|your|this|a)[ \t]+((?:new|current|updated|revised)[ \t]+)?planning\b(?=[ \t]+(?:is|was|looks|seems)\b|[ \t]*[.,;:!?]|$)/gimu,
+      (_match, determiner, adjective) => `${determiner} ${adjective || ""}schedule`);
+    // « je l'aime trop » : « too much » signifie l'excès, pas l'intensité.
+    replace(/\b(i|we)[ \t]+(like|love)[ \t]+(it|this|that)[ \t]+too[ \t]+much\b(?=[ \t]*[.!]|$)/giu,
+      (_match, subject, verb, object) => `${subject} really ${verb} ${object}`);
+    // « passer au bureau » : « pass by » signifie passer devant sans s'arrêter.
+    replace(/\b(will|shall|can|could|might|to)[ \t]+pass[ \t]+by[ \t]+(?=(?:the|your|my|our)[ \t]+(?:office|shop|store|house|desk)\b)/giu,
+      (_match, auxiliary) => `${auxiliary} stop by `);
+    // Accord inclusif : après « everyone », l'anglais moderne emploie « their ».
+    replace(/\b(everyone|everybody|anyone|anybody|each[ \t]+[a-z]+)([ \t]+[a-z]+[ \t]+)his[ \t]+(?=(?:opinion|feedback|thoughts|input|view|answer|choice|report)s?\b)/giu,
+      (_match, subject, verbPart) => `${subject}${verbPart}their `);
+    replace(/\bweek-end(s?)\b/giu, (_match, plural) => `weekend${plural}`);
+
+    // Abréviations de courriel : développées comme leurs équivalents SMS
+    // français. « atm » n'est développé qu'en minuscules : « ATM » est le
+    // distributeur de billets.
+    replace(/\bfyi\b/giu, "for your information");
+    replace(/\basap\b/giu, "as soon as possible");
+    replace(/\bbtw\b/giu, "by the way");
+    replace(/\bimho\b/giu, "in my humble opinion");
+    replace(/\btbh\b/giu, "to be honest");
+    replace(/\bw\/o\b/giu, "without");
+    // « IMO », « THX », « PLS » en capitales sont des sigles et des marques
+    // (Organisation maritime, THX Ltd.) : seule la graphie minuscule est
+    // une abréviation de courriel.
+    replaceRaw(/(?<![\p{L}\p{N}])imo(?![\p{L}\p{N}])/gu, () => "in my opinion");
+    replaceRaw(/(?<![\p{L}\p{N}])pl[sz](?![\p{L}\p{N}])/gu, () => "please");
+    replaceRaw(/(?<![\p{L}\p{N}])thx(?![\p{L}\p{N}])/gu, () => "thanks");
+    replace(/\btmr?rw\b/giu, "tomorrow");
+    replaceRaw(/(?<![\p{L}\p{N}])atm(?![\p{L}\p{N}])/gu, () => "at the moment");
 
     // ------------------------------------------------------------------
     // Orthographe : graphies inexistantes, y compris les fautes typiques du
@@ -684,6 +743,14 @@
     "user", "employee", "supplier", "vendor", "contractor", "consultant",
     "beginner", "specialist", "candidate", "subscriber", "teacher", "doctor"
   ];
+
+  // Mots en -s qui ne sont jamais un verbe conjugué : le motif du subjonctif
+  // pourrait sinon les « réduire » (his → hi, always → alway).
+  const NOT_VERBS_IN_S = new Set([
+    "his", "its", "this", "thus", "hers", "ours", "yours", "theirs",
+    "whereas", "perhaps", "always", "sometimes", "unless", "across",
+    "besides", "plus", "news", "less", "was", "yes", "as"
+  ]);
 
   // Verbes et adjectifs qui commandent le subjonctif dans la subordonnée.
   const SUBJUNCTIVE_TRIGGERS = [
