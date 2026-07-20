@@ -18,7 +18,34 @@
     "aeroplane", "aeroplanes", "aluminium", "practise", "practised", "practises",
     "practising", "tyre", "tyres", "api", "css", "gemma", "github", "grammalecte",
     "html", "javascript", "json", "npm", "ollama", "powershell", "pwa", "typescript",
-    "vercel", "wasm"
+    "vercel", "wasm",
+    // Orthographe britannique : le moteur tourne en dialecte américain, mais
+    // un correcteur n'a pas à réécrire la variété d'anglais de son auteur.
+    // Sans ces entrées, « favourite » passait et « rumour » était américanisé.
+    "rumour", "rumours", "humour", "humours", "armour", "endeavour",
+    "favour", "favours", "favoured", "flavour", "flavours", "harbour",
+    "odour", "odours", "parlour", "saviour", "savour", "splendour",
+    "vapour", "vigour", "labours", "neighbourhood", "behavioural",
+    "criticise", "criticised", "criticising", "emphasise", "emphasised",
+    "minimise", "minimised", "maximise", "maximised", "prioritise",
+    "prioritised", "specialise", "specialised", "summarise", "summarised",
+    "utilise", "utilised", "authorise", "authorised", "categorise",
+    "customise", "customised", "finalise", "finalised", "optimise",
+    "optimised", "standardise", "memorise", "familiarise", "generalise",
+    "normalise", "publicise", "stabilise", "sympathise", "visualise",
+    "apologises", "apologising", "analysing", "organisation", "organisations",
+    "pretence", "licences", "defences", "offences",
+    "metre", "metres", "litre", "litres", "fibre", "fibres", "calibre",
+    "sombre", "spectre", "theatres", "centred", "centring",
+    "counselled", "fuelled", "marvelled", "signalled", "totalled",
+    "levelled", "cancellation", "instalment", "instalments",
+    "storey", "storeys", "plough", "draught", "mould", "moulded",
+    "smoulder", "kerb", "whilst", "amongst", "learnt", "burnt", "dreamt",
+    "spelt", "spilt", "leapt", "programmed", "programming",
+    "monologue", "epilogue", "prologue", "catalogues", "dialogues",
+    "instil", "enrol", "enrolled", "appal", "distil", "skilfully",
+    "fulfils", "fulfilment", "grey", "greyed", "cosy", "sceptical",
+    "sceptic", "manoeuvre", "manoeuvres", "cheques", "moustache"
   ]);
   const PRESERVED_TECH_CASE = new Set([
     "api", "css", "html", "json", "ollama", "wasm"
@@ -400,8 +427,29 @@
     replace(/\b(i|we)[ \t]+(like|love)[ \t]+(it|this|that)[ \t]+too[ \t]+much\b(?=[ \t]*[.!]|$)/giu,
       (_match, subject, verb, object) => `${subject} really ${verb} ${object}`);
     // « passer au bureau » : « pass by » signifie passer devant sans s'arrêter.
-    replace(/\b(will|shall|can|could|might|to)[ \t]+pass[ \t]+by[ \t]+(?=(?:the|your|my|our)[ \t]+(?:office|shop|store|house|desk)\b)/giu,
+    replace(/\b(will|shall|can|could|might|to|would)[ \t]+pass[ \t]+by[ \t]+(?=(?:the|your|my|our|their|his|her|its)[ \t]+(?:office|shop|store|house|desk|place|premises|branch|site|apartment|flat)\b)/giu,
       (_match, auxiliary) => `${auxiliary} stop by `);
+    // « je suis dans une dynamique » : « dynamic » ne décrit jamais quelqu'un
+    // de pressé en anglais, et « literally » n'y est pas un intensificateur.
+    replace(/\b(?:be[ \t]+)?literally[ \t]+dynamic\b/giu, "extremely busy");
+    replace(/\b(i[ \t]+am|i['’]m|we[ \t]+are|we['’]re)[ \t]+(?:very[ \t]+|really[ \t]+)?dynamic[ \t]+(?=(?:right[ \t]+now|at[ \t]+the[ \t]+moment|today|this[ \t]+week)\b)/giu,
+      (_match, subject) => `${subject} extremely busy `);
+
+    // Nom-tête collectif suivi d'un complément pluriel : c'est la tête qui
+    // commande, même à distance (« the team of experts … have met » → « has »).
+    // Les quantifieurs (a number of, a lot of) prennent au contraire le
+    // pluriel : ils ne figurent pas dans la liste.
+    replaceRaw(
+      new RegExp(
+        String.raw`\b((?:the|this|that|our|your|their)[ \t]+(?:${COLLECTIVE_HEADS.join("|")})[ \t]+of[ \t]+[a-z]+s)` +
+        String.raw`([ \t]+(?:who|that|which)[ \t]+[^,.;:!?\n]{0,60}?)?([ \t]+)(have|are|were|do)\b`,
+        "gimu"
+      ),
+      (match, head, clause, spacing, verb) => {
+        const singular = { have: "has", are: "is", were: "was", do: "does" }[verb.toLocaleLowerCase("en-US")];
+        return `${head}${clause || ""}${spacing}${preserveInitialCase(verb, singular)}`;
+      }
+    );
     // Accord inclusif : après « everyone », l'anglais moderne emploie « their ».
     replace(/\b(everyone|everybody|anyone|anybody|each[ \t]+[a-z]+)([ \t]+[a-z]+[ \t]+)his[ \t]+(?=(?:opinion|feedback|thoughts|input|view|answer|choice|report)s?\b)/giu,
       (_match, subject, verbPart) => `${subject}${verbPart}their `);
@@ -735,6 +783,13 @@
     "address", "success", "access", "press", "progress", "loss", "glass",
     "kiss", "mess", "guess", "witness", "illness", "crisis", "thesis"
   ]);
+
+  // Noms-têtes collectifs : leur complément pluriel ne commande pas le verbe.
+  const COLLECTIVE_HEADS = [
+    "team", "group", "list", "set", "series", "stack", "pile", "batch",
+    "collection", "range", "array", "board", "committee", "panel", "squad",
+    "bunch", "package", "bundle", "portfolio", "selection"
+  ];
 
   // Noms de rôle dénombrables : un sujet pluriel appelle un attribut pluriel.
   const COUNTABLE_ROLES = [

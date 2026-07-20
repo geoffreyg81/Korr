@@ -367,6 +367,14 @@ const cases = [
   ["C’est un vrai disaster.", "C’est un vrai désastre."],
   ["On doit les restore en urgence.", "On doit les restaurer en urgence."],
   ["On va dead ça ce soir.", "On va gérer ça ce soir."],
+  // Nom-tête concret : son complément pluriel ne commande pas le verbe.
+  [
+    "La pile de dossiers qui contient les données sensibles sont toujours bloqués.",
+    "La pile de dossiers qui contient les données sensibles est toujours bloquée."
+  ],
+  ["La liste des courses sont complètes.", "La liste des courses est complète."],
+  // Garde-fou : un collectif de quantité admet l’accord de proximité.
+  ["La plupart des employés ont été prévenus.", "La plupart des employés ont été prévenus."],
   // Accord avec le noyau d’une fraction ou d’un collectif.
   ["La moitié du cloud a été redémarré ce matin.", "La moitié du cloud a été redémarrée ce matin."],
   ["La majorité de l’équipe est convaincu.", "La majorité de l’équipe est convaincue."],

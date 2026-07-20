@@ -1180,6 +1180,38 @@ function grammalecte() {
       }
     );
 
+    // Nom-tête concret suivi d'un complément pluriel : c'est la tête qui
+    // commande, même à distance. « La pile de dossiers … sont bloqués » →
+    // « est bloquée ». Les collectifs de quantité (la plupart, la majorité,
+    // une foule) admettent au contraire l'accord de proximité et sont donc
+    // absents de la liste : ils sont traités par leur propre règle.
+    replace(
+      new RegExp(
+        String.raw`\b((?:La|Le|Cette|Ce|Notre|Votre|Leur)\s+(?:${CONCRETE_HEADS.join("|")})\s+(?:de|des|du|d[’'])\s*[\p{L}’-]+s)` +
+        String.raw`(\s+qui\s+[^,.;:!?\n]{0,60}?)?\s+(sont|étaient|seront|ont\s+été)\s+` +
+        // Un adverbe peut s'intercaler : il ne varie pas et reste tel quel.
+        String.raw`((?:(?:toujours|encore|déjà|bien|très|totalement|complètement|actuellement|maintenant|désormais|enfin|malheureusement)\s+)?)` +
+        String.raw`([\p{L}]+(?:s|es))(?![\p{L}\p{N}])`,
+        "gu"
+      ),
+      (match, subject, relative, verb, adverb, attribute) => {
+        const head = subject.match(/^(?:La|Le|Cette|Ce|Notre|Votre|Leur)\s+([\p{L}’-]+)/u)?.[1] || "";
+        const features = nounFeatures(head);
+        if (!features || features.plural) return match;
+
+        const singularVerb = { sont: "est", étaient: "était", seront: "sera" }[verb] ||
+          (/^ont\s+été$/u.test(verb) ? "a été" : "");
+        if (!singularVerb) return match;
+
+        // L'attribut suit le genre de la tête ; on ne réécrit que si le
+        // dictionnaire confirme la forme obtenue.
+        const base = attribute.replace(/e?s$/u, "");
+        const agreed = features.feminine ? `${base}e` : base;
+        if (!morphOf(agreed).length) return match;
+        return `${subject}${relative || ""} ${singularVerb} ${adverb}${agreed}`;
+      }
+    );
+
     // Accent mangé sur un nom : le correcteur orthographique ne signale rien
     // quand la graphie sans accent existe par ailleurs comme forme verbale rare
     // (« moitie », participe de « moitir »). Or un déterminant appelle un nom :
@@ -1996,6 +2028,15 @@ function grammalecte() {
         morphologies.some((morph) => /:p(?![\p{L}\p{N}])/u.test(morph))
     };
   }
+
+  // Noms-têtes concrets : leur complément pluriel ne commande pas le verbe.
+  // Distincts des collectifs de quantité (plupart, majorité, foule), qui eux
+  // admettent l'accord de proximité.
+  const CONCRETE_HEADS = [
+    "pile", "liste", "série", "boîte", "dossier", "ensemble", "lot", "paquet",
+    "collection", "gamme", "sélection", "équipe", "table", "grille", "base",
+    "chaîne", "suite", "somme", "durée", "qualité", "quantité", "version"
+  ];
 
   // Verbes fréquents dont une virgule ne peut pas les séparer de leur sujet.
   // Les entrées sont des fragments d'expression régulière : les pronominaux

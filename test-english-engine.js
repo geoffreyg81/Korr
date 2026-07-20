@@ -240,6 +240,24 @@ const cases = [
   // « everyday » adjectif contre « every day » adverbe.
   ["I go to the gym everyday.", "I go to the gym every day."],
   ["Everyday life is hard.", "Everyday life is hard."],
+  // Nom-tête collectif : son complément pluriel ne commande pas le verbe.
+  [
+    "The team of experts who are working on the project have met many troubles.",
+    "The team of experts who are working on the project has met many troubles."
+  ],
+  ["The list of items are outdated.", "The list of items is outdated."],
+  // Garde-fous : les quantifieurs prennent bien le pluriel.
+  ["A number of users are complaining.", "A number of users are complaining."],
+  ["The team members are ready.", "The team members are ready."],
+  // Calques restants relevés au crash-test.
+  ["I agree to pass by their office tomorrow.", "I agree to stop by their office tomorrow."],
+  ["He walked past the shop.", "He walked past the shop."],
+  ["I am literally dynamic at the moment.", "I am extremely busy at the moment."],
+  // Orthographe britannique tolérée : le correcteur ne réécrit pas la variété
+  // d'anglais de l'auteur.
+  ["The crew traffics in rumours.", "The crew traffics in rumours."],
+  ["We organise the programme and analyse the behaviour.", "We organise the programme and analyse the behaviour."],
+  ["The theatre is 50 metres from the centre.", "The theatre is 50 metres from the centre."],
   // Apostrophe de pluriel devant un pronom relatif réduit.
   ["The new feature's we want to add are ready.", "The new features we want to add are ready."],
   // Accord distant : sujet pluriel, relative appositive, verbe principal.
