@@ -78,6 +78,17 @@ const cases = [
   ["Je suis ready for the meeting.", "mixed"],
   ["Bonjour, notre team is ready.", "mixed"],
   ["Hello, je suis late.", "mixed"],
+  // « Mixte » suppose un équilibre : une formule de politesse isolée ne fait
+  // pas basculer un texte entier, sinon l'outil refuserait de le corriger.
+  [
+    "Hey team, the group of devs who is working on the api have met many troubles. It is crucial that everyone downloads the update before the version expires. Merci!",
+    "en"
+  ],
+  ["Hi Marie, I will assist to the meeting tomorrow and send you the report. Bonne journée!", "en"],
+  [
+    "Bonjour, je vous envoie le rapport que j'ai écrit hier. Le deadline est vendredi, merci de faire un feedback rapide sur le planning.",
+    "fr"
+  ],
   ["OK", "fr"]
 ];
 

@@ -86,7 +86,14 @@
     // Un mélange net ne doit jamais être envoyé en bloc à un seul dictionnaire :
     // Harper et Grammalecte pourraient alors "corriger" les mots de l'autre
     // langue. L'interface demandera à l'utilisateur de choisir manuellement.
-    if (strongEnglish > 0 && strongFrench > 0) return "mixed";
+    //
+    // Mais « mélange » suppose un équilibre : un courriel anglais qui se
+    // termine par « Merci » reste un texte anglais, et refuser de le corriger
+    // serait absurde. La langue minoritaire doit peser au moins un quart des
+    // indices pour qu'on renonce à trancher.
+    const strongTotal = strongFrench + strongEnglish;
+    const minorityCount = Math.min(strongFrench, strongEnglish);
+    if (minorityCount > 0 && minorityCount * 4 >= strongTotal) return "mixed";
 
     // Il faut un signal anglais net : les textes courts et ambigus restent FR.
     if (strongEnglish > strongFrench) return "en";
