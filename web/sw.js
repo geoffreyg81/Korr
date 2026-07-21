@@ -31,10 +31,11 @@ const SHELL = [
 
 // Le moteur : volumineux, donc mis en cache à la première utilisation plutôt
 // qu'à l'installation, pour que la page s'affiche sans attendre.
-// L'espagnol (beta) est optionnel : ses fichiers et son dictionnaire de 0,7 Mo
-// ne sont pas précachés, mais deviennent disponibles hors ligne après un
-// premier usage, comme les moteurs français et anglais.
-const ENGINE_PATTERN = /vendor\/(?:grammalecte|harper|nspell)\/|(?:spanish-worker|spanish-rules)\.js$|spanish\.(?:aff|dic)$/u;
+// L'espagnol et l'italien sont optionnels : leurs fichiers (et, pour l'espagnol,
+// son dictionnaire de 0,7 Mo) ne sont pas précachés, mais deviennent
+// disponibles hors ligne après un premier usage, comme le français et l'anglais.
+// L'italien n'a aucun dictionnaire : ses seules règles suffisent.
+const ENGINE_PATTERN = /vendor\/(?:grammalecte|harper|nspell)\/|(?:spanish-worker|spanish-rules|italian-worker|italian-rules)\.js$|spanish\.(?:aff|dic)$/u;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

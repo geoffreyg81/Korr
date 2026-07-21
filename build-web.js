@@ -25,8 +25,10 @@ const SHARED_FILES = [
   "grammalecte-worker.js", "harper-worker.js", "language-detection.js",
   "grammar-rules.js", "english-rules.js", "LICENSE", "PRIVACY.md", "PRIVACY.en.md",
   "LEGAL.md", "LEGAL.en.md", "TERMS.md", "TERMS.en.md",
-  // Espagnol (beta) : site uniquement, absent de l'application Windows.
-  "spanish-worker.js", "spanish-rules.js"
+  // Espagnol et italien : site uniquement, absents de l'application Windows.
+  // L'italien n'a pas de dictionnaire, ses règles suffisent.
+  "spanish-worker.js", "spanish-rules.js",
+  "italian-worker.js", "italian-rules.js"
 ];
 const DIRECTORIES = ["icons", "vendor"];
 const HARPER_FILES = [
@@ -76,7 +78,7 @@ if (fs.existsSync(spanishDict)) {
   fs.copyFileSync(path.join(spanishDict, "index.aff"), path.join(OUT_DIR, "spanish.aff"));
   fs.copyFileSync(path.join(spanishDict, "index.dic"), path.join(OUT_DIR, "spanish.dic"));
 } else {
-  console.warn("Dictionnaire espagnol absent : la beta espagnole ne fonctionnera pas.");
+  console.warn("Dictionnaire espagnol absent : le correcteur espagnol ne fonctionnera pas.");
 }
 
 // Les navigateurs demandent encore /favicon.ico même lorsqu'une icône PNG est

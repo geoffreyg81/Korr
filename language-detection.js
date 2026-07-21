@@ -43,9 +43,9 @@
     "dans", "avec", "pour", "que", "qui", "suis", "notre", "votre"
   ]);
 
-  // Espagnol (beta). Les mots retenus sont ceux qui n'appartiennent ni au
-  // français ni à l'anglais : « que », « en » ou « la » sont communs et ne
-  // départageraient rien.
+  // Espagnol. Les mots retenus sont ceux qui n'appartiennent ni au français ni
+  // à l'anglais : « que », « en » ou « la » sont communs et ne départageraient
+  // rien.
   const SPANISH_WORDS = new Set([
     "el", "los", "las", "una", "unos", "unas", "del", "al", "por", "para",
     "con", "sin", "sobre", "desde", "hasta", "pero", "porque", "cuando",
@@ -75,6 +75,43 @@
     "dias", "adios", "senor", "anos", "quiero", "tiene", "hacer", "muchas",
     "nada", "algo", "bueno", "todos", "cuando", "donde", "quien"
   ]);
+
+  // Italien. Comme pour l'espagnol, les mots retenus sont propres à l'italien :
+  // ni le français, ni l'anglais, ni l'espagnol ne les emploient (« gli »,
+  // « della », « sono », « perché »). Les mots partagés avec l'espagnol
+  // (« cosa », « come », « casa ») sont écartés pour ne pas brouiller le
+  // départage entre les deux langues romanes.
+  const ITALIAN_WORDS = new Set([
+    "gli", "della", "delle", "dello", "degli", "dei", "dal", "dalla", "dallo",
+    "dagli", "nel", "nella", "nello", "negli", "nei", "nelle", "sul", "sulla",
+    "sullo", "sugli", "col", "coi", "che", "chi", "più", "piu", "già", "gia",
+    "così", "cosi", "perché", "perche", "perciò", "però", "pero", "quindi",
+    "dunque", "sono", "siamo", "siete", "essere", "fare", "abbiamo", "avete",
+    "hanno", "anche", "ancora", "sempre", "mai", "questo", "questa", "questi",
+    "queste", "quello", "quella", "quelli", "quelle", "molto", "molti", "molta",
+    "molte", "voglio", "vuole", "vogliamo", "adesso", "grazie", "ciao", "prego",
+    "buongiorno", "buonasera", "comunque", "qualcosa", "qualcuno", "niente",
+    "magari", "davvero", "invece", "oppure", "insomma", "soprattutto",
+    "mentre", "finché", "affinché", "neanche", "nemmeno", "senza", "dopo",
+    "prima", "sotto", "sopra", "dentro", "fuori", "cioè", "cioe", "ecco",
+    "oggi", "domani", "settimana", "lavoro", "tempo", "sempre", "tutto",
+    "tutti", "tutte", "ogni", "verso", "presso", "quasi",
+    "è", "ho", "hai", "ha", "ci", "ne", "né", "vorrei", "vediamo"
+  ]);
+  const STRONG_ITALIAN = new Set([
+    "gli", "della", "delle", "degli", "dei", "dal", "dalla", "nel", "nella",
+    "negli", "nei", "sul", "sulla", "col", "sono", "siamo", "siete", "anche",
+    "ancora", "questo", "questa", "questi", "queste", "quello", "quella",
+    "molto", "molti", "molte", "voglio", "vuole", "adesso", "grazie", "ciao",
+    "perché", "perche", "però", "quindi", "perciò", "essere", "fare",
+    "abbiamo", "hanno", "buongiorno", "comunque", "qualcosa", "niente",
+    "magari", "davvero", "invece", "oppure", "soprattutto", "cioè",
+    // Copule et auxiliaire avere : très fréquents et propres à l'italien
+    // (l'espagnol emploie « es », « he », « ha »).
+    "è", "ho", "hai", "già", "più", "così", "ciò", "oggi", "domani", "vorrei",
+    // Formes fréquentes en italien tapé sans accents.
+    "piu", "gia", "cosi", "cioe", "perche", "pero"
+  ]);
   // Mots identiques d'une langue à l'autre. Les listes espagnoles les écartent
   // déjà — « que » ou « la » ne départagent rien — mais les listes française et
   // anglaise, plus anciennes, les comptaient encore. Un courriel espagnol
@@ -86,9 +123,13 @@
   ]);
 
   // Signes propres à chaque langue : la ponctuation ouvrante et le ñ sont
-  // exclusivement espagnols, tandis que ç, œ, è et ê sont français.
+  // exclusivement espagnols. Côté français, seuls comptent les signes que ni
+  // l'espagnol ni l'italien n'emploient : la cédille, les ligatures, le
+  // circonflexe et le tréma. Les accents grave et aigu sur les voyelles
+  // (à è é ì ò ù) sont partagés avec l'italien : les inclure ferait passer
+  // « questo è già » pour du français.
   const SPANISH_MARKS = /[ñ¿¡]|[áíóú]/u;
-  const FRENCH_MARKS = /[çœàèêë]/u;
+  const FRENCH_MARKS = /[çœæâêîôûëïüÿ]/u;
 
   const ENGLISH_CONTRACTION = /\b(?:aren['’]t|can['’]t|couldn['’]t|didn['’]t|doesn['’]t|don['’]t|hasn['’]t|haven['’]t|isn['’]t|let['’]s|shouldn['’]t|wasn['’]t|weren['’]t|won['’]t|wouldn['’]t|i['’]m|i['’]ve|we['’]re|we['’]ve|they['’]re|you['’]re)\b/giu;
   const ENGLISH_SHORT_MESSAGES = Object.freeze([
@@ -116,7 +157,9 @@
     if (ENGLISH_SHORT_MESSAGES.some((pattern) => pattern.test(compact))) return "en";
 
     const words = normalized.match(/[a-zà-öø-ÿ]+/gu) || [];
-    const hasFrenchDiacritics = /[àâçéèêëîïôùûüÿœæ]/u.test(normalized);
+    // Seuls les signes exclusivement français comptent : les accents partagés
+    // avec l'italien (à è é ì ò ù) ne prouvent rien à eux seuls.
+    const hasFrenchDiacritics = FRENCH_MARKS.test(normalized);
     let french = hasFrenchDiacritics ? 2 : 0;
     let english = 0;
     let strongFrench = 0;
@@ -129,20 +172,37 @@
     if (FRENCH_MARKS.test(normalized)) spanish -= 2;
     let strongSpanish = 0;
 
+    // Le « ñ » et la ponctuation ouvrante sont exclusivement espagnols : leur
+    // absence, combinée à un « ç/œ » français, retire de la crédibilité à
+    // l'italien comme à l'espagnol.
+    let italian = 0;
+    if (FRENCH_MARKS.test(normalized) || SPANISH_MARKS.test(normalized)) italian -= 2;
+    let strongItalian = 0;
+
     for (const word of words) {
       if (SHARED_WORDS.has(word)) continue;
       if (FRENCH_WORDS.has(word)) french += 1;
       if (ENGLISH_WORDS.has(word)) english += 1;
       if (SPANISH_WORDS.has(word)) spanish += 1;
+      if (ITALIAN_WORDS.has(word)) italian += 1;
       if (STRONG_FRENCH.has(word)) strongFrench += 1;
       if (STRONG_ENGLISH.has(word)) strongEnglish += 1;
       if (STRONG_SPANISH.has(word)) strongSpanish += 1;
+      if (STRONG_ITALIAN.has(word)) strongItalian += 1;
     }
 
-    // L'espagnol ne se déclare que sur un signal net et dominant : le
-    // français reste la langue de repli, et un doute ne doit jamais faire
-    // basculer un texte français vers un moteur qui ne le connaît pas.
-    if (strongSpanish >= 2 && spanish > french && spanish > english) return "es";
+    // Les langues romanes (espagnol, italien) ne se déclarent que sur un signal
+    // net et dominant : le français reste la langue de repli, et un doute ne
+    // doit jamais faire basculer un texte français vers un moteur qui ne le
+    // connaît pas. Entre elles, c'est le score le plus élevé qui l'emporte,
+    // départagé au besoin par le nombre d'indices forts.
+    const spanishReady = strongSpanish >= 2 && spanish > french && spanish > english;
+    const italianReady = strongItalian >= 2 && italian > french && italian > english;
+    if (spanishReady || italianReady) {
+      if (spanishReady && (!italianReady || spanish > italian)) return "es";
+      if (italianReady && (!spanishReady || italian > spanish)) return "it";
+      return strongItalian > strongSpanish ? "it" : "es";
+    }
 
     // Un mélange net ne doit jamais être envoyé en bloc à un seul dictionnaire :
     // Harper et Grammalecte pourraient alors "corriger" les mots de l'autre

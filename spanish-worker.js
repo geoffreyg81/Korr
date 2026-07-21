@@ -1,4 +1,4 @@
-// Correcteur espagnol (beta), exécuté dans un Worker séparé.
+// Correcteur espagnol, exécuté dans un Worker séparé.
 // Le dictionnaire Hunspell n'est téléchargé qu'au premier texte espagnol.
 
 import nspell from "./vendor/nspell/nspell.js";

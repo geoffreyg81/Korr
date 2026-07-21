@@ -1,8 +1,8 @@
-// Règles de correction espagnoles de Korr — beta.
+// Règles de correction espagnoles de Korr.
 //
 // Contrairement au français (Grammalecte) et à l'anglais (Harper), l'espagnol
-// ne dispose pas d'un moteur grammatical hors ligne complet. Cette beta repose
-// donc sur deux piliers volontairement prudents :
+// ne dispose pas d'un moteur grammatical hors ligne complet. Le correcteur
+// repose donc sur deux piliers volontairement prudents :
 //   1. un correcteur orthographique Hunspell (nspell + dictionary-es) ;
 //   2. un jeu de règles écrites à la main, chacune bornée pour éviter les faux
 //      positifs : une règle qui ne peut pas trancher ne corrige rien.

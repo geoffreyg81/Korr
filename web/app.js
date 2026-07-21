@@ -112,8 +112,8 @@ function frenchClient() {
   return askFrench;
 }
 
-// Espagnol (beta) : moteur isolé, chargé seulement à la première demande, sans
-// aucune incidence sur les chemins français et anglais.
+// Espagnol : moteur isolé, chargé seulement à la première demande, sans aucune
+// incidence sur les chemins français et anglais.
 let askSpanish = null;
 function spanishClient() {
   if (!askSpanish) {
@@ -122,6 +122,18 @@ function spanishClient() {
     });
   }
   return askSpanish;
+}
+
+// Italien : même principe, mais sans dictionnaire (règles seules), donc prêt
+// instantanément à la première correction.
+let askItalian = null;
+function italianClient() {
+  if (!askItalian) {
+    askItalian = createWorkerClient("italian-worker.js", { type: "module" }, () => {
+      askItalian = null;
+    });
+  }
+  return askItalian;
 }
 
 (async () => {
@@ -175,6 +187,7 @@ async function runCorrection(forced) {
   if (language === "en" && !englishReady) correctButton.textContent = t("loadingHarper");
   const client = language === "en" ? englishClient()
     : language === "es" ? spanishClient()
+    : language === "it" ? italianClient()
     : frenchClient();
   const response = await client("CORRECT", text);
   if (language === "en" && response.ok) englishReady = true;
@@ -189,6 +202,7 @@ async function runCorrection(forced) {
 
   const engineState = language === "en" ? "engineEnglish"
     : language === "es" ? "engineSpanish"
+    : language === "it" ? "engineItalian"
     : "engineFrench";
   setState(engineState, {}, "is-ready");
   output.value = response.text;

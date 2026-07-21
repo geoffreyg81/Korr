@@ -90,8 +90,8 @@ const cases = [
     "fr"
   ],
   ["OK", "fr"],
-  // Espagnol (beta) : détecté avec ou sans accents, puisqu'un correcteur
-  // reçoit surtout du texte non accentué.
+  // Espagnol : détecté avec ou sans accents, puisqu'un correcteur reçoit
+  // surtout du texte non accentué.
   ["Hola, ¿cómo estás? Muy bien, gracias.", "es"],
   ["El corazón de María está roto y no sé qué hacer.", "es"],
   ["Mi corazon esta roto. Como estas? Enserio, aveces dudo.", "es"],
@@ -108,6 +108,16 @@ const cases = [
     "es"
   ],
   ["Te confirmo que el pedido de los clientes se ha enviado esta tarde.", "es"],
+  // Italien : détecté avec ou sans accents, et distingué de l'espagnol.
+  ["Ciao a tutti, questo è il nuovo programma della settimana.", "it"],
+  ["Buongiorno, ho già inviato il documento ma non ho ricevuto risposta.", "it"],
+  ["Perché non ci vediamo domani per discutere del progetto?", "it"],
+  ["cmq nn so se vengo, xké ho gia un meeting alle tre.", "it"],
+  ["Gli obiettivi sono molto chiari e la scadenza è vicina.", "it"],
+  ["Vorrei sapere qual è il problema con la riunione di oggi.", "it"],
+  // L'italien et l'espagnol ne se confondent pas.
+  ["El corazón de María está roto y no sé qué hacer.", "es"],
+  ["Non so cosa fare, il cuore di Maria è a pezzi.", "it"],
   // Garde-fous : le français et l'anglais ne basculent jamais vers l'espagnol.
   // Un texte français saturé de mots communs aux deux langues reste français.
   [

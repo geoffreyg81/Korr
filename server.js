@@ -22,6 +22,14 @@ const OLLAMA_THREADS = Number(process.env.OLLAMA_THREADS) || 0;
 const MAX_INPUT_CHARACTERS = 20_000;
 const REQUEST_TIMEOUT_MS = 120_000;
 
+// Langues corrigées uniquement sur le site (moteurs Worker), absentes de
+// l'application de bureau : le serveur ne fait que les détecter et renvoyer le
+// texte intact, sans jamais les confier au modèle ni au correcteur français.
+const SITE_ONLY_LANGUAGES = new Map([
+  ["es", "Texte espagnol"],
+  ["it", "Texte italien"]
+]);
+
 // Chaque style a son prompt et ses tolérances de vérification : une
 // reformulation change plus de mots qu'une correction, un résumé raccourcit.
 const STYLES = {
@@ -216,8 +224,8 @@ async function handleCorrection(request, response) {
       ...(language === "mixed" ? {
         fallback: "Texte français et anglais mélangé : choisissez explicitement la langue."
       } : {}),
-      ...(language === "es" ? {
-        fallback: "Texte espagnol détecté : la correction espagnole (beta) n'existe que sur le site."
+      ...(SITE_ONLY_LANGUAGES.has(language) ? {
+        fallback: `${SITE_ONLY_LANGUAGES.get(language)} détecté : cette correction n'existe que sur le site.`
       } : {})
     });
   }
@@ -238,14 +246,15 @@ async function handleCorrection(request, response) {
   }
 
   // Le modèle reçoit un prompt rédigé pour le français ou l'anglais : lui
-  // soumettre de l'espagnol produirait une réécriture dans la mauvaise langue.
-  if (language === "es") {
+  // soumettre de l'espagnol ou de l'italien produirait une réécriture dans la
+  // mauvaise langue. Ces langues n'existent que sur le site.
+  if (SITE_ONLY_LANGUAGES.has(language)) {
     return sendJson(response, 200, {
       ...instantResult,
       engine: "unsupported",
       language,
       style: styleName,
-      fallback: "Texte espagnol détecté : la correction espagnole (beta) n'existe que sur le site."
+      fallback: `${SITE_ONLY_LANGUAGES.get(language)} détecté : cette correction n'existe que sur le site.`
     });
   }
 
@@ -425,10 +434,11 @@ async function generateWithOllama(model, style, prompt) {
 }
 
 async function correctInstantText(text, language) {
-  // L'espagnol n'existe que sur le site : l'application n'embarque pas son
-  // moteur. Le renvoyer au correcteur français lui appliquerait des règles
-  // d'une autre langue, ce qui abîmerait le texte au lieu de le corriger.
-  if (language === "mixed" || language === "es") {
+  // L'espagnol et l'italien n'existent que sur le site : l'application
+  // n'embarque pas leurs moteurs. Les renvoyer au correcteur français leur
+  // appliquerait les règles d'une autre langue, ce qui abîmerait le texte au
+  // lieu de le corriger.
+  if (language === "mixed" || SITE_ONLY_LANGUAGES.has(language)) {
     return { text, corrections: 0, durationMs: 0 };
   }
   return language === "en" ? correctEnglishText(text) : correctFrenchText(text);
@@ -436,7 +446,7 @@ async function correctInstantText(text, language) {
 
 function instantEngineName(language) {
   if (language === "mixed") return "mixed";
-  if (language === "es") return "unsupported";
+  if (SITE_ONLY_LANGUAGES.has(language)) return "unsupported";
   return language === "en" ? "harper" : "grammalecte";
 }
 
