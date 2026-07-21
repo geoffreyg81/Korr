@@ -30,6 +30,7 @@
     "node": ">=18.17"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "dictionary-es": "^4.0.0",
     "harper.js": "^2.4.0",
     "nspell": "^2.1.5"
