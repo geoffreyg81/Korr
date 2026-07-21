@@ -32,7 +32,7 @@ const context = vm.createContext({
 });
 vm.runInContext(source, context, { filename: "web/i18n.js" });
 
-const LOCALES = ["fr", "en", "es"];
+const LOCALES = ["fr", "en", "es", "it"];
 
 for (const locale of LOCALES) {
   context.korrI18n.apply(locale);
@@ -64,4 +64,4 @@ for (const [locale, catalogue] of catalogues) {
 }
 
 if (!fs.existsSync("PRIVACY.en.md")) throw new Error("Politique de confidentialité anglaise absente.");
-console.log(`Traductions FR/EN/ES vérifiées : ${keys.size} clés × ${LOCALES.length} langues.`);
+console.log(`Traductions FR/EN/ES/IT vérifiées : ${keys.size} clés × ${LOCALES.length} langues.`);
